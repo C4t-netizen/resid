@@ -13,6 +13,7 @@ import {
   Wrench,
   BookOpen,
   ShieldAlert,
+  UserCog,
 } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import {
@@ -27,6 +28,7 @@ import {
   SidebarMenuItem,
   useSidebar,
 } from "@/components/ui/sidebar";
+import { useAuth } from "@/contexts/AuthContext";
 
 const mainItems = [
   { title: "Índice", url: "/", icon: LayoutGrid },
@@ -56,7 +58,12 @@ const reportItems = [
 
 export function AppSidebar() {
   const { state } = useSidebar();
+  const { isSuperAdmin } = useAuth();
   const collapsed = state === "collapsed";
+
+  const adminItems = isSuperAdmin
+    ? [{ title: "Usuarios", url: "/usuarios", icon: UserCog }]
+    : [];
 
   const renderGroup = (label: string, items: typeof mainItems) => (
     <SidebarGroup>
@@ -109,6 +116,7 @@ export function AppSidebar() {
         {renderGroup("Operación CSH", operationItems)}
         {renderGroup("Eventos", incidentItems)}
         {renderGroup("Reportes", reportItems)}
+        {adminItems.length > 0 && renderGroup("Administración", adminItems)}
       </SidebarContent>
     </Sidebar>
   );
