@@ -14,6 +14,102 @@ export type Database = {
   }
   public: {
     Tables: {
+      acta_constitucion: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          estatus: string
+          fecha_acta: string
+          hora: string | null
+          id: string
+          lugar: string | null
+          observaciones: string | null
+          patron_firma: string | null
+          representante_trabajadores_firma: string | null
+          testigo_stps: string | null
+          updated_at: string
+          vigencia_fin: string | null
+          vigencia_inicio: string | null
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          estatus?: string
+          fecha_acta: string
+          hora?: string | null
+          id?: string
+          lugar?: string | null
+          observaciones?: string | null
+          patron_firma?: string | null
+          representante_trabajadores_firma?: string | null
+          testigo_stps?: string | null
+          updated_at?: string
+          vigencia_fin?: string | null
+          vigencia_inicio?: string | null
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          estatus?: string
+          fecha_acta?: string
+          hora?: string | null
+          id?: string
+          lugar?: string | null
+          observaciones?: string | null
+          patron_firma?: string | null
+          representante_trabajadores_firma?: string | null
+          testigo_stps?: string | null
+          updated_at?: string
+          vigencia_fin?: string | null
+          vigencia_inicio?: string | null
+        }
+        Relationships: []
+      }
+      comite_miembros: {
+        Row: {
+          activo: boolean
+          cargo_csh: string
+          created_at: string
+          created_by: string | null
+          email: string | null
+          fecha_designacion: string | null
+          id: string
+          nombre: string
+          puesto: string | null
+          representacion: string
+          telefono: string | null
+          updated_at: string
+        }
+        Insert: {
+          activo?: boolean
+          cargo_csh: string
+          created_at?: string
+          created_by?: string | null
+          email?: string | null
+          fecha_designacion?: string | null
+          id?: string
+          nombre: string
+          puesto?: string | null
+          representacion: string
+          telefono?: string | null
+          updated_at?: string
+        }
+        Update: {
+          activo?: boolean
+          cargo_csh?: string
+          created_at?: string
+          created_by?: string | null
+          email?: string | null
+          fecha_designacion?: string | null
+          id?: string
+          nombre?: string
+          puesto?: string | null
+          representacion?: string
+          telefono?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       csh_config: {
         Row: {
           cp: string | null
@@ -119,6 +215,137 @@ export type Database = {
         }
         Relationships: []
       }
+      programa_anual: {
+        Row: {
+          actividad: string
+          anio: number
+          created_at: string
+          created_by: string | null
+          estatus: string
+          fecha_programada: string | null
+          fecha_realizada: string | null
+          id: string
+          mes: number
+          observaciones: string | null
+          responsable: string | null
+          tipo: string | null
+          updated_at: string
+        }
+        Insert: {
+          actividad: string
+          anio: number
+          created_at?: string
+          created_by?: string | null
+          estatus?: string
+          fecha_programada?: string | null
+          fecha_realizada?: string | null
+          id?: string
+          mes: number
+          observaciones?: string | null
+          responsable?: string | null
+          tipo?: string | null
+          updated_at?: string
+        }
+        Update: {
+          actividad?: string
+          anio?: number
+          created_at?: string
+          created_by?: string | null
+          estatus?: string
+          fecha_programada?: string | null
+          fecha_realizada?: string | null
+          id?: string
+          mes?: number
+          observaciones?: string | null
+          responsable?: string | null
+          tipo?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      recorrido_hallazgos: {
+        Row: {
+          created_at: string
+          descripcion: string
+          estatus: string
+          foto_url: string | null
+          id: string
+          nivel_riesgo: string | null
+          recomendacion: string | null
+          recorrido_id: string
+          ubicacion: string | null
+        }
+        Insert: {
+          created_at?: string
+          descripcion: string
+          estatus?: string
+          foto_url?: string | null
+          id?: string
+          nivel_riesgo?: string | null
+          recomendacion?: string | null
+          recorrido_id: string
+          ubicacion?: string | null
+        }
+        Update: {
+          created_at?: string
+          descripcion?: string
+          estatus?: string
+          foto_url?: string | null
+          id?: string
+          nivel_riesgo?: string | null
+          recomendacion?: string | null
+          recorrido_id?: string
+          ubicacion?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "recorrido_hallazgos_recorrido_id_fkey"
+            columns: ["recorrido_id"]
+            isOneToOne: false
+            referencedRelation: "recorridos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      recorridos: {
+        Row: {
+          area: string
+          created_at: string
+          created_by: string | null
+          estatus: string
+          fecha: string
+          id: string
+          integrantes: string | null
+          observaciones_generales: string | null
+          tipo: string | null
+          updated_at: string
+        }
+        Insert: {
+          area: string
+          created_at?: string
+          created_by?: string | null
+          estatus?: string
+          fecha: string
+          id?: string
+          integrantes?: string | null
+          observaciones_generales?: string | null
+          tipo?: string | null
+          updated_at?: string
+        }
+        Update: {
+          area?: string
+          created_at?: string
+          created_by?: string | null
+          estatus?: string
+          fecha?: string
+          id?: string
+          integrantes?: string | null
+          observaciones_generales?: string | null
+          tipo?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       user_roles: {
         Row: {
           created_at: string
@@ -137,6 +364,89 @@ export type Database = {
           id?: string
           role?: Database["public"]["Enums"]["app_role"]
           user_id?: string
+        }
+        Relationships: []
+      }
+      verificacion_items: {
+        Row: {
+          created_at: string
+          cumple: string
+          descripcion: string
+          evidencia_url: string | null
+          id: string
+          numero: number | null
+          observaciones: string | null
+          verificacion_id: string
+        }
+        Insert: {
+          created_at?: string
+          cumple?: string
+          descripcion: string
+          evidencia_url?: string | null
+          id?: string
+          numero?: number | null
+          observaciones?: string | null
+          verificacion_id: string
+        }
+        Update: {
+          created_at?: string
+          cumple?: string
+          descripcion?: string
+          evidencia_url?: string | null
+          id?: string
+          numero?: number | null
+          observaciones?: string | null
+          verificacion_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "verificacion_items_verificacion_id_fkey"
+            columns: ["verificacion_id"]
+            isOneToOne: false
+            referencedRelation: "verificaciones"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      verificaciones: {
+        Row: {
+          area: string | null
+          created_at: string
+          created_by: string | null
+          estatus: string
+          fecha: string
+          id: string
+          norma: string
+          porcentaje_cumplimiento: number | null
+          responsable: string | null
+          titulo: string
+          updated_at: string
+        }
+        Insert: {
+          area?: string | null
+          created_at?: string
+          created_by?: string | null
+          estatus?: string
+          fecha: string
+          id?: string
+          norma: string
+          porcentaje_cumplimiento?: number | null
+          responsable?: string | null
+          titulo: string
+          updated_at?: string
+        }
+        Update: {
+          area?: string | null
+          created_at?: string
+          created_by?: string | null
+          estatus?: string
+          fecha?: string
+          id?: string
+          norma?: string
+          porcentaje_cumplimiento?: number | null
+          responsable?: string | null
+          titulo?: string
+          updated_at?: string
         }
         Relationships: []
       }
