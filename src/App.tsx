@@ -13,6 +13,11 @@ import Minutas from "./pages/Minutas";
 import Accidentes from "./pages/Accidentes";
 import Configuracion from "./pages/Configuracion";
 import Usuarios from "./pages/Usuarios";
+import Comite from "./pages/Comite";
+import Acta from "./pages/Acta";
+import Programa from "./pages/Programa";
+import Recorridos from "./pages/Recorridos";
+import Verificaciones from "./pages/Verificaciones";
 import Placeholder from "./pages/Placeholder";
 import NotFound from "./pages/NotFound";
 
@@ -41,11 +46,11 @@ const App = () => (
                   </ProtectedRoute>
                 }
               />
-              <Route path="/eleccion" element={<Placeholder title="Elección del comité" />} />
-              <Route path="/acta" element={<Placeholder title="Acta de constitución" />} />
-              <Route path="/programa" element={<Placeholder title="Programa anual" />} />
-              <Route path="/recorridos" element={<Placeholder title="Recorridos" />} />
-              <Route path="/verificaciones" element={<Placeholder title="Verificaciones" />} />
+              <Route path="/eleccion" element={<Comite />} />
+              <Route path="/acta" element={<Acta />} />
+              <Route path="/programa" element={<Programa />} />
+              <Route path="/recorridos" element={<Recorridos />} />
+              <Route path="/verificaciones" element={<Verificaciones />} />
               <Route path="/incidentes" element={<Placeholder title="Registro de incidentes" />} />
               <Route path="/acciones" element={<Placeholder title="Acciones correctivas" />} />
               <Route path="/informes" element={<Placeholder title="Informes" />} />
