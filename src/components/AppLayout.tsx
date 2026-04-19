@@ -1,12 +1,26 @@
 import { Outlet } from "react-router-dom";
-import { Bell, Plus, Search } from "lucide-react";
+import { Bell, LogOut, Plus, Search } from "lucide-react";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "./AppSidebar";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Badge } from "@/components/ui/badge";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { ROLE_BADGE_COLORS, ROLE_LABELS, useAuth } from "@/contexts/AuthContext";
 
 export default function AppLayout() {
+  const { profile, role, signOut } = useAuth();
+  const displayName = profile?.full_name || profile?.email?.split("@")[0] || "Usuario";
+  const initials = displayName.split(" ").map((p) => p[0]).join("").slice(0, 2).toUpperCase();
+
   return (
     <SidebarProvider>
       <div className="flex min-h-screen w-full bg-mesh bg-background">
@@ -27,17 +41,32 @@ export default function AppLayout() {
                 <span className="absolute right-2 top-2 h-2 w-2 rounded-full bg-destructive ring-2 ring-background" />
               </Button>
               <div className="hidden h-8 w-px bg-border md:block" />
-              <div className="flex items-center gap-3 rounded-xl px-2 py-1.5 transition-smooth hover:bg-secondary">
-                <Avatar className="h-9 w-9 ring-2 ring-primary/20">
-                  <AvatarFallback className="bg-gradient-primary text-xs font-semibold text-primary-foreground">
-                    JP
-                  </AvatarFallback>
-                </Avatar>
-                <div className="hidden text-left md:block">
-                  <p className="text-sm font-semibold leading-tight">Juan Pérez</p>
-                  <p className="text-[11px] text-muted-foreground">Coordinador CSH</p>
-                </div>
-              </div>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <button className="flex items-center gap-3 rounded-xl px-2 py-1.5 transition-smooth hover:bg-secondary">
+                    <Avatar className="h-9 w-9 ring-2 ring-primary/20">
+                      <AvatarFallback className="bg-gradient-primary text-xs font-semibold text-primary-foreground">
+                        {initials}
+                      </AvatarFallback>
+                    </Avatar>
+                    <div className="hidden text-left md:block">
+                      <p className="text-sm font-semibold leading-tight">{displayName}</p>
+                      <p className="text-[11px] text-muted-foreground">{role ? ROLE_LABELS[role] : "—"}</p>
+                    </div>
+                  </button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-60 rounded-xl">
+                  <DropdownMenuLabel className="flex flex-col gap-1">
+                    <span className="text-sm font-semibold">{displayName}</span>
+                    <span className="text-[11px] font-normal text-muted-foreground">{profile?.email}</span>
+                    {role && <Badge className={`${ROLE_BADGE_COLORS[role]} mt-1 w-fit`}>{ROLE_LABELS[role]}</Badge>}
+                  </DropdownMenuLabel>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem onClick={signOut} className="cursor-pointer text-destructive focus:text-destructive">
+                    <LogOut className="mr-2 h-4 w-4" /> Cerrar sesión
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
             </div>
           </header>
 
