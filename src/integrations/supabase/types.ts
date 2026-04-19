@@ -14,6 +14,63 @@ export type Database = {
   }
   public: {
     Tables: {
+      acciones_correctivas: {
+        Row: {
+          avance: number
+          created_at: string
+          created_by: string | null
+          descripcion: string | null
+          estatus: string
+          evidencia_url: string | null
+          fecha_cierre: string | null
+          fecha_compromiso: string | null
+          fecha_deteccion: string
+          id: string
+          origen: string | null
+          origen_id: string | null
+          prioridad: string
+          responsable: string | null
+          titulo: string
+          updated_at: string
+        }
+        Insert: {
+          avance?: number
+          created_at?: string
+          created_by?: string | null
+          descripcion?: string | null
+          estatus?: string
+          evidencia_url?: string | null
+          fecha_cierre?: string | null
+          fecha_compromiso?: string | null
+          fecha_deteccion?: string
+          id?: string
+          origen?: string | null
+          origen_id?: string | null
+          prioridad?: string
+          responsable?: string | null
+          titulo: string
+          updated_at?: string
+        }
+        Update: {
+          avance?: number
+          created_at?: string
+          created_by?: string | null
+          descripcion?: string | null
+          estatus?: string
+          evidencia_url?: string | null
+          fecha_cierre?: string | null
+          fecha_compromiso?: string | null
+          fecha_deteccion?: string
+          id?: string
+          origen?: string | null
+          origen_id?: string | null
+          prioridad?: string
+          responsable?: string | null
+          titulo?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       acta_constitucion: {
         Row: {
           created_at: string
@@ -179,6 +236,129 @@ export type Database = {
           telefono?: string | null
           updated_at?: string
           vigencia_anios?: number | null
+        }
+        Relationships: []
+      }
+      incidentes: {
+        Row: {
+          area: string
+          causas: string | null
+          consecuencias: string | null
+          costo_estimado: number | null
+          created_at: string
+          created_by: string | null
+          descripcion: string
+          dias_incapacidad: number | null
+          edad: number | null
+          estatus: string
+          fecha: string
+          gravedad: string
+          hora: string | null
+          id: string
+          lugar: string | null
+          persona_afectada: string | null
+          puesto: string | null
+          reportado_por: string | null
+          tipo: string
+          updated_at: string
+        }
+        Insert: {
+          area: string
+          causas?: string | null
+          consecuencias?: string | null
+          costo_estimado?: number | null
+          created_at?: string
+          created_by?: string | null
+          descripcion: string
+          dias_incapacidad?: number | null
+          edad?: number | null
+          estatus?: string
+          fecha: string
+          gravedad?: string
+          hora?: string | null
+          id?: string
+          lugar?: string | null
+          persona_afectada?: string | null
+          puesto?: string | null
+          reportado_por?: string | null
+          tipo?: string
+          updated_at?: string
+        }
+        Update: {
+          area?: string
+          causas?: string | null
+          consecuencias?: string | null
+          costo_estimado?: number | null
+          created_at?: string
+          created_by?: string | null
+          descripcion?: string
+          dias_incapacidad?: number | null
+          edad?: number | null
+          estatus?: string
+          fecha?: string
+          gravedad?: string
+          hora?: string | null
+          id?: string
+          lugar?: string | null
+          persona_afectada?: string | null
+          puesto?: string | null
+          reportado_por?: string | null
+          tipo?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      informes: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          cumplimiento_promedio: number | null
+          estatus: string
+          id: string
+          periodo_fin: string
+          periodo_inicio: string
+          resumen: string | null
+          tipo: string
+          titulo: string
+          total_acciones: number | null
+          total_hallazgos: number | null
+          total_incidentes: number | null
+          total_recorridos: number | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          cumplimiento_promedio?: number | null
+          estatus?: string
+          id?: string
+          periodo_fin: string
+          periodo_inicio: string
+          resumen?: string | null
+          tipo?: string
+          titulo: string
+          total_acciones?: number | null
+          total_hallazgos?: number | null
+          total_incidentes?: number | null
+          total_recorridos?: number | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          cumplimiento_promedio?: number | null
+          estatus?: string
+          id?: string
+          periodo_fin?: string
+          periodo_inicio?: string
+          resumen?: string | null
+          tipo?: string
+          titulo?: string
+          total_acciones?: number | null
+          total_hallazgos?: number | null
+          total_incidentes?: number | null
+          total_recorridos?: number | null
+          updated_at?: string
         }
         Relationships: []
       }

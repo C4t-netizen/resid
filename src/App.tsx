@@ -18,6 +18,9 @@ import Acta from "./pages/Acta";
 import Programa from "./pages/Programa";
 import Recorridos from "./pages/Recorridos";
 import Verificaciones from "./pages/Verificaciones";
+import Incidentes from "./pages/Incidentes";
+import Acciones from "./pages/Acciones";
+import Informes from "./pages/Informes";
 import Placeholder from "./pages/Placeholder";
 import NotFound from "./pages/NotFound";
 
@@ -51,9 +54,9 @@ const App = () => (
               <Route path="/programa" element={<Programa />} />
               <Route path="/recorridos" element={<Recorridos />} />
               <Route path="/verificaciones" element={<Verificaciones />} />
-              <Route path="/incidentes" element={<Placeholder title="Registro de incidentes" />} />
-              <Route path="/acciones" element={<Placeholder title="Acciones correctivas" />} />
-              <Route path="/informes" element={<Placeholder title="Informes" />} />
+              <Route path="/incidentes" element={<Incidentes />} />
+              <Route path="/acciones" element={<Acciones />} />
+              <Route path="/informes" element={<Informes />} />
               <Route path="/guias" element={<Placeholder title="Guías / Formatos" />} />
             </Route>
             <Route path="*" element={<NotFound />} />
