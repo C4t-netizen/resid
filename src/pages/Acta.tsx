@@ -49,7 +49,7 @@ export default function Acta() {
     (async () => {
       const { data } = await supabase.from("acta_constitucion").select("*").order("created_at", { ascending: false }).limit(1).maybeSingle();
       if (data) setForm({
-        ...empty, ...data,
+        ...empty, ...(data as any),
         fecha_acta: data.fecha_acta ?? "", hora: data.hora ?? "",
         vigencia_inicio: data.vigencia_inicio ?? "", vigencia_fin: data.vigencia_fin ?? "",
       });
