@@ -5,9 +5,11 @@ import {
   Image as ImageIcon,
   MoreHorizontal,
   Paperclip,
+  Pencil,
   Plus,
   Send,
   Settings2,
+  Trash2,
   X,
   XCircle,
 } from "lucide-react";
@@ -26,11 +28,54 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import {
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { toast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 
 type Status = "Cumplido" | "Pendiente" | "No cumplido";
 
-const acuerdos: { id: number; actividad: string; responsable: string; iniciales: string; fecha: string; estado: Status; cumplimiento: string }[] = [
+type Acuerdo = {
+  id: number;
+  actividad: string;
+  responsable: string;
+  iniciales: string;
+  fecha: string;
+  estado: Status;
+  cumplimiento: string;
+};
+
+const initialAcuerdos: Acuerdo[] = [
   { id: 1, actividad: "Constitución de la Comisión", responsable: "Juan Pérez", iniciales: "JP", fecha: "16 marzo, 2026", estado: "Cumplido", cumplimiento: "16 marzo, 2026" },
   { id: 2, actividad: "Acta constitutiva firmada y entregada", responsable: "Juan Pérez", iniciales: "JP", fecha: "17 marzo, 2026", estado: "Cumplido", cumplimiento: "17 marzo, 2026" },
   { id: 3, actividad: "Inspeccionar áreas de trabajo", responsable: "Antonio T.", iniciales: "AT", fecha: "18 marzo, 2026", estado: "Cumplido", cumplimiento: "18 marzo, 2026" },
@@ -53,12 +98,44 @@ const statusIcons: Record<Status, typeof CheckCircle2> = {
   "No cumplido": XCircle,
 };
 
+const getIniciales = (nombre: string) =>
+  nombre
+    .split(" ")
+    .map((n) => n[0])
+    .filter(Boolean)
+    .slice(0, 2)
+    .join("")
+    .toUpperCase() || "??";
+
 export default function Minutas() {
+  const [acuerdos, setAcuerdos] = useState<Acuerdo[]>(initialAcuerdos);
   const [selected, setSelected] = useState<number | null>(6);
+  const [editing, setEditing] = useState<Acuerdo | null>(null);
+  const [deletingId, setDeletingId] = useState<number | null>(null);
+
   const cumplidos = acuerdos.filter((a) => a.estado === "Cumplido").length;
   const pendientes = acuerdos.filter((a) => a.estado !== "Cumplido").length;
-  const progreso = Math.round((cumplidos / acuerdos.length) * 100);
+  const progreso = acuerdos.length ? Math.round((cumplidos / acuerdos.length) * 100) : 0;
   const detail = acuerdos.find((a) => a.id === selected);
+
+  const handleSaveEdit = () => {
+    if (!editing) return;
+    setAcuerdos((prev) =>
+      prev.map((a) =>
+        a.id === editing.id ? { ...editing, iniciales: getIniciales(editing.responsable) } : a
+      )
+    );
+    toast({ title: "Acuerdo actualizado", description: `“${editing.actividad}” se guardó correctamente.` });
+    setEditing(null);
+  };
+
+  const handleConfirmDelete = () => {
+    if (deletingId == null) return;
+    setAcuerdos((prev) => prev.filter((a) => a.id !== deletingId));
+    if (selected === deletingId) setSelected(null);
+    toast({ title: "Acuerdo eliminado", description: "El acuerdo se eliminó de la minuta." });
+    setDeletingId(null);
+  };
 
   return (
     <>
@@ -168,10 +245,26 @@ export default function Minutas() {
                         </Badge>
                       </TableCell>
                       <TableCell className="text-sm text-muted-foreground">{a.cumplimiento}</TableCell>
-                      <TableCell>
-                        <Button variant="ghost" size="icon" className="h-8 w-8 rounded-lg">
-                          <MoreHorizontal className="h-4 w-4" />
-                        </Button>
+                      <TableCell onClick={(e) => e.stopPropagation()}>
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button variant="ghost" size="icon" className="h-8 w-8 rounded-lg">
+                              <MoreHorizontal className="h-4 w-4" />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end" className="w-40">
+                            <DropdownMenuItem onClick={() => setEditing(a)}>
+                              <Pencil className="mr-2 h-4 w-4" /> Editar
+                            </DropdownMenuItem>
+                            <DropdownMenuSeparator />
+                            <DropdownMenuItem
+                              className="text-destructive focus:text-destructive"
+                              onClick={() => setDeletingId(a.id)}
+                            >
+                              <Trash2 className="mr-2 h-4 w-4" /> Eliminar
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
                       </TableCell>
                     </TableRow>
                   );
@@ -179,7 +272,9 @@ export default function Minutas() {
               </TableBody>
             </Table>
             <div className="flex items-center justify-between border-t border-border/40 px-5 py-3">
-              <p className="text-xs text-muted-foreground">Mostrando 8 de 8 acuerdos</p>
+              <p className="text-xs text-muted-foreground">
+                Mostrando {acuerdos.length} de {acuerdos.length} acuerdos
+              </p>
               <div className="flex items-center gap-1">
                 <Button variant="outline" size="sm" className="h-8 w-8 rounded-lg p-0">‹</Button>
                 <Button size="sm" className="h-8 w-8 rounded-lg bg-gradient-primary p-0">1</Button>
@@ -253,6 +348,96 @@ export default function Minutas() {
           )}
         </div>
       </div>
+
+      {/* Editar acuerdo */}
+      <Dialog open={!!editing} onOpenChange={(open) => !open && setEditing(null)}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Editar acuerdo</DialogTitle>
+          </DialogHeader>
+          {editing && (
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="actividad">Actividad / Acuerdo</Label>
+                <Input
+                  id="actividad"
+                  value={editing.actividad}
+                  onChange={(e) => setEditing({ ...editing, actividad: e.target.value })}
+                />
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-2">
+                  <Label htmlFor="responsable">Responsable</Label>
+                  <Input
+                    id="responsable"
+                    value={editing.responsable}
+                    onChange={(e) => setEditing({ ...editing, responsable: e.target.value })}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="fecha">Fecha compromiso</Label>
+                  <Input
+                    id="fecha"
+                    value={editing.fecha}
+                    onChange={(e) => setEditing({ ...editing, fecha: e.target.value })}
+                  />
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-2">
+                  <Label>Estado</Label>
+                  <Select
+                    value={editing.estado}
+                    onValueChange={(v: Status) => setEditing({ ...editing, estado: v })}
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="Cumplido">Cumplido</SelectItem>
+                      <SelectItem value="Pendiente">Pendiente</SelectItem>
+                      <SelectItem value="No cumplido">No cumplido</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="cumplimiento">Cumplimiento</Label>
+                  <Input
+                    id="cumplimiento"
+                    value={editing.cumplimiento}
+                    onChange={(e) => setEditing({ ...editing, cumplimiento: e.target.value })}
+                  />
+                </div>
+              </div>
+            </div>
+          )}
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setEditing(null)}>Cancelar</Button>
+            <Button className="bg-gradient-primary" onClick={handleSaveEdit}>Guardar cambios</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Eliminar acuerdo */}
+      <AlertDialog open={deletingId != null} onOpenChange={(open) => !open && setDeletingId(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>¿Eliminar este acuerdo?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Esta acción no se puede deshacer. El acuerdo será removido de la minuta.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleConfirmDelete}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              Eliminar
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </>
   );
 }
