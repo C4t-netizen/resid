@@ -1,7 +1,8 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { z } from "zod";
-import { ShieldCheck, Loader2 } from "lucide-react";
+import { Loader2 } from "lucide-react";
+import sgiLogo from "@/assets/sgi-logo.png";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
@@ -89,9 +90,7 @@ export default function Auth() {
     <div className="flex min-h-screen items-center justify-center bg-mesh bg-background p-4">
       <div className="w-full max-w-md space-y-6">
         <div className="flex flex-col items-center text-center">
-          <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-primary shadow-glow">
-            <ShieldCheck className="h-7 w-7 text-primary-foreground" />
-          </div>
+          <img src={sgiLogo} alt="Logo SGI - Sistema de Gestión Integrado" className="h-28 w-28 object-contain drop-shadow-lg" />
           <h1 className="mt-4 font-display text-2xl font-bold">Gestión NOM-019</h1>
           <p className="text-sm text-muted-foreground">STPS · Comisión de Seguridad e Higiene</p>
         </div>
