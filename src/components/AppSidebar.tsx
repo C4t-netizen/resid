@@ -6,7 +6,7 @@ import {
   CalendarCheck,
   ClipboardList,
   Search,
-  ShieldCheck,
+  ShieldCheck as _ShieldCheck,
   AlertTriangle,
   HeartPulse,
   BarChart3,
