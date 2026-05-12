@@ -29,6 +29,7 @@ import {
   useSidebar,
 } from "@/components/ui/sidebar";
 import { useAuth } from "@/contexts/AuthContext";
+import sgiLogo from "@/assets/sgi-logo.png";
 
 const mainItems = [
   { title: "Índice", url: "/", icon: LayoutGrid },
@@ -98,8 +99,8 @@ export function AppSidebar() {
     <Sidebar collapsible="icon" className="border-r border-sidebar-border">
       <SidebarHeader className="border-b border-sidebar-border px-4 py-5">
         <div className="flex items-center gap-3">
-          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-gradient-primary shadow-glow">
-            <ShieldCheck className="h-5 w-5 text-primary-foreground" />
+          <div className="flex h-11 w-11 shrink-0 items-center justify-center">
+            <img src={sgiLogo} alt="SGI" className="h-11 w-11 object-contain" />
           </div>
           {!collapsed && (
             <div className="min-w-0">
