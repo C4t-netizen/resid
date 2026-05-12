@@ -16,18 +16,19 @@
     --popover: 0 0% 100%;
     --popover-foreground: 345 50% 12%;
 
-    /* Guinda corporativo */
-    --primary: 345 75% 28%;
+    /* Guinda corporativo #6B1331 */
+    --primary: 345 70% 25%;
     --primary-foreground: 0 0% 100%;
-    --primary-glow: 345 80% 45%;
+    --primary-glow: 345 75% 38%;
 
-    --secondary: 345 30% 96%;
-    --secondary-foreground: 345 75% 28%;
+    --secondary: 345 25% 96%;
+    --secondary-foreground: 345 70% 25%;
 
-    --muted: 345 20% 95%;
-    --muted-foreground: 345 10% 40%;
+    --muted: 0 0% 95%;
+    --muted-foreground: 0 0% 40%;
 
-    --accent: 345 70% 40%;
+    /* Azul marino #1B396A */
+    --accent: 214 59% 26%;
     --accent-foreground: 0 0% 100%;
 
     --destructive: 0 78% 50%;
@@ -39,15 +40,15 @@
     --warning: 32 95% 55%;
     --warning-foreground: 0 0% 100%;
 
-    --border: 345 20% 90%;
-    --input: 345 20% 90%;
-    --ring: 345 75% 28%;
+    --border: 0 0% 88%;
+    --input: 0 0% 88%;
+    --ring: 345 70% 25%;
 
     --radius: 0.875rem;
 
     /* Gradientes */
-    --gradient-primary: linear-gradient(135deg, hsl(345 75% 28%), hsl(345 80% 42%));
-    --gradient-header: linear-gradient(180deg, hsl(345 75% 28%), hsl(345 70% 20%));
+    --gradient-primary: linear-gradient(135deg, hsl(345 70% 25%), hsl(345 75% 38%));
+    --gradient-header: linear-gradient(180deg, hsl(345 70% 25%), hsl(214 59% 26%));
     --gradient-success: linear-gradient(135deg, hsl(152 60% 38%), hsl(165 70% 42%));
     --gradient-warning: linear-gradient(135deg, hsl(32 95% 55%), hsl(20 90% 55%));
     --gradient-card: linear-gradient(180deg, hsl(0 0% 100%), hsl(345 20% 98%));
