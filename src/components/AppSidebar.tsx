@@ -38,8 +38,8 @@ const mainItems = [
 
 const operationItems = [
   { title: "Configuración", url: "/configuracion", icon: Settings },
-  { title: "Elección comité", url: "/eleccion", icon: Users },
-  { title: "Acta constitución", url: "/acta", icon: FileSignature },
+  { title: "Comisión", url: "/eleccion", icon: Users },
+  { title: "Acta constitutiva", url: "/acta", icon: FileSignature },
   { title: "Programa anual", url: "/programa", icon: CalendarCheck },
   { title: "Minutas", url: "/minutas", icon: ClipboardList },
   { title: "Recorridos", url: "/recorridos", icon: Search },
