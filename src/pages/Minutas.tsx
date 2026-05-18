@@ -107,8 +107,30 @@ const getIniciales = (nombre: string) =>
     .join("")
     .toUpperCase() || "??";
 
+interface MinutaInfo {
+  titulo: string;
+  coordinador: string;
+  iniciales: string;
+  fecha: string;
+  estado: string;
+  anio: string;
+}
+
+const initialMinuta: MinutaInfo = {
+  titulo: "FT-Minuta 10457",
+  coordinador: "Antonio T.",
+  iniciales: "AT",
+  fecha: "15 marzo, 2026",
+  estado: "En proceso",
+  anio: "2026",
+};
+
+const AÑOS_DISPONIBLES = ["2024", "2025", "2026", "2027", "2028"];
+
 export default function Minutas() {
   const [acuerdos, setAcuerdos] = useState<Acuerdo[]>(initialAcuerdos);
+  const [minuta, setMinuta] = useState<MinutaInfo>(initialMinuta);
+  const [editingMinuta, setEditingMinuta] = useState<MinutaInfo | null>(null);
   const [selected, setSelected] = useState<number | null>(6);
   const [editing, setEditing] = useState<Acuerdo | null>(null);
   const [deletingId, setDeletingId] = useState<number | null>(null);
@@ -129,6 +151,13 @@ export default function Minutas() {
     setEditing(null);
   };
 
+  const handleSaveMinuta = () => {
+    if (!editingMinuta) return;
+    setMinuta({ ...editingMinuta, iniciales: getIniciales(editingMinuta.coordinador) });
+    toast({ title: "Minuta actualizada", description: "Los datos de la minuta se guardaron correctamente." });
+    setEditingMinuta(null);
+  };
+
   const handleConfirmDelete = () => {
     if (deletingId == null) return;
     setAcuerdos((prev) => prev.filter((a) => a.id !== deletingId));
@@ -140,12 +169,15 @@ export default function Minutas() {
   return (
     <>
       <PageHeader
-        title="FT-Minuta 10457"
-        subtitle="Seguimiento de acuerdos · Comisión de Seguridad e Higiene"
-        breadcrumbs={[{ label: "Minutas", href: "/minutas" }, { label: "FT-Minuta 10457" }]}
-        badge={<Badge className="bg-warning/10 text-warning border-warning/20">En proceso</Badge>}
+        title={minuta.titulo}
+        subtitle={`Seguimiento de acuerdos · Comisión de Seguridad e Higiene · ${minuta.anio}`}
+        breadcrumbs={[{ label: "Minutas", href: "/minutas" }, { label: minuta.titulo }]}
+        badge={<Badge className="bg-warning/10 text-warning border-warning/20">{minuta.estado}</Badge>}
         actions={
           <>
+            <Button variant="outline" className="rounded-xl" onClick={() => setEditingMinuta(minuta)}>
+              <Pencil className="mr-2 h-4 w-4" /> Editar minuta
+            </Button>
             <Button variant="outline" className="rounded-xl">
               <Settings2 className="mr-2 h-4 w-4" /> Acciones
             </Button>
@@ -186,12 +218,12 @@ export default function Minutas() {
               <div className="mt-2 flex items-center gap-3">
                 <Avatar className="h-10 w-10 ring-2 ring-primary/20">
                   <AvatarFallback className="bg-gradient-primary text-xs font-semibold text-primary-foreground">
-                    AT
+                    {minuta.iniciales}
                   </AvatarFallback>
                 </Avatar>
                 <div>
-                  <p className="text-sm font-semibold leading-tight">Antonio T.</p>
-                  <p className="text-xs text-muted-foreground">15 marzo, 2026</p>
+                  <p className="text-sm font-semibold leading-tight">{minuta.coordinador}</p>
+                  <p className="text-xs text-muted-foreground">{minuta.fecha}</p>
                 </div>
               </div>
             </div>
@@ -438,6 +470,76 @@ export default function Minutas() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Editar minuta */}
+      <Dialog open={!!editingMinuta} onOpenChange={(open) => !open && setEditingMinuta(null)}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Editar minuta</DialogTitle>
+          </DialogHeader>
+          {editingMinuta && (
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <Label>Título</Label>
+                <Input
+                  value={editingMinuta.titulo}
+                  onChange={(e) => setEditingMinuta({ ...editingMinuta, titulo: e.target.value })}
+                />
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-2">
+                  <Label>Coordinador</Label>
+                  <Input
+                    value={editingMinuta.coordinador}
+                    onChange={(e) => setEditingMinuta({ ...editingMinuta, coordinador: e.target.value })}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>Año</Label>
+                  <Select
+                    value={editingMinuta.anio}
+                    onValueChange={(v) => setEditingMinuta({ ...editingMinuta, anio: v })}
+                  >
+                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      {AÑOS_DISPONIBLES.map((y) => (
+                        <SelectItem key={y} value={y}>{y}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-2">
+                  <Label>Fecha</Label>
+                  <Input
+                    value={editingMinuta.fecha}
+                    onChange={(e) => setEditingMinuta({ ...editingMinuta, fecha: e.target.value })}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>Estado</Label>
+                  <Select
+                    value={editingMinuta.estado}
+                    onValueChange={(v) => setEditingMinuta({ ...editingMinuta, estado: v })}
+                  >
+                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="En proceso">En proceso</SelectItem>
+                      <SelectItem value="Cerrada">Cerrada</SelectItem>
+                      <SelectItem value="Borrador">Borrador</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+            </div>
+          )}
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setEditingMinuta(null)}>Cancelar</Button>
+            <Button className="bg-gradient-primary" onClick={handleSaveMinuta}>Guardar cambios</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </>
   );
 }

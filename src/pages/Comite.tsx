@@ -73,9 +73,9 @@ export default function Comite() {
   return (
     <>
       <PageHeader
-        title="Elección del comité"
+        title="Comisión"
         subtitle="Integrantes designados para la Comisión de Seguridad e Higiene."
-        breadcrumbs={[{ label: "Operación CSH" }, { label: "Elección comité" }]}
+        breadcrumbs={[{ label: "Operación CSH" }, { label: "Comisión" }]}
         actions={canEdit && (
           <Dialog open={open} onOpenChange={setOpen}>
             <DialogTrigger asChild>
@@ -84,7 +84,7 @@ export default function Comite() {
               </Button>
             </DialogTrigger>
             <DialogContent className="rounded-2xl">
-              <DialogHeader><DialogTitle>Nuevo integrante del comité</DialogTitle></DialogHeader>
+              <DialogHeader><DialogTitle>Nuevo integrante de la comisión</DialogTitle></DialogHeader>
               <div className="grid gap-4 py-2">
                 <div className="space-y-1.5"><Label>Nombre completo</Label>
                   <Input value={form.nombre} onChange={(e) => setForm({...form, nombre: e.target.value})} className="h-11 rounded-xl" /></div>
