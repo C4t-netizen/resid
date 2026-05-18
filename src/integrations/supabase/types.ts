@@ -71,6 +71,33 @@ export type Database = {
         }
         Relationships: []
       }
+      acta_archivos: {
+        Row: {
+          acta_id: string
+          archivo_url: string
+          created_at: string
+          created_by: string | null
+          id: string
+          nombre: string
+        }
+        Insert: {
+          acta_id: string
+          archivo_url: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          nombre: string
+        }
+        Update: {
+          acta_id?: string
+          archivo_url?: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          nombre?: string
+        }
+        Relationships: []
+      }
       acta_constitucion: {
         Row: {
           created_at: string
@@ -404,6 +431,7 @@ export type Database = {
           estatus: string
           fecha_programada: string | null
           fecha_realizada: string | null
+          hora: string | null
           id: string
           mes: number
           observaciones: string | null
@@ -419,6 +447,7 @@ export type Database = {
           estatus?: string
           fecha_programada?: string | null
           fecha_realizada?: string | null
+          hora?: string | null
           id?: string
           mes: number
           observaciones?: string | null
@@ -434,12 +463,40 @@ export type Database = {
           estatus?: string
           fecha_programada?: string | null
           fecha_realizada?: string | null
+          hora?: string | null
           id?: string
           mes?: number
           observaciones?: string | null
           responsable?: string | null
           tipo?: string | null
           updated_at?: string
+        }
+        Relationships: []
+      }
+      programa_archivos: {
+        Row: {
+          anio: number
+          archivo_url: string
+          created_at: string
+          created_by: string | null
+          id: string
+          nombre: string
+        }
+        Insert: {
+          anio: number
+          archivo_url: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          nombre: string
+        }
+        Update: {
+          anio?: number
+          archivo_url?: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          nombre?: string
         }
         Relationships: []
       }
