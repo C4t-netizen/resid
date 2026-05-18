@@ -59,15 +59,24 @@ export default function Acta() {
   const [form, setForm] = useState<Acta>(empty);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [archivos, setArchivos] = useState<ArchivoItem[]>([]);
+
+  const loadArchivos = async (actaId: string) => {
+    const { data } = await supabase.from("acta_archivos").select("*").eq("acta_id", actaId).order("created_at", { ascending: false });
+    setArchivos((data ?? []) as ArchivoItem[]);
+  };
 
   useEffect(() => {
     (async () => {
       const { data } = await supabase.from("acta_constitucion").select("*").order("created_at", { ascending: false }).limit(1).maybeSingle();
-      if (data) setForm({
-        ...empty, ...(data as any),
-        fecha_acta: data.fecha_acta ?? "", hora: data.hora ?? "",
-        vigencia_inicio: data.vigencia_inicio ?? "", vigencia_fin: data.vigencia_fin ?? "",
-      });
+      if (data) {
+        setForm({
+          ...empty, ...(data as any),
+          fecha_acta: data.fecha_acta ?? "", hora: data.hora ?? "",
+          vigencia_inicio: data.vigencia_inicio ?? "", vigencia_fin: data.vigencia_fin ?? "",
+        });
+        await loadArchivos(data.id);
+      }
       setLoading(false);
     })();
   }, []);
@@ -89,8 +98,24 @@ export default function Acta() {
       : await supabase.from("acta_constitucion").insert(payload).select().single();
     setSaving(false);
     if (error) return toast.error(error.message);
-    if (data) setForm((p) => ({ ...p, id: data.id }));
+    if (data) { setForm((p) => ({ ...p, id: data.id })); await loadArchivos(data.id); }
     toast.success("Acta guardada");
+  };
+
+  const handleUpload = async (file: { nombre: string; archivo_url: string }) => {
+    if (!form.id) throw new Error("Guarda el acta primero antes de subir archivos");
+    const { error, data } = await supabase.from("acta_archivos").insert({
+      acta_id: form.id, nombre: file.nombre, archivo_url: file.archivo_url, created_by: user?.id,
+    }).select().single();
+    if (error) throw error;
+    setArchivos((p) => [data as ArchivoItem, ...p]);
+  };
+
+  const handleDelete = async (item: ArchivoItem) => {
+    const { error } = await supabase.from("acta_archivos").delete().eq("id", item.id);
+    if (error) return toast.error(error.message);
+    setArchivos((p) => p.filter((a) => a.id !== item.id));
+    toast.success("Archivo eliminado");
   };
 
   if (loading) return <div className="flex h-96 items-center justify-center"><Loader2 className="h-6 w-6 animate-spin text-primary" /></div>;
@@ -98,9 +123,9 @@ export default function Acta() {
   return (
     <>
       <PageHeader
-        title="Acta de constitución"
+        title="Acta constitutiva"
         subtitle="Documento que formaliza la integración del comité ante la STPS."
-        breadcrumbs={[{ label: "Operación CSH" }, { label: "Acta constitución" }]}
+        breadcrumbs={[{ label: "Operación CSH" }, { label: "Acta constitutiva" }]}
         badge={<Badge className={estatusColor[form.estatus]}>{form.estatus.toUpperCase()}</Badge>}
       />
       <div className="px-4 py-6 md:px-8">
