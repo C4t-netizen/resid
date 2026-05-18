@@ -113,7 +113,7 @@ export default function Acta() {
 
   const handleDelete = async (item: ArchivoItem) => {
     const { error } = await supabase.from("acta_archivos").delete().eq("id", item.id);
-    if (error) return toast.error(error.message);
+    if (error) { toast.error(error.message); return; }
     setArchivos((p) => p.filter((a) => a.id !== item.id));
     toast.success("Archivo eliminado");
   };
