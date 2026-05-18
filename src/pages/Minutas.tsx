@@ -470,6 +470,76 @@ export default function Minutas() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Editar minuta */}
+      <Dialog open={!!editingMinuta} onOpenChange={(open) => !open && setEditingMinuta(null)}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Editar minuta</DialogTitle>
+          </DialogHeader>
+          {editingMinuta && (
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <Label>Título</Label>
+                <Input
+                  value={editingMinuta.titulo}
+                  onChange={(e) => setEditingMinuta({ ...editingMinuta, titulo: e.target.value })}
+                />
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-2">
+                  <Label>Coordinador</Label>
+                  <Input
+                    value={editingMinuta.coordinador}
+                    onChange={(e) => setEditingMinuta({ ...editingMinuta, coordinador: e.target.value })}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>Año</Label>
+                  <Select
+                    value={editingMinuta.anio}
+                    onValueChange={(v) => setEditingMinuta({ ...editingMinuta, anio: v })}
+                  >
+                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      {AÑOS_DISPONIBLES.map((y) => (
+                        <SelectItem key={y} value={y}>{y}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-2">
+                  <Label>Fecha</Label>
+                  <Input
+                    value={editingMinuta.fecha}
+                    onChange={(e) => setEditingMinuta({ ...editingMinuta, fecha: e.target.value })}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>Estado</Label>
+                  <Select
+                    value={editingMinuta.estado}
+                    onValueChange={(v) => setEditingMinuta({ ...editingMinuta, estado: v })}
+                  >
+                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="En proceso">En proceso</SelectItem>
+                      <SelectItem value="Cerrada">Cerrada</SelectItem>
+                      <SelectItem value="Borrador">Borrador</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+            </div>
+          )}
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setEditingMinuta(null)}>Cancelar</Button>
+            <Button className="bg-gradient-primary" onClick={handleSaveMinuta}>Guardar cambios</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </>
   );
 }
