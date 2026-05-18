@@ -218,12 +218,12 @@ export default function Minutas() {
               <div className="mt-2 flex items-center gap-3">
                 <Avatar className="h-10 w-10 ring-2 ring-primary/20">
                   <AvatarFallback className="bg-gradient-primary text-xs font-semibold text-primary-foreground">
-                    AT
+                    {minuta.iniciales}
                   </AvatarFallback>
                 </Avatar>
                 <div>
-                  <p className="text-sm font-semibold leading-tight">Antonio T.</p>
-                  <p className="text-xs text-muted-foreground">15 marzo, 2026</p>
+                  <p className="text-sm font-semibold leading-tight">{minuta.coordinador}</p>
+                  <p className="text-xs text-muted-foreground">{minuta.fecha}</p>
                 </div>
               </div>
             </div>
