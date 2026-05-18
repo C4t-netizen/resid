@@ -8,9 +8,24 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { FileUploader, ArchivoItem } from "@/components/FileUploader";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
+
+interface Acta {
+  id?: string;
+  lugar: string;
+  fecha_acta: string;
+  hora: string;
+  vigencia_inicio: string;
+  vigencia_fin: string;
+  observaciones: string;
+  patron_firma: string;
+  representante_trabajadores_firma: string;
+  testigo_stps: string;
+  estatus: "borrador" | "firmada" | "vigente" | "vencida";
+}
 
 interface Acta {
   id?: string;
