@@ -107,8 +107,30 @@ const getIniciales = (nombre: string) =>
     .join("")
     .toUpperCase() || "??";
 
+interface MinutaInfo {
+  titulo: string;
+  coordinador: string;
+  iniciales: string;
+  fecha: string;
+  estado: string;
+  anio: string;
+}
+
+const initialMinuta: MinutaInfo = {
+  titulo: "FT-Minuta 10457",
+  coordinador: "Antonio T.",
+  iniciales: "AT",
+  fecha: "15 marzo, 2026",
+  estado: "En proceso",
+  anio: "2026",
+};
+
+const AÑOS_DISPONIBLES = ["2024", "2025", "2026", "2027", "2028"];
+
 export default function Minutas() {
   const [acuerdos, setAcuerdos] = useState<Acuerdo[]>(initialAcuerdos);
+  const [minuta, setMinuta] = useState<MinutaInfo>(initialMinuta);
+  const [editingMinuta, setEditingMinuta] = useState<MinutaInfo | null>(null);
   const [selected, setSelected] = useState<number | null>(6);
   const [editing, setEditing] = useState<Acuerdo | null>(null);
   const [deletingId, setDeletingId] = useState<number | null>(null);
@@ -129,6 +151,13 @@ export default function Minutas() {
     setEditing(null);
   };
 
+  const handleSaveMinuta = () => {
+    if (!editingMinuta) return;
+    setMinuta({ ...editingMinuta, iniciales: getIniciales(editingMinuta.coordinador) });
+    toast({ title: "Minuta actualizada", description: "Los datos de la minuta se guardaron correctamente." });
+    setEditingMinuta(null);
+  };
+
   const handleConfirmDelete = () => {
     if (deletingId == null) return;
     setAcuerdos((prev) => prev.filter((a) => a.id !== deletingId));
@@ -140,12 +169,15 @@ export default function Minutas() {
   return (
     <>
       <PageHeader
-        title="FT-Minuta 10457"
-        subtitle="Seguimiento de acuerdos · Comisión de Seguridad e Higiene"
-        breadcrumbs={[{ label: "Minutas", href: "/minutas" }, { label: "FT-Minuta 10457" }]}
-        badge={<Badge className="bg-warning/10 text-warning border-warning/20">En proceso</Badge>}
+        title={minuta.titulo}
+        subtitle={`Seguimiento de acuerdos · Comisión de Seguridad e Higiene · ${minuta.anio}`}
+        breadcrumbs={[{ label: "Minutas", href: "/minutas" }, { label: minuta.titulo }]}
+        badge={<Badge className="bg-warning/10 text-warning border-warning/20">{minuta.estado}</Badge>}
         actions={
           <>
+            <Button variant="outline" className="rounded-xl" onClick={() => setEditingMinuta(minuta)}>
+              <Pencil className="mr-2 h-4 w-4" /> Editar minuta
+            </Button>
             <Button variant="outline" className="rounded-xl">
               <Settings2 className="mr-2 h-4 w-4" /> Acciones
             </Button>
