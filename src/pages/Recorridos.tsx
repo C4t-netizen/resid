@@ -16,6 +16,10 @@ import { toast } from "sonner";
 interface Recorrido {
   id: string;
   fecha: string;
+  fecha_inicio: string | null;
+  fecha_fin: string | null;
+  hora_inicio: string | null;
+  hora_fin: string | null;
   area: string;
   tipo: string;
   integrantes: string | null;
