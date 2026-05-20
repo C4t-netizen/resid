@@ -255,7 +255,11 @@ export default function Recorridos() {
                     </div>
                     <div className="min-w-0 flex-1">
                       <p className="font-display text-sm font-bold">{r.area}</p>
-                      <p className="text-xs text-muted-foreground">{r.fecha} · {r.tipo}</p>
+                      <p className="text-xs text-muted-foreground">
+                        {r.fecha_inicio ?? r.fecha}{r.hora_inicio ? ` ${r.hora_inicio.slice(0,5)}` : ""}
+                        {r.fecha_fin ? ` → ${r.fecha_fin}${r.hora_fin ? ` ${r.hora_fin.slice(0,5)}` : ""}` : ""}
+                        {" · "}{r.tipo}
+                      </p>
                     </div>
                     <Badge className={r.estatus === "cerrado" ? "bg-success/10 text-success border-success/20" : "bg-warning/10 text-warning border-warning/20"}>
                       {r.estatus}
