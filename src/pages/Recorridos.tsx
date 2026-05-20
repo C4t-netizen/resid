@@ -70,11 +70,18 @@ export default function Recorridos() {
 
   const create = async () => {
     if (!form.area.trim()) { toast.error("Área requerida"); return; }
-    const { error, data } = await supabase.from("recorridos").insert({ ...form, created_by: user?.id }).select().single();
+    const payload = {
+      ...form,
+      fecha_fin: form.fecha_fin || null,
+      hora_inicio: form.hora_inicio || null,
+      hora_fin: form.hora_fin || null,
+      created_by: user?.id,
+    };
+    const { error, data } = await supabase.from("recorridos").insert(payload).select().single();
     if (error) return toast.error(error.message);
     toast.success("Recorrido creado");
     setOpen(false);
-    setForm({ fecha: new Date().toISOString().slice(0,10), area: "", tipo: "ordinario", integrantes: "" });
+    setForm({ fecha: new Date().toISOString().slice(0,10), fecha_inicio: new Date().toISOString().slice(0,10), fecha_fin: "", hora_inicio: "", hora_fin: "", area: "", tipo: "ordinario", integrantes: "" });
     load();
     if (data) openDetail(data as Recorrido);
   };
