@@ -1,18 +1,33 @@
-import { useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import {
+  BarChart3,
   CheckCircle2,
   Clock,
+  Download,
+  FileText,
   Image as ImageIcon,
   MoreHorizontal,
   Paperclip,
   Pencil,
   Plus,
   Send,
-  Settings2,
   Trash2,
   X,
   XCircle,
 } from "lucide-react";
+import {
+  Bar,
+  BarChart,
+  CartesianGrid,
+  Cell,
+  Legend,
+  Pie,
+  PieChart,
+  ResponsiveContainer,
+  Tooltip,
+  XAxis,
+  YAxis,
+} from "recharts";
 import { PageHeader } from "@/components/PageHeader";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -62,6 +77,8 @@ import {
 } from "@/components/ui/select";
 import { toast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
+import jsPDF from "jspdf";
+import autoTable from "jspdf-autotable";
 
 type Status = "Cumplido" | "Pendiente" | "No cumplido";
 
@@ -74,6 +91,16 @@ type Acuerdo = {
   estado: Status;
   cumplimiento: string;
 };
+
+interface MinutaInfo {
+  id: number;
+  titulo: string;
+  coordinador: string;
+  iniciales: string;
+  fecha: string;
+  estado: string;
+  anio: string;
+}
 
 const initialAcuerdos: Acuerdo[] = [
   { id: 1, actividad: "Constitución de la Comisión", responsable: "Juan Pérez", iniciales: "JP", fecha: "16 marzo, 2026", estado: "Cumplido", cumplimiento: "16 marzo, 2026" },
@@ -107,64 +134,239 @@ const getIniciales = (nombre: string) =>
     .join("")
     .toUpperCase() || "??";
 
-interface MinutaInfo {
-  titulo: string;
-  coordinador: string;
-  iniciales: string;
-  fecha: string;
-  estado: string;
-  anio: string;
-}
-
-const initialMinuta: MinutaInfo = {
-  titulo: "FT-Minuta 10457",
-  coordinador: "Antonio T.",
-  iniciales: "AT",
-  fecha: "15 marzo, 2026",
-  estado: "En proceso",
-  anio: "2026",
-};
+const initialMinutas: MinutaInfo[] = [
+  { id: 1, titulo: "FT-Minuta 10457", coordinador: "Antonio T.", iniciales: "AT", fecha: "15 marzo, 2026", estado: "En proceso", anio: "2026" },
+];
 
 const AÑOS_DISPONIBLES = ["2024", "2025", "2026", "2027", "2028"];
+const ESTADO_COLORS: Record<Status, string> = {
+  Cumplido: "hsl(var(--success))",
+  Pendiente: "hsl(var(--warning))",
+  "No cumplido": "hsl(var(--destructive))",
+};
 
 export default function Minutas() {
-  const [acuerdos, setAcuerdos] = useState<Acuerdo[]>(initialAcuerdos);
-  const [minuta, setMinuta] = useState<MinutaInfo>(initialMinuta);
+  const [minutas, setMinutas] = useState<MinutaInfo[]>(initialMinutas);
+  const [acuerdosByMinuta, setAcuerdosByMinuta] = useState<Record<number, Acuerdo[]>>({ 1: initialAcuerdos });
+  const [selectedMinutaId, setSelectedMinutaId] = useState<number>(1);
+  const [yearFilter, setYearFilter] = useState<string>("todos");
   const [editingMinuta, setEditingMinuta] = useState<MinutaInfo | null>(null);
+  const [newMinuta, setNewMinuta] = useState<MinutaInfo | null>(null);
   const [selected, setSelected] = useState<number | null>(6);
   const [editing, setEditing] = useState<Acuerdo | null>(null);
   const [deletingId, setDeletingId] = useState<number | null>(null);
+  const [statsOpen, setStatsOpen] = useState(false);
+  const chartRef = useRef<HTMLDivElement | null>(null);
+
+  const minuta = minutas.find((m) => m.id === selectedMinutaId) ?? minutas[0];
+  const acuerdos = minuta ? acuerdosByMinuta[minuta.id] ?? [] : [];
+  const filteredMinutas = yearFilter === "todos" ? minutas : minutas.filter((m) => m.anio === yearFilter);
 
   const cumplidos = acuerdos.filter((a) => a.estado === "Cumplido").length;
-  const pendientes = acuerdos.filter((a) => a.estado !== "Cumplido").length;
+  const pendientesCount = acuerdos.filter((a) => a.estado === "Pendiente").length;
+  const noCumplidos = acuerdos.filter((a) => a.estado === "No cumplido").length;
+  const pendientes = acuerdos.length - cumplidos;
   const progreso = acuerdos.length ? Math.round((cumplidos / acuerdos.length) * 100) : 0;
   const detail = acuerdos.find((a) => a.id === selected);
 
+  const chartData = useMemo(
+    () => [
+      { name: "Cumplido", value: cumplidos, fill: ESTADO_COLORS.Cumplido },
+      { name: "Pendiente", value: pendientesCount, fill: ESTADO_COLORS.Pendiente },
+      { name: "No cumplido", value: noCumplidos, fill: ESTADO_COLORS["No cumplido"] },
+    ],
+    [cumplidos, pendientesCount, noCumplidos]
+  );
+
   const handleSaveEdit = () => {
-    if (!editing) return;
-    setAcuerdos((prev) =>
-      prev.map((a) =>
+    if (!editing || !minuta) return;
+    setAcuerdosByMinuta((prev) => ({
+      ...prev,
+      [minuta.id]: (prev[minuta.id] ?? []).map((a) =>
         a.id === editing.id ? { ...editing, iniciales: getIniciales(editing.responsable) } : a
-      )
-    );
+      ),
+    }));
     toast({ title: "Acuerdo actualizado", description: `“${editing.actividad}” se guardó correctamente.` });
     setEditing(null);
   };
 
   const handleSaveMinuta = () => {
     if (!editingMinuta) return;
-    setMinuta({ ...editingMinuta, iniciales: getIniciales(editingMinuta.coordinador) });
+    setMinutas((prev) =>
+      prev.map((m) => (m.id === editingMinuta.id ? { ...editingMinuta, iniciales: getIniciales(editingMinuta.coordinador) } : m))
+    );
     toast({ title: "Minuta actualizada", description: "Los datos de la minuta se guardaron correctamente." });
     setEditingMinuta(null);
   };
 
+  const handleCreateMinuta = () => {
+    if (!newMinuta) return;
+    if (!newMinuta.titulo.trim() || !newMinuta.coordinador.trim()) {
+      toast({ title: "Datos incompletos", description: "Completa título y coordinador." });
+      return;
+    }
+    const id = Math.max(0, ...minutas.map((m) => m.id)) + 1;
+    const anio = (newMinuta.fecha.match(/(20\d{2})/) || [])[1] ?? new Date().getFullYear().toString();
+    const created: MinutaInfo = { ...newMinuta, id, iniciales: getIniciales(newMinuta.coordinador), anio };
+    setMinutas((prev) => [...prev, created]);
+    setAcuerdosByMinuta((prev) => ({ ...prev, [id]: [] }));
+    setSelectedMinutaId(id);
+    setNewMinuta(null);
+    toast({ title: "Minuta creada", description: `"${created.titulo}" se agregó correctamente.` });
+  };
+
   const handleConfirmDelete = () => {
-    if (deletingId == null) return;
-    setAcuerdos((prev) => prev.filter((a) => a.id !== deletingId));
+    if (deletingId == null || !minuta) return;
+    setAcuerdosByMinuta((prev) => ({
+      ...prev,
+      [minuta.id]: (prev[minuta.id] ?? []).filter((a) => a.id !== deletingId),
+    }));
     if (selected === deletingId) setSelected(null);
     toast({ title: "Acuerdo eliminado", description: "El acuerdo se eliminó de la minuta." });
     setDeletingId(null);
   };
+
+  const downloadPDF = () => {
+    if (!minuta) return;
+    const doc = new jsPDF();
+    const pageW = doc.internal.pageSize.getWidth();
+
+    doc.setFontSize(16);
+    doc.text("Resumen de Minuta", pageW / 2, 18, { align: "center" });
+    doc.setFontSize(11);
+    doc.text(`${minuta.titulo}`, pageW / 2, 26, { align: "center" });
+    doc.setFontSize(9);
+    doc.setTextColor(110);
+    doc.text(`Coordinador: ${minuta.coordinador}  ·  Fecha: ${minuta.fecha}  ·  Año: ${minuta.anio}  ·  Estado: ${minuta.estado}`, pageW / 2, 32, { align: "center" });
+    doc.setTextColor(0);
+
+    // Resumen
+    doc.setFontSize(11);
+    doc.text("Resumen de cumplimiento", 14, 44);
+    autoTable(doc, {
+      startY: 48,
+      head: [["Total", "Cumplidos", "Pendientes", "No cumplidos", "% Avance"]],
+      body: [[acuerdos.length, cumplidos, pendientesCount, noCumplidos, `${progreso}%`]],
+      headStyles: { fillColor: [101, 22, 47] },
+      theme: "grid",
+    });
+
+    // Gráfico de barras dibujado manualmente
+    let y = (doc as any).lastAutoTable.finalY + 10;
+    doc.setFontSize(11);
+    doc.text("Gráfico de estadísticas", 14, y);
+    y += 4;
+    const barX = 20;
+    const barMaxW = pageW - 60;
+    const maxVal = Math.max(1, cumplidos, pendientesCount, noCumplidos);
+    const colors: [number, number, number][] = [
+      [34, 139, 87],
+      [217, 152, 31],
+      [200, 50, 50],
+    ];
+    const labels = ["Cumplido", "Pendiente", "No cumplido"];
+    const values = [cumplidos, pendientesCount, noCumplidos];
+    values.forEach((v, i) => {
+      const yy = y + 6 + i * 14;
+      doc.setFontSize(9);
+      doc.setTextColor(60);
+      doc.text(labels[i], barX, yy + 5);
+      doc.setFillColor(...colors[i]);
+      const w = (v / maxVal) * barMaxW;
+      doc.rect(barX + 30, yy, w, 7, "F");
+      doc.setTextColor(0);
+      doc.text(String(v), barX + 32 + w, yy + 5);
+    });
+
+    y = y + 6 + values.length * 14 + 6;
+    doc.setFontSize(11);
+    doc.setTextColor(0);
+    doc.text("Acuerdos", 14, y);
+    autoTable(doc, {
+      startY: y + 4,
+      head: [["#", "Actividad", "Responsable", "Fecha", "Estado", "Cumplimiento"]],
+      body: acuerdos.map((a) => [a.id, a.actividad, a.responsable, a.fecha, a.estado, a.cumplimiento]),
+      headStyles: { fillColor: [101, 22, 47] },
+      styles: { fontSize: 9 },
+      theme: "striped",
+    });
+
+    doc.save(`${minuta.titulo.replace(/\s+/g, "_")}_resumen.pdf`);
+    toast({ title: "PDF generado", description: "El resumen se descargó correctamente." });
+  };
+
+  if (!minuta) {
+    return (
+      <>
+        <PageHeader
+          title="Minutas"
+          subtitle="Crea tu primera minuta para comenzar."
+          breadcrumbs={[{ label: "Minutas", href: "/minutas" }]}
+          actions={
+            <Button
+              className="rounded-xl bg-gradient-primary"
+              onClick={() => setNewMinuta({ id: 0, titulo: "", coordinador: "", iniciales: "", fecha: new Date().toLocaleDateString("es-MX", { day: "numeric", month: "long", year: "numeric" }), estado: "En proceso", anio: new Date().getFullYear().toString() })}
+            >
+              <Plus className="mr-2 h-4 w-4" /> Nueva minuta
+            </Button>
+          }
+        />
+        <div className="px-4 py-12 text-center text-sm text-muted-foreground md:px-8">
+          No hay minutas registradas.
+        </div>
+        {renderNewMinutaDialog()}
+      </>
+    );
+  }
+
+  function renderNewMinutaDialog() {
+    return (
+      <Dialog open={!!newMinuta} onOpenChange={(open) => !open && setNewMinuta(null)}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Nueva minuta</DialogTitle>
+          </DialogHeader>
+          {newMinuta && (
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <Label>Título</Label>
+                <Input value={newMinuta.titulo} onChange={(e) => setNewMinuta({ ...newMinuta, titulo: e.target.value })} placeholder="FT-Minuta 10458" />
+              </div>
+              <div className="space-y-2">
+                <Label>Coordinador</Label>
+                <Input value={newMinuta.coordinador} onChange={(e) => setNewMinuta({ ...newMinuta, coordinador: e.target.value })} placeholder="Nombre completo" />
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-2">
+                  <Label>Fecha de inicio</Label>
+                  <Input type="date" onChange={(e) => {
+                    const d = new Date(e.target.value);
+                    const txt = isNaN(d.getTime()) ? e.target.value : d.toLocaleDateString("es-MX", { day: "numeric", month: "long", year: "numeric" });
+                    setNewMinuta({ ...newMinuta, fecha: txt, anio: isNaN(d.getTime()) ? newMinuta.anio : String(d.getFullYear()) });
+                  }} />
+                </div>
+                <div className="space-y-2">
+                  <Label>Estado</Label>
+                  <Select value={newMinuta.estado} onValueChange={(v) => setNewMinuta({ ...newMinuta, estado: v })}>
+                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="Borrador">Borrador</SelectItem>
+                      <SelectItem value="En proceso">En proceso</SelectItem>
+                      <SelectItem value="Cerrada">Cerrada</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+            </div>
+          )}
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setNewMinuta(null)}>Cancelar</Button>
+            <Button className="bg-gradient-primary" onClick={handleCreateMinuta}>Crear minuta</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    );
+  }
 
   return (
     <>
@@ -178,17 +380,64 @@ export default function Minutas() {
             <Button variant="outline" className="rounded-xl" onClick={() => setEditingMinuta(minuta)}>
               <Pencil className="mr-2 h-4 w-4" /> Editar minuta
             </Button>
-            <Button variant="outline" className="rounded-xl">
-              <Settings2 className="mr-2 h-4 w-4" /> Acciones
+            <Button variant="outline" className="rounded-xl" onClick={() => setStatsOpen(true)}>
+              <BarChart3 className="mr-2 h-4 w-4" /> Estadísticas
             </Button>
-            <Button className="rounded-xl bg-gradient-primary shadow-elegant hover:shadow-glow">
-              <Plus className="mr-2 h-4 w-4" /> Nuevo acuerdo
+            <Button variant="outline" className="rounded-xl" onClick={downloadPDF}>
+              <Download className="mr-2 h-4 w-4" /> PDF
+            </Button>
+            <Button
+              className="rounded-xl bg-gradient-primary shadow-elegant hover:shadow-glow"
+              onClick={() => setNewMinuta({ id: 0, titulo: "", coordinador: "", iniciales: "", fecha: new Date().toLocaleDateString("es-MX", { day: "numeric", month: "long", year: "numeric" }), estado: "En proceso", anio: new Date().getFullYear().toString() })}
+            >
+              <Plus className="mr-2 h-4 w-4" /> Nueva minuta
             </Button>
           </>
         }
       />
 
       <div className="space-y-6 px-4 py-6 md:px-8">
+        {/* Filtro de año + lista de minutas */}
+        <Card className="rounded-2xl border-border/50 p-4 shadow-soft">
+          <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+            <div className="flex items-center gap-2">
+              <Label className="text-xs uppercase tracking-wider text-muted-foreground">Filtrar por año</Label>
+              <Select value={yearFilter} onValueChange={setYearFilter}>
+                <SelectTrigger className="h-9 w-32 rounded-xl"><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="todos">Todos</SelectItem>
+                  {AÑOS_DISPONIBLES.map((y) => (
+                    <SelectItem key={y} value={y}>{y}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <p className="text-xs text-muted-foreground">{filteredMinutas.length} minuta(s)</p>
+          </div>
+          {filteredMinutas.length > 0 && (
+            <div className="mt-4 flex flex-wrap gap-2">
+              {filteredMinutas.map((m) => (
+                <button
+                  key={m.id}
+                  onClick={() => setSelectedMinutaId(m.id)}
+                  className={cn(
+                    "flex items-center gap-2 rounded-xl border px-3 py-2 text-left text-sm transition-smooth",
+                    m.id === selectedMinutaId
+                      ? "border-primary bg-primary/5 text-foreground"
+                      : "border-border/50 hover:bg-secondary/50"
+                  )}
+                >
+                  <FileText className="h-4 w-4 text-primary" />
+                  <div>
+                    <p className="font-medium leading-tight">{m.titulo}</p>
+                    <p className="text-[11px] text-muted-foreground">{m.fecha} · {m.anio}</p>
+                  </div>
+                </button>
+              ))}
+            </div>
+          )}
+        </Card>
+
         {/* Resumen */}
         <Card className="rounded-2xl border-border/50 bg-gradient-card p-6 shadow-soft">
           <div className="grid gap-6 md:grid-cols-4">
@@ -231,7 +480,7 @@ export default function Minutas() {
         </Card>
 
         {/* Tabla + Panel */}
-        <div className={cn("grid gap-6", selected ? "lg:grid-cols-[1fr_380px]" : "")}>
+        <div className={cn("grid gap-6", selected && detail ? "lg:grid-cols-[1fr_380px]" : "")}>
           <Card className="overflow-hidden rounded-2xl border-border/50 bg-card shadow-soft">
             <Table>
               <TableHeader>
@@ -246,7 +495,13 @@ export default function Minutas() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {acuerdos.map((a) => {
+                {acuerdos.length === 0 ? (
+                  <TableRow>
+                    <TableCell colSpan={7} className="py-10 text-center text-sm text-muted-foreground">
+                      Sin acuerdos registrados en esta minuta.
+                    </TableCell>
+                  </TableRow>
+                ) : acuerdos.map((a) => {
                   const Icon = statusIcons[a.estado];
                   return (
                     <TableRow
@@ -303,16 +558,6 @@ export default function Minutas() {
                 })}
               </TableBody>
             </Table>
-            <div className="flex items-center justify-between border-t border-border/40 px-5 py-3">
-              <p className="text-xs text-muted-foreground">
-                Mostrando {acuerdos.length} de {acuerdos.length} acuerdos
-              </p>
-              <div className="flex items-center gap-1">
-                <Button variant="outline" size="sm" className="h-8 w-8 rounded-lg p-0">‹</Button>
-                <Button size="sm" className="h-8 w-8 rounded-lg bg-gradient-primary p-0">1</Button>
-                <Button variant="outline" size="sm" className="h-8 w-8 rounded-lg p-0">›</Button>
-              </div>
-            </div>
           </Card>
 
           {detail && (
@@ -335,7 +580,7 @@ export default function Minutas() {
                   </Avatar>
                   <div>
                     <p className="text-sm font-semibold">{detail.responsable}</p>
-                    <p className="text-xs text-muted-foreground">{detail.fecha} · 2:05 PM</p>
+                    <p className="text-xs text-muted-foreground">{detail.fecha}</p>
                   </div>
                 </div>
 
@@ -357,13 +602,6 @@ export default function Minutas() {
                       </div>
                     </div>
                   </div>
-                </div>
-
-                <div>
-                  <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">Comentario</p>
-                  <p className="rounded-xl bg-secondary/40 p-3 text-sm leading-relaxed">
-                    Se colocarán señales de peligro e instrucciones en las zonas peligrosas de la planta antes del próximo recorrido.
-                  </p>
                 </div>
 
                 <div className="relative">
@@ -471,7 +709,7 @@ export default function Minutas() {
         </AlertDialogContent>
       </AlertDialog>
 
-      {/* Editar minuta */}
+      {/* Editar minuta (sin año) */}
       <Dialog open={!!editingMinuta} onOpenChange={(open) => !open && setEditingMinuta(null)}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
@@ -486,28 +724,12 @@ export default function Minutas() {
                   onChange={(e) => setEditingMinuta({ ...editingMinuta, titulo: e.target.value })}
                 />
               </div>
-              <div className="grid grid-cols-2 gap-3">
-                <div className="space-y-2">
-                  <Label>Coordinador</Label>
-                  <Input
-                    value={editingMinuta.coordinador}
-                    onChange={(e) => setEditingMinuta({ ...editingMinuta, coordinador: e.target.value })}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label>Año</Label>
-                  <Select
-                    value={editingMinuta.anio}
-                    onValueChange={(v) => setEditingMinuta({ ...editingMinuta, anio: v })}
-                  >
-                    <SelectTrigger><SelectValue /></SelectTrigger>
-                    <SelectContent>
-                      {AÑOS_DISPONIBLES.map((y) => (
-                        <SelectItem key={y} value={y}>{y}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
+              <div className="space-y-2">
+                <Label>Coordinador</Label>
+                <Input
+                  value={editingMinuta.coordinador}
+                  onChange={(e) => setEditingMinuta({ ...editingMinuta, coordinador: e.target.value })}
+                />
               </div>
               <div className="grid grid-cols-2 gap-3">
                 <div className="space-y-2">
@@ -537,6 +759,58 @@ export default function Minutas() {
           <DialogFooter>
             <Button variant="outline" onClick={() => setEditingMinuta(null)}>Cancelar</Button>
             <Button className="bg-gradient-primary" onClick={handleSaveMinuta}>Guardar cambios</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Nueva minuta */}
+      {renderNewMinutaDialog()}
+
+      {/* Estadísticas */}
+      <Dialog open={statsOpen} onOpenChange={setStatsOpen}>
+        <DialogContent className="sm:max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Estadísticas de la minuta</DialogTitle>
+          </DialogHeader>
+          <div ref={chartRef} className="grid gap-6 py-4 md:grid-cols-2">
+            <div className="h-64">
+              <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">Distribución</p>
+              <ResponsiveContainer width="100%" height="100%">
+                <PieChart>
+                  <Pie data={chartData} dataKey="value" nameKey="name" innerRadius={45} outerRadius={80} paddingAngle={2}>
+                    {chartData.map((entry, i) => <Cell key={i} fill={entry.fill} />)}
+                  </Pie>
+                  <Tooltip />
+                  <Legend />
+                </PieChart>
+              </ResponsiveContainer>
+            </div>
+            <div className="h-64">
+              <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">Comparativa</p>
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={chartData}>
+                  <CartesianGrid strokeDasharray="3 3" opacity={0.3} />
+                  <XAxis dataKey="name" fontSize={11} />
+                  <YAxis allowDecimals={false} fontSize={11} />
+                  <Tooltip />
+                  <Bar dataKey="value" radius={[6, 6, 0, 0]}>
+                    {chartData.map((entry, i) => <Cell key={i} fill={entry.fill} />)}
+                  </Bar>
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+          </div>
+          <div className="grid grid-cols-4 gap-3 border-t border-border/40 pt-4 text-center text-xs">
+            <div><p className="font-display text-xl font-bold">{acuerdos.length}</p><p className="text-muted-foreground">Total</p></div>
+            <div><p className="font-display text-xl font-bold text-success">{cumplidos}</p><p className="text-muted-foreground">Cumplidos</p></div>
+            <div><p className="font-display text-xl font-bold text-warning">{pendientesCount}</p><p className="text-muted-foreground">Pendientes</p></div>
+            <div><p className="font-display text-xl font-bold text-destructive">{noCumplidos}</p><p className="text-muted-foreground">No cumplidos</p></div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setStatsOpen(false)}>Cerrar</Button>
+            <Button className="bg-gradient-primary" onClick={downloadPDF}>
+              <Download className="mr-2 h-4 w-4" /> Descargar PDF
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
