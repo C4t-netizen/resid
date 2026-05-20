@@ -50,7 +50,7 @@ export default function Recorridos() {
   const [open, setOpen] = useState(false);
   const [selected, setSelected] = useState<Recorrido | null>(null);
   const [hallazgos, setHallazgos] = useState<Hallazgo[]>([]);
-  const [form, setForm] = useState({ fecha: new Date().toISOString().slice(0,10), area: "", tipo: "ordinario", integrantes: "" });
+  const [form, setForm] = useState({ fecha: new Date().toISOString().slice(0,10), fecha_inicio: new Date().toISOString().slice(0,10), fecha_fin: "", hora_inicio: "", hora_fin: "", area: "", tipo: "ordinario", integrantes: "" });
   const [hForm, setHForm] = useState({ descripcion: "", ubicacion: "", nivel_riesgo: "medio", recomendacion: "" });
 
   const load = async () => {
