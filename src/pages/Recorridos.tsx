@@ -16,6 +16,10 @@ import { toast } from "sonner";
 interface Recorrido {
   id: string;
   fecha: string;
+  fecha_inicio: string | null;
+  fecha_fin: string | null;
+  hora_inicio: string | null;
+  hora_fin: string | null;
   area: string;
   tipo: string;
   integrantes: string | null;
@@ -46,7 +50,7 @@ export default function Recorridos() {
   const [open, setOpen] = useState(false);
   const [selected, setSelected] = useState<Recorrido | null>(null);
   const [hallazgos, setHallazgos] = useState<Hallazgo[]>([]);
-  const [form, setForm] = useState({ fecha: new Date().toISOString().slice(0,10), area: "", tipo: "ordinario", integrantes: "" });
+  const [form, setForm] = useState({ fecha: new Date().toISOString().slice(0,10), fecha_inicio: new Date().toISOString().slice(0,10), fecha_fin: "", hora_inicio: "", hora_fin: "", area: "", tipo: "ordinario", integrantes: "" });
   const [hForm, setHForm] = useState({ descripcion: "", ubicacion: "", nivel_riesgo: "medio", recomendacion: "" });
 
   const load = async () => {
@@ -66,11 +70,18 @@ export default function Recorridos() {
 
   const create = async () => {
     if (!form.area.trim()) { toast.error("Área requerida"); return; }
-    const { error, data } = await supabase.from("recorridos").insert({ ...form, created_by: user?.id }).select().single();
+    const payload = {
+      ...form,
+      fecha_fin: form.fecha_fin || null,
+      hora_inicio: form.hora_inicio || null,
+      hora_fin: form.hora_fin || null,
+      created_by: user?.id,
+    };
+    const { error, data } = await supabase.from("recorridos").insert(payload).select().single();
     if (error) return toast.error(error.message);
     toast.success("Recorrido creado");
     setOpen(false);
-    setForm({ fecha: new Date().toISOString().slice(0,10), area: "", tipo: "ordinario", integrantes: "" });
+    setForm({ fecha: new Date().toISOString().slice(0,10), fecha_inicio: new Date().toISOString().slice(0,10), fecha_fin: "", hora_inicio: "", hora_fin: "", area: "", tipo: "ordinario", integrantes: "" });
     load();
     if (data) openDetail(data as Recorrido);
   };
@@ -106,7 +117,7 @@ export default function Recorridos() {
       <>
         <PageHeader
           title={`Recorrido · ${selected.area}`}
-          subtitle={`${selected.fecha} · ${selected.tipo}`}
+          subtitle={`${selected.fecha_inicio ?? selected.fecha}${selected.hora_inicio ? ` ${selected.hora_inicio.slice(0,5)}` : ""}${selected.fecha_fin ? ` → ${selected.fecha_fin}` : ""}${selected.hora_fin ? ` ${selected.hora_fin.slice(0,5)}` : ""} · ${selected.tipo}`}
           breadcrumbs={[{ label: "Recorridos", href: "/recorridos" }, { label: selected.area }]}
           actions={<Button variant="outline" onClick={() => setSelected(null)} className="rounded-xl"><ArrowLeft className="mr-2 h-4 w-4" /> Volver</Button>}
         />
@@ -194,9 +205,15 @@ export default function Recorridos() {
               <DialogHeader><DialogTitle>Nuevo recorrido</DialogTitle></DialogHeader>
               <div className="grid gap-4 py-2">
                 <div className="grid grid-cols-2 gap-3">
-                  <div className="space-y-1.5"><Label>Fecha</Label>
-                    <Input type="date" value={form.fecha} onChange={(e) => setForm({...form, fecha: e.target.value})} className="h-11 rounded-xl" /></div>
-                  <div className="space-y-1.5"><Label>Tipo</Label>
+                  <div className="space-y-1.5"><Label>Fecha inicio</Label>
+                    <Input type="date" value={form.fecha_inicio} onChange={(e) => setForm({...form, fecha_inicio: e.target.value, fecha: e.target.value})} className="h-11 rounded-xl" /></div>
+                  <div className="space-y-1.5"><Label>Fecha fin</Label>
+                    <Input type="date" value={form.fecha_fin} onChange={(e) => setForm({...form, fecha_fin: e.target.value})} className="h-11 rounded-xl" /></div>
+                  <div className="space-y-1.5"><Label>Hora inicio</Label>
+                    <Input type="time" value={form.hora_inicio} onChange={(e) => setForm({...form, hora_inicio: e.target.value})} className="h-11 rounded-xl" /></div>
+                  <div className="space-y-1.5"><Label>Hora fin</Label>
+                    <Input type="time" value={form.hora_fin} onChange={(e) => setForm({...form, hora_fin: e.target.value})} className="h-11 rounded-xl" /></div>
+                  <div className="space-y-1.5 col-span-2"><Label>Tipo</Label>
                     <Select value={form.tipo} onValueChange={(v) => setForm({...form, tipo: v})}>
                       <SelectTrigger className="h-11 rounded-xl"><SelectValue /></SelectTrigger>
                       <SelectContent>
@@ -238,7 +255,11 @@ export default function Recorridos() {
                     </div>
                     <div className="min-w-0 flex-1">
                       <p className="font-display text-sm font-bold">{r.area}</p>
-                      <p className="text-xs text-muted-foreground">{r.fecha} · {r.tipo}</p>
+                      <p className="text-xs text-muted-foreground">
+                        {r.fecha_inicio ?? r.fecha}{r.hora_inicio ? ` ${r.hora_inicio.slice(0,5)}` : ""}
+                        {r.fecha_fin ? ` → ${r.fecha_fin}${r.hora_fin ? ` ${r.hora_fin.slice(0,5)}` : ""}` : ""}
+                        {" · "}{r.tipo}
+                      </p>
                     </div>
                     <Badge className={r.estatus === "cerrado" ? "bg-success/10 text-success border-success/20" : "bg-warning/10 text-warning border-warning/20"}>
                       {r.estatus}
