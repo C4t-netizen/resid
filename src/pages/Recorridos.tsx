@@ -117,7 +117,7 @@ export default function Recorridos() {
       <>
         <PageHeader
           title={`Recorrido · ${selected.area}`}
-          subtitle={`${selected.fecha} · ${selected.tipo}`}
+          subtitle={`${selected.fecha_inicio ?? selected.fecha}${selected.hora_inicio ? ` ${selected.hora_inicio.slice(0,5)}` : ""}${selected.fecha_fin ? ` → ${selected.fecha_fin}` : ""}${selected.hora_fin ? ` ${selected.hora_fin.slice(0,5)}` : ""} · ${selected.tipo}`}
           breadcrumbs={[{ label: "Recorridos", href: "/recorridos" }, { label: selected.area }]}
           actions={<Button variant="outline" onClick={() => setSelected(null)} className="rounded-xl"><ArrowLeft className="mr-2 h-4 w-4" /> Volver</Button>}
         />
