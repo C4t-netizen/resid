@@ -205,9 +205,15 @@ export default function Recorridos() {
               <DialogHeader><DialogTitle>Nuevo recorrido</DialogTitle></DialogHeader>
               <div className="grid gap-4 py-2">
                 <div className="grid grid-cols-2 gap-3">
-                  <div className="space-y-1.5"><Label>Fecha</Label>
-                    <Input type="date" value={form.fecha} onChange={(e) => setForm({...form, fecha: e.target.value})} className="h-11 rounded-xl" /></div>
-                  <div className="space-y-1.5"><Label>Tipo</Label>
+                  <div className="space-y-1.5"><Label>Fecha inicio</Label>
+                    <Input type="date" value={form.fecha_inicio} onChange={(e) => setForm({...form, fecha_inicio: e.target.value, fecha: e.target.value})} className="h-11 rounded-xl" /></div>
+                  <div className="space-y-1.5"><Label>Fecha fin</Label>
+                    <Input type="date" value={form.fecha_fin} onChange={(e) => setForm({...form, fecha_fin: e.target.value})} className="h-11 rounded-xl" /></div>
+                  <div className="space-y-1.5"><Label>Hora inicio</Label>
+                    <Input type="time" value={form.hora_inicio} onChange={(e) => setForm({...form, hora_inicio: e.target.value})} className="h-11 rounded-xl" /></div>
+                  <div className="space-y-1.5"><Label>Hora fin</Label>
+                    <Input type="time" value={form.hora_fin} onChange={(e) => setForm({...form, hora_fin: e.target.value})} className="h-11 rounded-xl" /></div>
+                  <div className="space-y-1.5 col-span-2"><Label>Tipo</Label>
                     <Select value={form.tipo} onValueChange={(v) => setForm({...form, tipo: v})}>
                       <SelectTrigger className="h-11 rounded-xl"><SelectValue /></SelectTrigger>
                       <SelectContent>
