@@ -551,6 +551,10 @@ export type Database = {
           created_by: string | null
           estatus: string
           fecha: string
+          fecha_fin: string | null
+          fecha_inicio: string | null
+          hora_fin: string | null
+          hora_inicio: string | null
           id: string
           integrantes: string | null
           observaciones_generales: string | null
@@ -563,6 +567,10 @@ export type Database = {
           created_by?: string | null
           estatus?: string
           fecha: string
+          fecha_fin?: string | null
+          fecha_inicio?: string | null
+          hora_fin?: string | null
+          hora_inicio?: string | null
           id?: string
           integrantes?: string | null
           observaciones_generales?: string | null
@@ -575,6 +583,10 @@ export type Database = {
           created_by?: string | null
           estatus?: string
           fecha?: string
+          fecha_fin?: string | null
+          fecha_inicio?: string | null
+          hora_fin?: string | null
+          hora_inicio?: string | null
           id?: string
           integrantes?: string | null
           observaciones_generales?: string | null
