@@ -389,6 +389,131 @@ export type Database = {
         }
         Relationships: []
       }
+      investigacion_acciones: {
+        Row: {
+          accion: string
+          created_at: string
+          depto_responsable: string | null
+          fecha_probable: string | null
+          fecha_real: string | null
+          id: string
+          investigacion_id: string
+          responsable_seguimiento: string | null
+        }
+        Insert: {
+          accion: string
+          created_at?: string
+          depto_responsable?: string | null
+          fecha_probable?: string | null
+          fecha_real?: string | null
+          id?: string
+          investigacion_id: string
+          responsable_seguimiento?: string | null
+        }
+        Update: {
+          accion?: string
+          created_at?: string
+          depto_responsable?: string | null
+          fecha_probable?: string | null
+          fecha_real?: string | null
+          id?: string
+          investigacion_id?: string
+          responsable_seguimiento?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "investigacion_acciones_investigacion_id_fkey"
+            columns: ["investigacion_id"]
+            isOneToOne: false
+            referencedRelation: "investigaciones"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      investigaciones: {
+        Row: {
+          actividad_tipo: string | null
+          acto_inseguro: string | null
+          area: string | null
+          causas: string | null
+          condicion_insegura: string | null
+          condicion_peligrosa: string | null
+          consecuencias: string | null
+          created_at: string
+          created_by: string | null
+          departamento: string | null
+          descripcion: string | null
+          edad: number | null
+          estatus: string
+          fecha_evento: string
+          fecha_nacimiento: string | null
+          fecha_notificacion: string | null
+          folio: string | null
+          id: string
+          lugar_accidente: string | null
+          nombre_persona: string
+          puesto: string | null
+          rfc_num_control: string | null
+          sexo: string | null
+          tipo: string
+          updated_at: string
+        }
+        Insert: {
+          actividad_tipo?: string | null
+          acto_inseguro?: string | null
+          area?: string | null
+          causas?: string | null
+          condicion_insegura?: string | null
+          condicion_peligrosa?: string | null
+          consecuencias?: string | null
+          created_at?: string
+          created_by?: string | null
+          departamento?: string | null
+          descripcion?: string | null
+          edad?: number | null
+          estatus?: string
+          fecha_evento: string
+          fecha_nacimiento?: string | null
+          fecha_notificacion?: string | null
+          folio?: string | null
+          id?: string
+          lugar_accidente?: string | null
+          nombre_persona: string
+          puesto?: string | null
+          rfc_num_control?: string | null
+          sexo?: string | null
+          tipo?: string
+          updated_at?: string
+        }
+        Update: {
+          actividad_tipo?: string | null
+          acto_inseguro?: string | null
+          area?: string | null
+          causas?: string | null
+          condicion_insegura?: string | null
+          condicion_peligrosa?: string | null
+          consecuencias?: string | null
+          created_at?: string
+          created_by?: string | null
+          departamento?: string | null
+          descripcion?: string | null
+          edad?: number | null
+          estatus?: string
+          fecha_evento?: string
+          fecha_nacimiento?: string | null
+          fecha_notificacion?: string | null
+          folio?: string | null
+          id?: string
+          lugar_accidente?: string | null
+          nombre_persona?: string
+          puesto?: string | null
+          rfc_num_control?: string | null
+          sexo?: string | null
+          tipo?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           avatar_url: string | null
@@ -594,6 +719,128 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
+      }
+      registro_accidentes: {
+        Row: {
+          adscripcion: string | null
+          apellido_materno: string | null
+          apellido_paterno: string | null
+          area_accidente: string | null
+          calle_numero: string | null
+          causa_acto_inseguro: string | null
+          causa_condicion_insegura: string | null
+          ciudad: string | null
+          codigo_postal: string | null
+          colonia: string | null
+          consecuencia: string | null
+          created_at: string
+          created_by: string | null
+          dictamen_riesgo: string | null
+          edad: number | null
+          email: string | null
+          estado: string | null
+          fecha: string
+          fecha_accidente: string | null
+          folio: string | null
+          id: string
+          incapacidad_parcial: number | null
+          incapacidad_total: number | null
+          investigacion_id: string | null
+          licencia_alta: string | null
+          licencia_inicio: string | null
+          mecanismo_lesion: string | null
+          muerte: boolean | null
+          no_tarjeta: string | null
+          nombres: string | null
+          region_anatomica: string | null
+          rfc_num_control: string | null
+          sexo: string | null
+          telefono: string | null
+          updated_at: string
+        }
+        Insert: {
+          adscripcion?: string | null
+          apellido_materno?: string | null
+          apellido_paterno?: string | null
+          area_accidente?: string | null
+          calle_numero?: string | null
+          causa_acto_inseguro?: string | null
+          causa_condicion_insegura?: string | null
+          ciudad?: string | null
+          codigo_postal?: string | null
+          colonia?: string | null
+          consecuencia?: string | null
+          created_at?: string
+          created_by?: string | null
+          dictamen_riesgo?: string | null
+          edad?: number | null
+          email?: string | null
+          estado?: string | null
+          fecha?: string
+          fecha_accidente?: string | null
+          folio?: string | null
+          id?: string
+          incapacidad_parcial?: number | null
+          incapacidad_total?: number | null
+          investigacion_id?: string | null
+          licencia_alta?: string | null
+          licencia_inicio?: string | null
+          mecanismo_lesion?: string | null
+          muerte?: boolean | null
+          no_tarjeta?: string | null
+          nombres?: string | null
+          region_anatomica?: string | null
+          rfc_num_control?: string | null
+          sexo?: string | null
+          telefono?: string | null
+          updated_at?: string
+        }
+        Update: {
+          adscripcion?: string | null
+          apellido_materno?: string | null
+          apellido_paterno?: string | null
+          area_accidente?: string | null
+          calle_numero?: string | null
+          causa_acto_inseguro?: string | null
+          causa_condicion_insegura?: string | null
+          ciudad?: string | null
+          codigo_postal?: string | null
+          colonia?: string | null
+          consecuencia?: string | null
+          created_at?: string
+          created_by?: string | null
+          dictamen_riesgo?: string | null
+          edad?: number | null
+          email?: string | null
+          estado?: string | null
+          fecha?: string
+          fecha_accidente?: string | null
+          folio?: string | null
+          id?: string
+          incapacidad_parcial?: number | null
+          incapacidad_total?: number | null
+          investigacion_id?: string | null
+          licencia_alta?: string | null
+          licencia_inicio?: string | null
+          mecanismo_lesion?: string | null
+          muerte?: boolean | null
+          no_tarjeta?: string | null
+          nombres?: string | null
+          region_anatomica?: string | null
+          rfc_num_control?: string | null
+          sexo?: string | null
+          telefono?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "registro_accidentes_investigacion_id_fkey"
+            columns: ["investigacion_id"]
+            isOneToOne: false
+            referencedRelation: "investigaciones"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       user_roles: {
         Row: {
