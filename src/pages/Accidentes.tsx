@@ -1,370 +1,406 @@
-import { useRef, useState } from "react";
-import {
-  Calendar,
-  ClipboardList,
-  FileDown,
-  Image as ImageIcon,
-  Save,
-  Send,
-  Trash2,
-  UploadCloud,
-  User,
-  PenLine,
-  FileText,
-} from "lucide-react";
+import { useEffect, useState } from "react";
+import { Loader2, Plus, HeartPulse, Trash2, FileDown, Pencil, ChevronLeft, ChevronRight } from "lucide-react";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import { PageHeader } from "@/components/PageHeader";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { supabase } from "@/integrations/supabase/client";
-import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/contexts/AuthContext";
+import { toast } from "sonner";
 
-const Section = ({ icon: Icon, title, children }: { icon: any; title: string; children: React.ReactNode }) => (
-  <div>
-    <div className="mb-4 flex items-center gap-2 border-b border-border/60 pb-3">
-      <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/10">
-        <Icon className="h-4 w-4 text-primary" />
-      </div>
-      <h3 className="font-display text-base font-bold">{title}</h3>
-    </div>
-    <div className="space-y-4">{children}</div>
-  </div>
-);
-
-const Field = ({ label, children }: { label: string; children: React.ReactNode }) => (
-  <div className="grid items-center gap-2 md:grid-cols-[200px_1fr]">
-    <Label className="text-sm font-medium text-muted-foreground">{label}</Label>
-    {children}
-  </div>
-);
-
-type Evidencia = {
+interface Registro {
   id: string;
-  name: string;
-  size: number;
-  type: string;
-  url: string;
-  isImage: boolean;
-  path?: string;
-  uploading?: boolean;
+  investigacion_id: string | null;
+  fecha: string;
+  rfc_num_control: string | null;
+  nombres: string | null;
+  apellido_paterno: string | null;
+  apellido_materno: string | null;
+  sexo: string | null;
+  edad: number | null;
+  telefono: string | null;
+  email: string | null;
+  calle_numero: string | null;
+  colonia: string | null;
+  codigo_postal: string | null;
+  ciudad: string | null;
+  estado: string | null;
+  no_tarjeta: string | null;
+  adscripcion: string | null;
+  area_accidente: string | null;
+  fecha_accidente: string | null;
+  folio: string | null;
+  mecanismo_lesion: string | null;
+  consecuencia: string | null;
+  region_anatomica: string | null;
+  causa_acto_inseguro: string | null;
+  causa_condicion_insegura: string | null;
+  licencia_inicio: string | null;
+  licencia_alta: string | null;
+  incapacidad_total: number | null;
+  incapacidad_parcial: number | null;
+  muerte: boolean | null;
+  dictamen_riesgo: string | null;
+}
+
+interface InvOption {
+  id: string;
+  nombre_persona: string;
+  fecha_evento: string;
+  rfc_num_control: string | null;
+  departamento: string | null;
+  area: string | null;
+  edad: number | null;
+  sexo: string | null;
+}
+
+const empty = {
+  investigacion_id: "none",
+  fecha: new Date().toISOString().slice(0, 10),
+  rfc_num_control: "",
+  nombres: "",
+  apellido_paterno: "",
+  apellido_materno: "",
+  sexo: "M",
+  edad: "",
+  telefono: "",
+  email: "",
+  calle_numero: "",
+  colonia: "",
+  codigo_postal: "",
+  ciudad: "",
+  estado: "",
+  no_tarjeta: "",
+  adscripcion: "",
+  area_accidente: "",
+  fecha_accidente: "",
+  folio: "",
+  mecanismo_lesion: "",
+  consecuencia: "",
+  region_anatomica: "",
+  causa_acto_inseguro: "",
+  causa_condicion_insegura: "",
+  licencia_inicio: "",
+  licencia_alta: "",
+  incapacidad_total: "0",
+  incapacidad_parcial: "0",
+  muerte: false,
+  dictamen_riesgo: "",
 };
 
-const BUCKET = "evidencias-accidentes";
+const STEPS = ["Identificación", "Domicilio", "Trabajo", "Accidente", "Médico / Dictamen"];
 
 export default function Accidentes() {
-  const { toast } = useToast();
-  const [drag, setDrag] = useState(false);
-  const [evidencias, setEvidencias] = useState<Evidencia[]>([]);
-  const [notasEvidencia, setNotasEvidencia] = useState("");
-  const [form, setForm] = useState({
-    fecha: "2026-03-24",
-    area: "produccion",
-    responsable: "Mario López",
-    nombre: "Juan Pérez",
-    puesto: "Operador",
-    edad: "35",
-    descripcion: "",
-    tipo: "caida",
-    lugar: "Zona de embalaje",
-    hora: "10:15",
-  });
-  const fileRef = useRef<HTMLInputElement>(null);
+  const { user, canEdit, isAdmin } = useAuth();
+  const [list, setList] = useState<Registro[]>([]);
+  const [investigaciones, setInvestigaciones] = useState<InvOption[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [open, setOpen] = useState(false);
+  const [step, setStep] = useState(0);
+  const [editId, setEditId] = useState<string | null>(null);
+  const [form, setForm] = useState<any>(empty);
 
-  const update = (k: keyof typeof form, v: string) => setForm((f) => ({ ...f, [k]: v }));
-
-  const handleFiles = async (files: FileList | null) => {
-    if (!files) return;
-    for (const file of Array.from(files)) {
-      const id = crypto.randomUUID();
-      const isImage = file.type.startsWith("image/");
-      const localUrl = URL.createObjectURL(file);
-      setEvidencias((prev) => [
-        ...prev,
-        { id, name: file.name, size: file.size, type: file.type, url: localUrl, isImage, uploading: true },
-      ]);
-
-      const path = `${id}-${file.name}`;
-      const { error } = await supabase.storage.from(BUCKET).upload(path, file, { upsert: false });
-      if (error) {
-        toast({ title: "Error al subir", description: error.message, variant: "destructive" });
-        setEvidencias((prev) => prev.filter((e) => e.id !== id));
-        continue;
-      }
-      const { data } = supabase.storage.from(BUCKET).getPublicUrl(path);
-      setEvidencias((prev) =>
-        prev.map((e) => (e.id === id ? { ...e, url: data.publicUrl, path, uploading: false } : e)),
-      );
-    }
+  const load = async () => {
+    setLoading(true);
+    const [{ data: regs }, { data: invs }] = await Promise.all([
+      supabase.from("registro_accidentes").select("*").order("fecha", { ascending: false }),
+      supabase.from("investigaciones").select("id,nombre_persona,fecha_evento,rfc_num_control,departamento,area,edad,sexo").order("fecha_evento", { ascending: false }),
+    ]);
+    setList((regs ?? []) as Registro[]);
+    setInvestigaciones((invs ?? []) as InvOption[]);
+    setLoading(false);
   };
+  useEffect(() => { load(); }, []);
 
-  const removeEvidencia = async (ev: Evidencia) => {
-    if (ev.path) await supabase.storage.from(BUCKET).remove([ev.path]);
-    setEvidencias((prev) => prev.filter((e) => e.id !== ev.id));
-  };
+  const resetForm = () => { setForm(empty); setStep(0); setEditId(null); };
 
-  const fetchAsDataUrl = (url: string): Promise<string> =>
-    new Promise(async (resolve, reject) => {
-      try {
-        const r = await fetch(url);
-        const b = await r.blob();
-        const fr = new FileReader();
-        fr.onloadend = () => resolve(fr.result as string);
-        fr.onerror = reject;
-        fr.readAsDataURL(b);
-      } catch (e) {
-        reject(e);
-      }
+  const openNew = () => { resetForm(); setOpen(true); };
+
+  const onInvSelect = (id: string) => {
+    if (id === "none") return setForm({ ...form, investigacion_id: "none" });
+    const inv = investigaciones.find((i) => i.id === id);
+    if (!inv) return;
+    const parts = inv.nombre_persona.split(/\s+/);
+    setForm({
+      ...form,
+      investigacion_id: id,
+      nombres: parts.slice(0, parts.length - 2).join(" ") || parts[0] || "",
+      apellido_paterno: parts[parts.length - 2] ?? "",
+      apellido_materno: parts[parts.length - 1] ?? "",
+      rfc_num_control: inv.rfc_num_control ?? form.rfc_num_control,
+      adscripcion: inv.departamento ?? form.adscripcion,
+      area_accidente: inv.area ?? form.area_accidente,
+      fecha_accidente: inv.fecha_evento ?? form.fecha_accidente,
+      edad: inv.edad?.toString() ?? form.edad,
+      sexo: inv.sexo ?? form.sexo,
     });
+  };
 
-  const exportPDF = async () => {
-    const doc = new jsPDF();
-    const pw = doc.internal.pageSize.getWidth();
-    doc.setFontSize(16);
+  const openEdit = (r: Registro) => {
+    setEditId(r.id);
+    setForm({
+      ...empty,
+      ...r,
+      investigacion_id: r.investigacion_id ?? "none",
+      edad: r.edad?.toString() ?? "",
+      incapacidad_total: r.incapacidad_total?.toString() ?? "0",
+      incapacidad_parcial: r.incapacidad_parcial?.toString() ?? "0",
+      muerte: r.muerte ?? false,
+    });
+    setStep(0);
+    setOpen(true);
+  };
+
+  const save = async () => {
+    const payload: any = {
+      ...form,
+      investigacion_id: form.investigacion_id === "none" ? null : form.investigacion_id,
+      edad: form.edad ? Number(form.edad) : null,
+      incapacidad_total: Number(form.incapacidad_total || 0),
+      incapacidad_parcial: Number(form.incapacidad_parcial || 0),
+      muerte: !!form.muerte,
+      fecha_accidente: form.fecha_accidente || null,
+      licencia_inicio: form.licencia_inicio || null,
+      licencia_alta: form.licencia_alta || null,
+      created_by: user?.id,
+    };
+    if (editId) {
+      const { error } = await supabase.from("registro_accidentes").update(payload).eq("id", editId);
+      if (error) return toast.error(error.message);
+    } else {
+      const { error } = await supabase.from("registro_accidentes").insert(payload);
+      if (error) return toast.error(error.message);
+    }
+    toast.success(editId ? "Registro actualizado" : "Registro guardado");
+    setOpen(false);
+    resetForm();
+    load();
+  };
+
+  const remove = async (id: string) => {
+    if (!confirm("¿Eliminar este registro?")) return;
+    const { error } = await supabase.from("registro_accidentes").delete().eq("id", id);
+    if (error) return toast.error(error.message);
+    toast.success("Eliminado");
+    load();
+  };
+
+  const exportPDF = (r: Registro) => {
+    const doc = new jsPDF({ unit: "mm", format: "letter", orientation: "landscape" });
+    const W = doc.internal.pageSize.getWidth();
+    const M = 10;
+    doc.setFillColor(120, 30, 50);
+    doc.rect(0, 0, W, 20, "F");
+    doc.setTextColor(255);
     doc.setFont("helvetica", "bold");
-    doc.text("Informe de Accidente", pw / 2, 18, { align: "center" });
+    doc.setFontSize(11);
+    doc.text("INSTITUTO TECNOLÓGICO DE DURANGO", W / 2, 8, { align: "center" });
     doc.setFontSize(10);
+    doc.text("Formato de Registro de Accidentes", W / 2, 14, { align: "center" });
+    doc.setFontSize(7);
     doc.setFont("helvetica", "normal");
-    doc.text(`Generado: ${new Date().toLocaleString("es-MX")}`, pw / 2, 25, { align: "center" });
+    doc.text("Código: ITD-SS-PO-03-02  ·  Revisión: 1  ·  Ref. ISO 45001:2018 8.2, 10.2", W / 2, 18, { align: "center" });
+    doc.setTextColor(0);
 
     autoTable(doc, {
-      startY: 32,
-      head: [["Campo", "Valor"]],
-      body: [
-        ["Fecha", form.fecha],
-        ["Hora", form.hora],
-        ["Área", form.area],
-        ["Responsable de área", form.responsable],
-        ["Lugar", form.lugar],
-        ["Tipo de accidente", form.tipo],
-        ["Persona afectada", form.nombre],
-        ["Puesto", form.puesto],
-        ["Edad", form.edad],
-      ],
-      theme: "striped",
-      headStyles: { fillColor: [59, 130, 246] },
+      startY: 24,
+      theme: "grid",
+      head: [[
+        "Fecha", "R.F.C./Control", "Nombres", "A. Paterno", "A. Materno", "Sexo", "Edad", "Teléfono", "Email",
+      ]],
+      body: [[
+        r.fecha, r.rfc_num_control ?? "", r.nombres ?? "", r.apellido_paterno ?? "", r.apellido_materno ?? "",
+        r.sexo ?? "", r.edad?.toString() ?? "", r.telefono ?? "", r.email ?? "",
+      ]],
+      headStyles: { fillColor: [120, 30, 50], textColor: 255, fontSize: 7.5 },
+      styles: { fontSize: 7, cellPadding: 1.2 },
+      margin: { left: M, right: M },
+    });
+    autoTable(doc, {
+      startY: (doc as any).lastAutoTable.finalY + 1,
+      theme: "grid",
+      head: [["Calle y número", "Colonia", "C.P.", "Ciudad", "Estado", "No. Tarjeta", "Adscripción"]],
+      body: [[r.calle_numero ?? "", r.colonia ?? "", r.codigo_postal ?? "", r.ciudad ?? "", r.estado ?? "", r.no_tarjeta ?? "", r.adscripcion ?? ""]],
+      headStyles: { fillColor: [120, 30, 50], textColor: 255, fontSize: 7.5 },
+      styles: { fontSize: 7, cellPadding: 1.2 },
+      margin: { left: M, right: M },
+    });
+    autoTable(doc, {
+      startY: (doc as any).lastAutoTable.finalY + 1,
+      theme: "grid",
+      head: [["Área accidente", "Fecha accidente", "Folio", "Mecanismo lesión", "Consecuencia", "Región anatómica"]],
+      body: [[r.area_accidente ?? "", r.fecha_accidente ?? "", r.folio ?? "", r.mecanismo_lesion ?? "", r.consecuencia ?? "", r.region_anatomica ?? ""]],
+      headStyles: { fillColor: [120, 30, 50], textColor: 255, fontSize: 7.5 },
+      styles: { fontSize: 7, cellPadding: 1.2 },
+      margin: { left: M, right: M },
+    });
+    autoTable(doc, {
+      startY: (doc as any).lastAutoTable.finalY + 1,
+      theme: "grid",
+      head: [["Causa: Acto inseguro", "Causa: Condición insegura", "Licencia inicio", "Licencia alta", "Incap. total", "Incap. parcial", "Muerte", "Dictamen"]],
+      body: [[
+        r.causa_acto_inseguro ?? "", r.causa_condicion_insegura ?? "", r.licencia_inicio ?? "", r.licencia_alta ?? "",
+        r.incapacidad_total?.toString() ?? "0", r.incapacidad_parcial?.toString() ?? "0", r.muerte ? "Sí" : "No", r.dictamen_riesgo ?? "",
+      ]],
+      headStyles: { fillColor: [120, 30, 50], textColor: 255, fontSize: 7.5 },
+      styles: { fontSize: 7, cellPadding: 1.2 },
+      margin: { left: M, right: M },
     });
 
-    let y = (doc as any).lastAutoTable.finalY + 10;
-    doc.setFont("helvetica", "bold");
-    doc.text("Descripción del accidente", 14, y);
-    doc.setFont("helvetica", "normal");
-    const desc = doc.splitTextToSize(form.descripcion || "(sin descripción)", pw - 28);
-    doc.text(desc, 14, y + 6);
-    y = y + 6 + desc.length * 5 + 6;
-
-    if (notasEvidencia.trim()) {
-      doc.setFont("helvetica", "bold");
-      doc.text("Notas / texto de evidencia", 14, y);
-      doc.setFont("helvetica", "normal");
-      const notas = doc.splitTextToSize(notasEvidencia, pw - 28);
-      doc.text(notas, 14, y + 6);
-      y = y + 6 + notas.length * 5 + 6;
-    }
-
-    const imgs = evidencias.filter((e) => e.isImage && !e.uploading);
-    if (imgs.length) {
-      doc.addPage();
-      doc.setFont("helvetica", "bold");
-      doc.setFontSize(14);
-      doc.text("Evidencias fotográficas", pw / 2, 18, { align: "center" });
-      let cy = 28;
-      for (const im of imgs) {
-        try {
-          const data = await fetchAsDataUrl(im.url);
-          if (cy > 230) { doc.addPage(); cy = 20; }
-          doc.addImage(data, "JPEG", 20, cy, 170, 100, undefined, "FAST");
-          doc.setFontSize(9);
-          doc.setFont("helvetica", "italic");
-          doc.text(im.name, 20, cy + 106);
-          cy += 118;
-        } catch {}
-      }
-    }
-
-    const otros = evidencias.filter((e) => !e.isImage);
-    if (otros.length) {
-      doc.addPage();
-      doc.setFont("helvetica", "bold");
-      doc.setFontSize(14);
-      doc.text("Archivos adjuntos", pw / 2, 18, { align: "center" });
-      autoTable(doc, {
-        startY: 26,
-        head: [["Archivo", "Tipo", "URL"]],
-        body: otros.map((o) => [o.name, o.type || "—", o.url]),
-        styles: { fontSize: 8 },
-        headStyles: { fillColor: [59, 130, 246] },
-      });
-    }
-
-    doc.save(`informe-accidente-${form.fecha}.pdf`);
-    toast({ title: "PDF generado", description: "El informe se descargó correctamente." });
+    doc.save(`registro_accidente_${r.fecha}.pdf`);
   };
 
   return (
     <>
       <PageHeader
-        title="Informe de Accidente"
-        subtitle="Registro detallado de eventos con afectación a personal o instalaciones."
-        breadcrumbs={[{ label: "Accidentes", href: "/accidentes" }, { label: "Nuevo informe" }]}
-        badge={<Badge className="bg-warning/10 text-warning border-warning/20">Borrador</Badge>}
-        actions={<span className="text-sm font-medium text-muted-foreground">{form.fecha}</span>}
+        title="Registro de Accidentes"
+        subtitle="Formato ITD-SS-PO-03-02 · ISO 45001:2018 8.2, 10.2"
+        breadcrumbs={[{ label: "Eventos" }, { label: "Registro de accidentes" }]}
+        badge={<Badge className="bg-primary/10 text-primary border-primary/20">{list.length} registros</Badge>}
+        actions={canEdit && (
+          <Button onClick={openNew} className="rounded-xl bg-gradient-primary shadow-elegant">
+            <Plus className="mr-2 h-4 w-4" /> Nuevo registro
+          </Button>
+        )}
       />
 
-      <div className="px-4 py-6 md:px-8">
-        <Card className="mx-auto max-w-5xl rounded-2xl border-border/50 bg-card p-6 shadow-soft md:p-8">
-          <div className="space-y-8">
-            <Section icon={ClipboardList} title="Datos generales">
-              <Field label="Fecha del accidente">
-                <Input type="date" value={form.fecha} onChange={(e) => update("fecha", e.target.value)} className="h-11 rounded-xl" />
-              </Field>
-              <Field label="Área">
-                <Select value={form.area} onValueChange={(v) => update("area", v)}>
-                  <SelectTrigger className="h-11 rounded-xl"><SelectValue /></SelectTrigger>
+      <Dialog open={open} onOpenChange={(o) => { setOpen(o); if (!o) resetForm(); }}>
+        <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>{editId ? "Editar" : "Nuevo"} registro · Paso {step + 1} de {STEPS.length}: {STEPS[step]}</DialogTitle>
+          </DialogHeader>
+
+          {step === 0 && (
+            <div className="grid gap-4 md:grid-cols-2">
+              <div className="md:col-span-2">
+                <Label>Investigación asociada (autocompleta datos)</Label>
+                <Select value={form.investigacion_id} onValueChange={onInvSelect}>
+                  <SelectTrigger><SelectValue placeholder="Seleccionar" /></SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="produccion">Producción</SelectItem>
-                    <SelectItem value="almacen">Almacén</SelectItem>
-                    <SelectItem value="oficinas">Oficinas</SelectItem>
-                    <SelectItem value="mantenimiento">Mantenimiento</SelectItem>
+                    <SelectItem value="none">Sin asociar</SelectItem>
+                    {investigaciones.map((i) => (
+                      <SelectItem key={i.id} value={i.id}>{i.nombre_persona} · {i.fecha_evento}</SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
-              </Field>
-              <Field label="Responsable del área">
-                <Input value={form.responsable} onChange={(e) => update("responsable", e.target.value)} className="h-11 rounded-xl" />
-              </Field>
-            </Section>
-
-            <Section icon={User} title="Persona afectada">
-              <Field label="Nombre completo">
-                <Input value={form.nombre} onChange={(e) => update("nombre", e.target.value)} className="h-11 rounded-xl" />
-              </Field>
-              <Field label="Puesto">
-                <Input value={form.puesto} onChange={(e) => update("puesto", e.target.value)} className="h-11 rounded-xl" />
-              </Field>
-              <Field label="Edad">
-                <Input type="number" value={form.edad} onChange={(e) => update("edad", e.target.value)} className="h-11 w-32 rounded-xl" />
-              </Field>
-            </Section>
-
-            <Section icon={PenLine} title="Descripción del accidente">
-              <Textarea
-                value={form.descripcion}
-                onChange={(e) => update("descripcion", e.target.value)}
-                placeholder="Describa cómo ocurrió el accidente, factores contribuyentes y consecuencias inmediatas…"
-                className="min-h-[140px] rounded-xl"
-              />
-            </Section>
-
-            <Section icon={Calendar} title="Detalles adicionales">
-              <Field label="Tipo de accidente">
-                <Select value={form.tipo} onValueChange={(v) => update("tipo", v)}>
-                  <SelectTrigger className="h-11 rounded-xl"><SelectValue /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="caida">Caída</SelectItem>
-                    <SelectItem value="golpe">Golpe</SelectItem>
-                    <SelectItem value="quemadura">Quemadura</SelectItem>
-                    <SelectItem value="corte">Corte</SelectItem>
-                    <SelectItem value="electrico">Eléctrico</SelectItem>
-                    <SelectItem value="quimico">Químico</SelectItem>
-                  </SelectContent>
-                </Select>
-              </Field>
-              <Field label="Lugar del accidente">
-                <Input value={form.lugar} onChange={(e) => update("lugar", e.target.value)} className="h-11 rounded-xl" />
-              </Field>
-              <Field label="Hora del accidente">
-                <Input type="time" value={form.hora} onChange={(e) => update("hora", e.target.value)} className="h-11 w-40 rounded-xl" />
-              </Field>
-            </Section>
-
-            <Section icon={ImageIcon} title="Evidencias">
-              <div
-                onDragOver={(e) => { e.preventDefault(); setDrag(true); }}
-                onDragLeave={() => setDrag(false)}
-                onDrop={(e) => { e.preventDefault(); setDrag(false); handleFiles(e.dataTransfer.files); }}
-                onClick={() => fileRef.current?.click()}
-                className={`flex cursor-pointer flex-col items-center justify-center rounded-2xl border-2 border-dashed p-10 transition-smooth ${drag ? "border-primary bg-primary/5" : "border-border bg-secondary/30"}`}
-              >
-                <input
-                  ref={fileRef}
-                  type="file"
-                  multiple
-                  accept="image/*,application/pdf,.doc,.docx,.txt"
-                  className="hidden"
-                  onChange={(e) => handleFiles(e.target.files)}
-                />
-                <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-primary shadow-elegant">
-                  <UploadCloud className="h-7 w-7 text-primary-foreground" />
-                </div>
-                <p className="mt-4 font-display text-base font-bold">Subir fotos / archivos</p>
-                <p className="mt-1 text-sm text-muted-foreground">Arrastra o haz clic para subir (imágenes, PDF, documentos)</p>
-                <Button type="button" variant="outline" className="mt-4 rounded-xl" onClick={(e) => { e.stopPropagation(); fileRef.current?.click(); }}>
-                  Seleccionar archivos
-                </Button>
               </div>
-
-              {evidencias.length > 0 && (
-                <div className="grid grid-cols-2 gap-3 md:grid-cols-3 lg:grid-cols-4">
-                  {evidencias.map((ev) => (
-                    <div key={ev.id} className="group relative overflow-hidden rounded-xl border border-border bg-secondary/40">
-                      {ev.isImage ? (
-                        <img src={ev.url} alt={ev.name} className="h-32 w-full object-cover" />
-                      ) : (
-                        <div className="flex h-32 w-full flex-col items-center justify-center gap-2 p-2">
-                          <FileText className="h-8 w-8 text-primary" />
-                          <span className="line-clamp-2 text-center text-xs">{ev.name}</span>
-                        </div>
-                      )}
-                      {ev.uploading && (
-                        <div className="absolute inset-0 flex items-center justify-center bg-background/70 text-xs">Subiendo…</div>
-                      )}
-                      <button
-                        type="button"
-                        onClick={() => removeEvidencia(ev)}
-                        className="absolute right-1 top-1 rounded-md bg-destructive/90 p-1 text-destructive-foreground opacity-0 transition-opacity group-hover:opacity-100"
-                      >
-                        <Trash2 className="h-3.5 w-3.5" />
-                      </button>
-                    </div>
-                  ))}
-                </div>
-              )}
-
+              <div><Label>Fecha registro</Label><Input type="date" value={form.fecha} onChange={(e) => setForm({ ...form, fecha: e.target.value })} /></div>
+              <div><Label>R.F.C./Núm. de control</Label><Input value={form.rfc_num_control} onChange={(e) => setForm({ ...form, rfc_num_control: e.target.value })} /></div>
+              <div><Label>Nombres</Label><Input value={form.nombres} onChange={(e) => setForm({ ...form, nombres: e.target.value })} /></div>
+              <div><Label>Apellido paterno</Label><Input value={form.apellido_paterno} onChange={(e) => setForm({ ...form, apellido_paterno: e.target.value })} /></div>
+              <div><Label>Apellido materno</Label><Input value={form.apellido_materno} onChange={(e) => setForm({ ...form, apellido_materno: e.target.value })} /></div>
               <div>
-                <Label className="mb-2 block text-sm font-medium text-muted-foreground">Notas / descripción de evidencias</Label>
-                <Textarea
-                  value={notasEvidencia}
-                  onChange={(e) => setNotasEvidencia(e.target.value)}
-                  placeholder="Agrega notas o testimonios escritos que acompañen las evidencias…"
-                  className="min-h-[100px] rounded-xl"
-                />
+                <Label>Sexo</Label>
+                <Select value={form.sexo} onValueChange={(v) => setForm({ ...form, sexo: v })}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent><SelectItem value="M">Masculino</SelectItem><SelectItem value="F">Femenino</SelectItem><SelectItem value="O">Otro</SelectItem></SelectContent>
+                </Select>
               </div>
-            </Section>
-
-            <div className="flex flex-col-reverse gap-3 border-t border-border/60 pt-6 md:flex-row md:justify-end">
-              <Button variant="outline" className="rounded-xl" onClick={exportPDF}>
-                <FileDown className="mr-2 h-4 w-4" /> Exportar PDF
-              </Button>
-              <Button variant="secondary" className="rounded-xl">
-                <Save className="mr-2 h-4 w-4" /> Guardar borrador
-              </Button>
-              <Button className="rounded-xl bg-gradient-primary shadow-elegant hover:shadow-glow">
-                <Send className="mr-2 h-4 w-4" /> Enviar informe
-              </Button>
+              <div><Label>Edad</Label><Input type="number" value={form.edad} onChange={(e) => setForm({ ...form, edad: e.target.value })} /></div>
+              <div><Label>Teléfono</Label><Input value={form.telefono} onChange={(e) => setForm({ ...form, telefono: e.target.value })} /></div>
+              <div className="md:col-span-2"><Label>Email</Label><Input type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} /></div>
             </div>
+          )}
+
+          {step === 1 && (
+            <div className="grid gap-4 md:grid-cols-2">
+              <div className="md:col-span-2"><Label>Calle y número</Label><Input value={form.calle_numero} onChange={(e) => setForm({ ...form, calle_numero: e.target.value })} /></div>
+              <div><Label>Colonia / Fracc.</Label><Input value={form.colonia} onChange={(e) => setForm({ ...form, colonia: e.target.value })} /></div>
+              <div><Label>Código postal</Label><Input value={form.codigo_postal} onChange={(e) => setForm({ ...form, codigo_postal: e.target.value })} /></div>
+              <div><Label>Ciudad</Label><Input value={form.ciudad} onChange={(e) => setForm({ ...form, ciudad: e.target.value })} /></div>
+              <div><Label>Estado</Label><Input value={form.estado} onChange={(e) => setForm({ ...form, estado: e.target.value })} /></div>
+            </div>
+          )}
+
+          {step === 2 && (
+            <div className="grid gap-4 md:grid-cols-2">
+              <div><Label>No. de tarjeta</Label><Input value={form.no_tarjeta} onChange={(e) => setForm({ ...form, no_tarjeta: e.target.value })} /></div>
+              <div><Label>Adscripción</Label><Input value={form.adscripcion} onChange={(e) => setForm({ ...form, adscripcion: e.target.value })} /></div>
+              <div><Label>Área del accidente</Label><Input value={form.area_accidente} onChange={(e) => setForm({ ...form, area_accidente: e.target.value })} /></div>
+              <div><Label>Folio</Label><Input value={form.folio} onChange={(e) => setForm({ ...form, folio: e.target.value })} /></div>
+              <div><Label>Fecha del accidente</Label><Input type="date" value={form.fecha_accidente} onChange={(e) => setForm({ ...form, fecha_accidente: e.target.value })} /></div>
+            </div>
+          )}
+
+          {step === 3 && (
+            <div className="grid gap-4">
+              <div><Label>Mecanismo de la lesión</Label><Textarea rows={2} value={form.mecanismo_lesion} onChange={(e) => setForm({ ...form, mecanismo_lesion: e.target.value })} /></div>
+              <div><Label>Consecuencia</Label><Textarea rows={2} value={form.consecuencia} onChange={(e) => setForm({ ...form, consecuencia: e.target.value })} /></div>
+              <div><Label>Región anatómica afectada</Label><Input value={form.region_anatomica} onChange={(e) => setForm({ ...form, region_anatomica: e.target.value })} /></div>
+              <div><Label>Causa - Acto inseguro</Label><Textarea rows={2} value={form.causa_acto_inseguro} onChange={(e) => setForm({ ...form, causa_acto_inseguro: e.target.value })} /></div>
+              <div><Label>Causa - Condición insegura</Label><Textarea rows={2} value={form.causa_condicion_insegura} onChange={(e) => setForm({ ...form, causa_condicion_insegura: e.target.value })} /></div>
+            </div>
+          )}
+
+          {step === 4 && (
+            <div className="grid gap-4 md:grid-cols-2">
+              <div><Label>Licencia médica - inicio</Label><Input type="date" value={form.licencia_inicio} onChange={(e) => setForm({ ...form, licencia_inicio: e.target.value })} /></div>
+              <div><Label>Licencia médica - alta</Label><Input type="date" value={form.licencia_alta} onChange={(e) => setForm({ ...form, licencia_alta: e.target.value })} /></div>
+              <div><Label>Incapacidad total (días)</Label><Input type="number" value={form.incapacidad_total} onChange={(e) => setForm({ ...form, incapacidad_total: e.target.value })} /></div>
+              <div><Label>Incapacidad parcial (días)</Label><Input type="number" value={form.incapacidad_parcial} onChange={(e) => setForm({ ...form, incapacidad_parcial: e.target.value })} /></div>
+              <div className="md:col-span-2">
+                <Label>Muerte</Label>
+                <Select value={form.muerte ? "si" : "no"} onValueChange={(v) => setForm({ ...form, muerte: v === "si" })}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent><SelectItem value="no">No</SelectItem><SelectItem value="si">Sí</SelectItem></SelectContent>
+                </Select>
+              </div>
+              <div className="md:col-span-2"><Label>Dictamen del riesgo de trabajo</Label><Textarea rows={3} value={form.dictamen_riesgo} onChange={(e) => setForm({ ...form, dictamen_riesgo: e.target.value })} /></div>
+            </div>
+          )}
+
+          <DialogFooter className="flex items-center justify-between sm:justify-between">
+            <Button variant="outline" disabled={step === 0} onClick={() => setStep(step - 1)}><ChevronLeft className="mr-1 h-4 w-4" /> Anterior</Button>
+            {step < STEPS.length - 1 ? (
+              <Button onClick={() => setStep(step + 1)}>Siguiente <ChevronRight className="ml-1 h-4 w-4" /></Button>
+            ) : (
+              <Button onClick={save}>{editId ? "Actualizar" : "Guardar"} registro</Button>
+            )}
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <div className="px-4 py-6 md:px-8">
+        {loading ? (
+          <div className="flex justify-center py-12"><Loader2 className="h-6 w-6 animate-spin text-muted-foreground" /></div>
+        ) : list.length === 0 ? (
+          <Card className="rounded-2xl border-dashed border-border/60 bg-secondary/30 p-12 text-center">
+            <HeartPulse className="mx-auto h-10 w-10 text-muted-foreground" />
+            <p className="mt-3 font-display text-base font-bold">Sin registros de accidentes</p>
+            <p className="text-sm text-muted-foreground">Captura el primer registro para construir el histórico.</p>
+          </Card>
+        ) : (
+          <div className="grid gap-4">
+            {list.map((r) => (
+              <Card key={r.id} className="rounded-2xl border-border/50 p-5 shadow-soft">
+                <div className="flex flex-wrap items-start justify-between gap-3">
+                  <div className="min-w-0 flex-1">
+                    <div className="mb-2 flex flex-wrap items-center gap-2">
+                      {r.folio && <Badge variant="outline">Folio {r.folio}</Badge>}
+                      {r.muerte && <Badge className="bg-destructive text-destructive-foreground">Muerte</Badge>}
+                      <span className="text-xs text-muted-foreground">{r.fecha}</span>
+                    </div>
+                    <h3 className="font-display text-base font-bold">{[r.nombres, r.apellido_paterno, r.apellido_materno].filter(Boolean).join(" ") || "—"}</h3>
+                    <p className="text-xs text-muted-foreground">{r.adscripcion ?? "—"} · {r.area_accidente ?? "—"}</p>
+                    {r.mecanismo_lesion && <p className="mt-1 text-sm text-muted-foreground line-clamp-2">{r.mecanismo_lesion}</p>}
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Button variant="outline" size="sm" onClick={() => exportPDF(r)}><FileDown className="mr-1 h-3.5 w-3.5" /> PDF</Button>
+                    {canEdit && <Button variant="ghost" size="icon" onClick={() => openEdit(r)}><Pencil className="h-4 w-4" /></Button>}
+                    {isAdmin && <Button variant="ghost" size="icon" onClick={() => remove(r.id)}><Trash2 className="h-4 w-4 text-destructive" /></Button>}
+                  </div>
+                </div>
+              </Card>
+            ))}
           </div>
-        </Card>
+        )}
       </div>
     </>
   );

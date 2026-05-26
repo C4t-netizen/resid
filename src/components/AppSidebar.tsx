@@ -47,9 +47,8 @@ const operationItems = [
 ];
 
 const incidentItems = [
-  { title: "Incidentes", url: "/incidentes", icon: AlertTriangle },
-  { title: "Accidentes", url: "/accidentes", icon: HeartPulse },
-  { title: "Acciones correctivas", url: "/acciones", icon: ShieldAlert },
+  { title: "Investigación de Incidentes y Accidentes", url: "/incidentes", icon: AlertTriangle },
+  { title: "Registro de Accidentes", url: "/accidentes", icon: HeartPulse },
 ];
 
 const reportItems = [
