@@ -21,6 +21,7 @@ import Verificaciones from "./pages/Verificaciones";
 import Incidentes from "./pages/Incidentes";
 import Acciones from "./pages/Acciones";
 import Informes from "./pages/Informes";
+import Guias from "./pages/Guias";
 import Placeholder from "./pages/Placeholder";
 import NotFound from "./pages/NotFound";
 
@@ -57,7 +58,7 @@ const App = () => (
               <Route path="/incidentes" element={<Incidentes />} />
               <Route path="/acciones" element={<Acciones />} />
               <Route path="/informes" element={<Informes />} />
-              <Route path="/guias" element={<Placeholder title="Guías / Formatos" />} />
+              <Route path="/guias" element={<Guias />} />
             </Route>
             <Route path="*" element={<NotFound />} />
           </Routes>
