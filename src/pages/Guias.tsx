@@ -44,7 +44,7 @@ export default function Guias() {
     <div className="space-y-6">
       <PageHeader
         title="Guías / Formatos"
-        description="Procedimientos y formatos oficiales del Proceso de Seguridad y Salud en el Trabajo del ITD."
+        subtitle="Procedimientos y formatos oficiales del Proceso de Seguridad y Salud en el Trabajo del ITD."
       />
 
       <Card className="p-5 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 border-primary/20">
