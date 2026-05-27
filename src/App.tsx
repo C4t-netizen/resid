@@ -21,6 +21,7 @@ import Verificaciones from "./pages/Verificaciones";
 import Incidentes from "./pages/Incidentes";
 import Acciones from "./pages/Acciones";
 import Informes from "./pages/Informes";
+import Guias from "./pages/Guias";
 import Placeholder from "./pages/Placeholder";
 import NotFound from "./pages/NotFound";
 
