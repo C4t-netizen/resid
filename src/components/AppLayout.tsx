@@ -74,13 +74,6 @@ export default function AppLayout() {
             <Outlet />
           </main>
 
-          {/* FAB */}
-          <button
-            className="fixed bottom-6 right-6 z-40 flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-primary text-primary-foreground shadow-fab transition-smooth hover:scale-105 hover:shadow-glow"
-            aria-label="Registrar nuevo"
-          >
-            <Plus className="h-6 w-6" />
-          </button>
         </div>
       </div>
     </SidebarProvider>
