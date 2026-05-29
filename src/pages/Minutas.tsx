@@ -154,6 +154,7 @@ export default function Minutas() {
   const [newMinuta, setNewMinuta] = useState<MinutaInfo | null>(null);
   const [selected, setSelected] = useState<number | null>(6);
   const [editing, setEditing] = useState<Acuerdo | null>(null);
+  const [creatingAcuerdo, setCreatingAcuerdo] = useState<Acuerdo | null>(null);
   const [deletingId, setDeletingId] = useState<number | null>(null);
   const [statsOpen, setStatsOpen] = useState(false);
   const chartRef = useRef<HTMLDivElement | null>(null);
