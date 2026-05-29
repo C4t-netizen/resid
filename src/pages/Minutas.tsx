@@ -516,9 +516,6 @@ export default function Minutas() {
               </Button>
             </div>
             <Table>
-        <div className={cn("grid gap-6", selected && detail ? "lg:grid-cols-[1fr_380px]" : "")}>
-          <Card className="overflow-hidden rounded-2xl border-border/50 bg-card shadow-soft">
-            <Table>
               <TableHeader>
                 <TableRow className="border-border/50 hover:bg-transparent">
                   <TableHead className="w-12 pl-5">#</TableHead>
