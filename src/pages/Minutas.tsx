@@ -188,7 +188,35 @@ export default function Minutas() {
       ),
     }));
     toast({ title: "Acuerdo actualizado", description: `“${editing.actividad}” se guardó correctamente.` });
-    setEditing(null);
+  };
+
+  const openNewAcuerdo = () => {
+    if (!minuta) return;
+    const nextId = Math.max(0, ...(acuerdosByMinuta[minuta.id] ?? []).map((a) => a.id)) + 1;
+    setCreatingAcuerdo({
+      id: nextId,
+      actividad: "",
+      responsable: "",
+      iniciales: "",
+      fecha: "",
+      estado: "Pendiente",
+      cumplimiento: "—",
+    });
+  };
+
+  const handleCreateAcuerdo = () => {
+    if (!creatingAcuerdo || !minuta) return;
+    if (!creatingAcuerdo.actividad.trim() || !creatingAcuerdo.responsable.trim()) {
+      toast({ title: "Datos incompletos", description: "Completa actividad y responsable." });
+      return;
+    }
+    const nuevo: Acuerdo = { ...creatingAcuerdo, iniciales: getIniciales(creatingAcuerdo.responsable) };
+    setAcuerdosByMinuta((prev) => ({
+      ...prev,
+      [minuta.id]: [...(prev[minuta.id] ?? []), nuevo],
+    }));
+    toast({ title: "Actividad agregada", description: `“${nuevo.actividad}” se agregó a la minuta.` });
+    setCreatingAcuerdo(null);
   };
 
   const handleSaveMinuta = () => {
