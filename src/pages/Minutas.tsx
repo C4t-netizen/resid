@@ -154,6 +154,7 @@ export default function Minutas() {
   const [newMinuta, setNewMinuta] = useState<MinutaInfo | null>(null);
   const [selected, setSelected] = useState<number | null>(6);
   const [editing, setEditing] = useState<Acuerdo | null>(null);
+  const [creatingAcuerdo, setCreatingAcuerdo] = useState<Acuerdo | null>(null);
   const [deletingId, setDeletingId] = useState<number | null>(null);
   const [statsOpen, setStatsOpen] = useState(false);
   const chartRef = useRef<HTMLDivElement | null>(null);
@@ -187,7 +188,35 @@ export default function Minutas() {
       ),
     }));
     toast({ title: "Acuerdo actualizado", description: `“${editing.actividad}” se guardó correctamente.` });
-    setEditing(null);
+  };
+
+  const openNewAcuerdo = () => {
+    if (!minuta) return;
+    const nextId = Math.max(0, ...(acuerdosByMinuta[minuta.id] ?? []).map((a) => a.id)) + 1;
+    setCreatingAcuerdo({
+      id: nextId,
+      actividad: "",
+      responsable: "",
+      iniciales: "",
+      fecha: "",
+      estado: "Pendiente",
+      cumplimiento: "—",
+    });
+  };
+
+  const handleCreateAcuerdo = () => {
+    if (!creatingAcuerdo || !minuta) return;
+    if (!creatingAcuerdo.actividad.trim() || !creatingAcuerdo.responsable.trim()) {
+      toast({ title: "Datos incompletos", description: "Completa actividad y responsable." });
+      return;
+    }
+    const nuevo: Acuerdo = { ...creatingAcuerdo, iniciales: getIniciales(creatingAcuerdo.responsable) };
+    setAcuerdosByMinuta((prev) => ({
+      ...prev,
+      [minuta.id]: [...(prev[minuta.id] ?? []), nuevo],
+    }));
+    toast({ title: "Actividad agregada", description: `“${nuevo.actividad}” se agregó a la minuta.` });
+    setCreatingAcuerdo(null);
   };
 
   const handleSaveMinuta = () => {
@@ -478,10 +507,14 @@ export default function Minutas() {
             </div>
           </div>
         </Card>
-
-        {/* Tabla + Panel */}
         <div className={cn("grid gap-6", selected && detail ? "lg:grid-cols-[1fr_380px]" : "")}>
           <Card className="overflow-hidden rounded-2xl border-border/50 bg-card shadow-soft">
+            <div className="flex items-center justify-between border-b border-border/40 px-5 py-3">
+              <p className="text-sm font-semibold">Acuerdos y actividades</p>
+              <Button size="sm" className="rounded-xl bg-gradient-primary" onClick={openNewAcuerdo}>
+                <Plus className="mr-2 h-4 w-4" /> Nueva actividad
+              </Button>
+            </div>
             <Table>
               <TableHeader>
                 <TableRow className="border-border/50 hover:bg-transparent">
@@ -687,6 +720,74 @@ export default function Minutas() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Nueva actividad */}
+      <Dialog open={!!creatingAcuerdo} onOpenChange={(open) => !open && setCreatingAcuerdo(null)}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Nueva actividad / acuerdo</DialogTitle>
+          </DialogHeader>
+          {creatingAcuerdo && (
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <Label>Actividad / Acuerdo</Label>
+                <Input
+                  value={creatingAcuerdo.actividad}
+                  onChange={(e) => setCreatingAcuerdo({ ...creatingAcuerdo, actividad: e.target.value })}
+                  placeholder="Ej. Constitución de la Comisión"
+                />
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-2">
+                  <Label>Responsable</Label>
+                  <Input
+                    value={creatingAcuerdo.responsable}
+                    onChange={(e) => setCreatingAcuerdo({ ...creatingAcuerdo, responsable: e.target.value })}
+                    placeholder="Nombre completo"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>Fecha compromiso</Label>
+                  <Input
+                    value={creatingAcuerdo.fecha}
+                    onChange={(e) => setCreatingAcuerdo({ ...creatingAcuerdo, fecha: e.target.value })}
+                    placeholder="16 marzo, 2026"
+                  />
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-2">
+                  <Label>Estado</Label>
+                  <Select
+                    value={creatingAcuerdo.estado}
+                    onValueChange={(v: Status) => setCreatingAcuerdo({ ...creatingAcuerdo, estado: v })}
+                  >
+                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="Cumplido">Cumplido</SelectItem>
+                      <SelectItem value="Pendiente">Pendiente</SelectItem>
+                      <SelectItem value="No cumplido">No cumplido</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2">
+                  <Label>Cumplimiento</Label>
+                  <Input
+                    value={creatingAcuerdo.cumplimiento}
+                    onChange={(e) => setCreatingAcuerdo({ ...creatingAcuerdo, cumplimiento: e.target.value })}
+                    placeholder="—"
+                  />
+                </div>
+              </div>
+            </div>
+          )}
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setCreatingAcuerdo(null)}>Cancelar</Button>
+            <Button className="bg-gradient-primary" onClick={handleCreateAcuerdo}>Agregar actividad</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
 
       {/* Eliminar acuerdo */}
       <AlertDialog open={deletingId != null} onOpenChange={(open) => !open && setDeletingId(null)}>
