@@ -157,6 +157,8 @@ export default function Minutas() {
   const [creatingAcuerdo, setCreatingAcuerdo] = useState<Acuerdo | null>(null);
   const [deletingId, setDeletingId] = useState<number | null>(null);
   const [statsOpen, setStatsOpen] = useState(false);
+  const [comentariosByAcuerdo, setComentariosByAcuerdo] = useState<Record<string, { id: number; texto: string; fecha: string }[]>>({});
+  const [nuevoComentario, setNuevoComentario] = useState("");
   const chartRef = useRef<HTMLDivElement | null>(null);
 
   const minuta = minutas.find((m) => m.id === selectedMinutaId) ?? minutas[0];
@@ -637,15 +639,60 @@ export default function Minutas() {
                   </div>
                 </div>
 
-                <div className="relative">
-                  <Input
-                    placeholder="Escribe un comentario…"
-                    className="h-11 rounded-xl border-border/60 bg-background pr-12 text-sm"
-                  />
-                  <Button size="icon" className="absolute right-1.5 top-1/2 h-8 w-8 -translate-y-1/2 rounded-lg bg-gradient-primary">
-                    <Send className="h-3.5 w-3.5" />
-                  </Button>
-                </div>
+                {(() => {
+                  const key = `${selectedMinutaId}:${detail.id}`;
+                  const comentarios = comentariosByAcuerdo[key] ?? [];
+                  const handleSend = () => {
+                    const texto = nuevoComentario.trim();
+                    if (!texto) return;
+                    const fecha = new Date().toLocaleString("es-MX", { dateStyle: "short", timeStyle: "short" });
+                    setComentariosByAcuerdo((prev) => ({
+                      ...prev,
+                      [key]: [...(prev[key] ?? []), { id: Date.now(), texto, fecha }],
+                    }));
+                    setNuevoComentario("");
+                  };
+                  return (
+                    <div className="space-y-3">
+                      <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Comentarios</p>
+                      {comentarios.length === 0 ? (
+                        <p className="rounded-xl border border-dashed border-border/60 p-3 text-center text-xs text-muted-foreground">
+                          Sin comentarios.
+                        </p>
+                      ) : (
+                        <ul className="space-y-2">
+                          {comentarios.map((c) => (
+                            <li key={c.id} className="rounded-xl border border-border/60 bg-background p-3">
+                              <p className="text-sm">{c.texto}</p>
+                              <p className="mt-1 text-[10px] uppercase tracking-wider text-muted-foreground">{c.fecha}</p>
+                            </li>
+                          ))}
+                        </ul>
+                      )}
+                      <div className="relative">
+                        <Input
+                          placeholder="Escribe un comentario…"
+                          value={nuevoComentario}
+                          onChange={(e) => setNuevoComentario(e.target.value)}
+                          onKeyDown={(e) => {
+                            if (e.key === "Enter" && !e.shiftKey) {
+                              e.preventDefault();
+                              handleSend();
+                            }
+                          }}
+                          className="h-11 rounded-xl border-border/60 bg-background pr-12 text-sm"
+                        />
+                        <Button
+                          size="icon"
+                          onClick={handleSend}
+                          className="absolute right-1.5 top-1/2 h-8 w-8 -translate-y-1/2 rounded-lg bg-gradient-primary"
+                        >
+                          <Send className="h-3.5 w-3.5" />
+                        </Button>
+                      </div>
+                    </div>
+                  );
+                })()}
               </div>
             </Card>
           )}
