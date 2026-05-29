@@ -721,6 +721,74 @@ export default function Minutas() {
         </DialogContent>
       </Dialog>
 
+      {/* Nueva actividad */}
+      <Dialog open={!!creatingAcuerdo} onOpenChange={(open) => !open && setCreatingAcuerdo(null)}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Nueva actividad / acuerdo</DialogTitle>
+          </DialogHeader>
+          {creatingAcuerdo && (
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <Label>Actividad / Acuerdo</Label>
+                <Input
+                  value={creatingAcuerdo.actividad}
+                  onChange={(e) => setCreatingAcuerdo({ ...creatingAcuerdo, actividad: e.target.value })}
+                  placeholder="Ej. Constitución de la Comisión"
+                />
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-2">
+                  <Label>Responsable</Label>
+                  <Input
+                    value={creatingAcuerdo.responsable}
+                    onChange={(e) => setCreatingAcuerdo({ ...creatingAcuerdo, responsable: e.target.value })}
+                    placeholder="Nombre completo"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>Fecha compromiso</Label>
+                  <Input
+                    value={creatingAcuerdo.fecha}
+                    onChange={(e) => setCreatingAcuerdo({ ...creatingAcuerdo, fecha: e.target.value })}
+                    placeholder="16 marzo, 2026"
+                  />
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-2">
+                  <Label>Estado</Label>
+                  <Select
+                    value={creatingAcuerdo.estado}
+                    onValueChange={(v: Status) => setCreatingAcuerdo({ ...creatingAcuerdo, estado: v })}
+                  >
+                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="Cumplido">Cumplido</SelectItem>
+                      <SelectItem value="Pendiente">Pendiente</SelectItem>
+                      <SelectItem value="No cumplido">No cumplido</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2">
+                  <Label>Cumplimiento</Label>
+                  <Input
+                    value={creatingAcuerdo.cumplimiento}
+                    onChange={(e) => setCreatingAcuerdo({ ...creatingAcuerdo, cumplimiento: e.target.value })}
+                    placeholder="—"
+                  />
+                </div>
+              </div>
+            </div>
+          )}
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setCreatingAcuerdo(null)}>Cancelar</Button>
+            <Button className="bg-gradient-primary" onClick={handleCreateAcuerdo}>Agregar actividad</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+
       {/* Eliminar acuerdo */}
       <AlertDialog open={deletingId != null} onOpenChange={(open) => !open && setDeletingId(null)}>
         <AlertDialogContent>
