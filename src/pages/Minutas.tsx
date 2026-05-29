@@ -157,6 +157,8 @@ export default function Minutas() {
   const [creatingAcuerdo, setCreatingAcuerdo] = useState<Acuerdo | null>(null);
   const [deletingId, setDeletingId] = useState<number | null>(null);
   const [statsOpen, setStatsOpen] = useState(false);
+  const [comentariosByAcuerdo, setComentariosByAcuerdo] = useState<Record<string, { id: number; texto: string; fecha: string }[]>>({});
+  const [nuevoComentario, setNuevoComentario] = useState("");
   const chartRef = useRef<HTMLDivElement | null>(null);
 
   const minuta = minutas.find((m) => m.id === selectedMinutaId) ?? minutas[0];
