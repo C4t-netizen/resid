@@ -763,6 +763,33 @@ export default function Minutas() {
                   />
                 </div>
               </div>
+              <div className="space-y-2">
+                <Label>Imágenes</Label>
+                <Input
+                  type="file"
+                  accept="image/*"
+                  multiple
+                  onChange={async (e) => {
+                    const files = Array.from(e.target.files ?? []);
+                    if (!files.length || !editing) return;
+                    const urls = await Promise.all(files.map((f) => new Promise<string>((res) => {
+                      const r = new FileReader(); r.onload = () => res(String(r.result)); r.readAsDataURL(f);
+                    })));
+                    setEditing({ ...editing, imagenes: [...(editing.imagenes ?? []), ...urls] });
+                    e.target.value = "";
+                  }}
+                />
+                {editing.imagenes && editing.imagenes.length > 0 && (
+                  <div className="flex flex-wrap gap-2">
+                    {editing.imagenes.map((src, i) => (
+                      <div key={i} className="relative">
+                        <img src={src} alt="" className="h-16 w-16 rounded-lg object-cover" />
+                        <button type="button" onClick={() => setEditing({ ...editing, imagenes: editing.imagenes!.filter((_, j) => j !== i) })} className="absolute -right-1 -top-1 flex h-5 w-5 items-center justify-center rounded-full bg-destructive text-destructive-foreground"><X className="h-3 w-3" /></button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
             </div>
           )}
           <DialogFooter>
