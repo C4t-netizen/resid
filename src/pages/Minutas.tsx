@@ -90,6 +90,7 @@ type Acuerdo = {
   fecha: string;
   estado: Status;
   cumplimiento: string;
+  imagenes?: string[];
 };
 
 interface MinutaInfo {
@@ -98,6 +99,9 @@ interface MinutaInfo {
   coordinador: string;
   iniciales: string;
   fecha: string;
+  fechaFin?: string;
+  horaInicio?: string;
+  horaFin?: string;
   estado: string;
   anio: string;
 }
