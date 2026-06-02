@@ -180,14 +180,14 @@ export default function Acta() {
             <div className="border-t border-border/60 pt-5">
               <FileUploader
                 archivos={archivos}
-                canEdit={canEdit && !!form.id}
+                canEdit={canEdit}
                 folder={`actas/${form.id ?? "nueva"}`}
                 onUpload={handleUpload}
                 onDelete={handleDelete}
                 label="Actas y documentos adjuntos"
               />
               {!form.id && canEdit && (
-                <p className="mt-2 text-xs text-muted-foreground">Guarda el acta antes de adjuntar archivos.</p>
+                <p className="mt-2 text-xs text-muted-foreground">Captura la fecha del acta; al subir se guardará automáticamente.</p>
               )}
             </div>
 
