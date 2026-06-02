@@ -381,6 +381,22 @@ export default function Minutas() {
                   }} />
                 </div>
                 <div className="space-y-2">
+                  <Label>Fecha de terminación</Label>
+                  <Input type="date" onChange={(e) => {
+                    const d = new Date(e.target.value);
+                    const txt = isNaN(d.getTime()) ? e.target.value : d.toLocaleDateString("es-MX", { day: "numeric", month: "long", year: "numeric" });
+                    setNewMinuta({ ...newMinuta, fechaFin: txt });
+                  }} />
+                </div>
+                <div className="space-y-2">
+                  <Label>Hora de inicio</Label>
+                  <Input type="time" value={newMinuta.horaInicio ?? ""} onChange={(e) => setNewMinuta({ ...newMinuta, horaInicio: e.target.value })} />
+                </div>
+                <div className="space-y-2">
+                  <Label>Hora final</Label>
+                  <Input type="time" value={newMinuta.horaFin ?? ""} onChange={(e) => setNewMinuta({ ...newMinuta, horaFin: e.target.value })} />
+                </div>
+                <div className="col-span-2 space-y-2">
                   <Label>Estado</Label>
                   <Select value={newMinuta.estado} onValueChange={(v) => setNewMinuta({ ...newMinuta, estado: v })}>
                     <SelectTrigger><SelectValue /></SelectTrigger>
