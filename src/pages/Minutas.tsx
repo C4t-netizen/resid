@@ -624,23 +624,18 @@ export default function Minutas() {
                 </div>
 
                 <div>
-                  <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">Evidencia</p>
-                  <div className="rounded-xl border border-dashed border-border bg-secondary/40 p-4">
-                    <div className="mb-3 flex items-center gap-2 text-xs">
-                      <Paperclip className="h-3.5 w-3.5 text-muted-foreground" />
-                      <span className="font-medium">ejemplo_señalizacion.png</span>
-                      <span className="ml-auto text-muted-foreground">2.1 MB</span>
+                  <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">Imágenes</p>
+                  {detail.imagenes && detail.imagenes.length > 0 ? (
+                    <div className="grid grid-cols-2 gap-2">
+                      {detail.imagenes.map((src, i) => (
+                        <a key={i} href={src} target="_blank" rel="noreferrer">
+                          <img src={src} alt="" className="aspect-video w-full rounded-lg object-cover ring-1 ring-border" />
+                        </a>
+                      ))}
                     </div>
-                    <div className="flex aspect-video items-center justify-center rounded-lg bg-gradient-to-br from-warning/20 to-destructive/10 ring-1 ring-warning/20">
-                      <div className="flex flex-col items-center gap-2 text-center">
-                        <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-warning shadow-elegant">
-                          <ImageIcon className="h-6 w-6 text-warning-foreground" />
-                        </div>
-                        <p className="font-display text-sm font-bold text-warning">PELIGRO</p>
-                        <p className="text-[10px] uppercase tracking-wider text-muted-foreground">Zona de riesgo</p>
-                      </div>
-                    </div>
-                  </div>
+                  ) : (
+                    <p className="rounded-xl border border-dashed border-border/60 p-4 text-center text-xs text-muted-foreground">Sin imágenes. Edita la actividad para agregar.</p>
+                  )}
                 </div>
 
                 {(() => {
