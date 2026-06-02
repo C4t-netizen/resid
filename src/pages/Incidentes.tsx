@@ -368,8 +368,14 @@ export default function Incidentes() {
                   </div>
                   <Textarea placeholder="Acción correctiva" rows={2} value={a.accion} onChange={(e) => { const c = [...accForm]; c[idx].accion = e.target.value; setAccForm(c); }} />
                   <div className="grid gap-2 md:grid-cols-2">
-                    <Input placeholder="Departamento responsable" value={a.depto_responsable} onChange={(e) => { const c = [...accForm]; c[idx].depto_responsable = e.target.value; setAccForm(c); }} />
-                    <Input placeholder="Responsable seguimiento" value={a.responsable_seguimiento} onChange={(e) => { const c = [...accForm]; c[idx].responsable_seguimiento = e.target.value; setAccForm(c); }} />
+                    <div className="md:col-span-2">
+                      <Label className="text-xs">Departamento responsable de la implementación de las acciones correctivas</Label>
+                      <Input placeholder="Departamento responsable" value={a.depto_responsable} onChange={(e) => { const c = [...accForm]; c[idx].depto_responsable = e.target.value; setAccForm(c); }} />
+                    </div>
+                    <div className="md:col-span-2">
+                      <Label className="text-xs">Responsable de seguimiento</Label>
+                      <Input placeholder="Responsable de seguimiento" value={a.responsable_seguimiento} onChange={(e) => { const c = [...accForm]; c[idx].responsable_seguimiento = e.target.value; setAccForm(c); }} />
+                    </div>
                     <div><Label className="text-xs">Fecha probable</Label><Input type="date" value={a.fecha_probable} onChange={(e) => { const c = [...accForm]; c[idx].fecha_probable = e.target.value; setAccForm(c); }} /></div>
                     <div><Label className="text-xs">Fecha real</Label><Input type="date" value={a.fecha_real} onChange={(e) => { const c = [...accForm]; c[idx].fecha_real = e.target.value; setAccForm(c); }} /></div>
                   </div>
