@@ -90,6 +90,7 @@ type Acuerdo = {
   fecha: string;
   estado: Status;
   cumplimiento: string;
+  imagenes?: string[];
 };
 
 interface MinutaInfo {
@@ -98,6 +99,9 @@ interface MinutaInfo {
   coordinador: string;
   iniciales: string;
   fecha: string;
+  fechaFin?: string;
+  horaInicio?: string;
+  horaFin?: string;
   estado: string;
   anio: string;
 }
@@ -377,6 +381,22 @@ export default function Minutas() {
                   }} />
                 </div>
                 <div className="space-y-2">
+                  <Label>Fecha de terminación</Label>
+                  <Input type="date" onChange={(e) => {
+                    const d = new Date(e.target.value);
+                    const txt = isNaN(d.getTime()) ? e.target.value : d.toLocaleDateString("es-MX", { day: "numeric", month: "long", year: "numeric" });
+                    setNewMinuta({ ...newMinuta, fechaFin: txt });
+                  }} />
+                </div>
+                <div className="space-y-2">
+                  <Label>Hora de inicio</Label>
+                  <Input type="time" value={newMinuta.horaInicio ?? ""} onChange={(e) => setNewMinuta({ ...newMinuta, horaInicio: e.target.value })} />
+                </div>
+                <div className="space-y-2">
+                  <Label>Hora final</Label>
+                  <Input type="time" value={newMinuta.horaFin ?? ""} onChange={(e) => setNewMinuta({ ...newMinuta, horaFin: e.target.value })} />
+                </div>
+                <div className="col-span-2 space-y-2">
                   <Label>Estado</Label>
                   <Select value={newMinuta.estado} onValueChange={(v) => setNewMinuta({ ...newMinuta, estado: v })}>
                     <SelectTrigger><SelectValue /></SelectTrigger>
@@ -620,23 +640,18 @@ export default function Minutas() {
                 </div>
 
                 <div>
-                  <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">Evidencia</p>
-                  <div className="rounded-xl border border-dashed border-border bg-secondary/40 p-4">
-                    <div className="mb-3 flex items-center gap-2 text-xs">
-                      <Paperclip className="h-3.5 w-3.5 text-muted-foreground" />
-                      <span className="font-medium">ejemplo_señalizacion.png</span>
-                      <span className="ml-auto text-muted-foreground">2.1 MB</span>
+                  <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">Imágenes</p>
+                  {detail.imagenes && detail.imagenes.length > 0 ? (
+                    <div className="grid grid-cols-2 gap-2">
+                      {detail.imagenes.map((src, i) => (
+                        <a key={i} href={src} target="_blank" rel="noreferrer">
+                          <img src={src} alt="" className="aspect-video w-full rounded-lg object-cover ring-1 ring-border" />
+                        </a>
+                      ))}
                     </div>
-                    <div className="flex aspect-video items-center justify-center rounded-lg bg-gradient-to-br from-warning/20 to-destructive/10 ring-1 ring-warning/20">
-                      <div className="flex flex-col items-center gap-2 text-center">
-                        <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-warning shadow-elegant">
-                          <ImageIcon className="h-6 w-6 text-warning-foreground" />
-                        </div>
-                        <p className="font-display text-sm font-bold text-warning">PELIGRO</p>
-                        <p className="text-[10px] uppercase tracking-wider text-muted-foreground">Zona de riesgo</p>
-                      </div>
-                    </div>
-                  </div>
+                  ) : (
+                    <p className="rounded-xl border border-dashed border-border/60 p-4 text-center text-xs text-muted-foreground">Sin imágenes. Edita la actividad para agregar.</p>
+                  )}
                 </div>
 
                 {(() => {
@@ -759,6 +774,33 @@ export default function Minutas() {
                   />
                 </div>
               </div>
+              <div className="space-y-2">
+                <Label>Imágenes</Label>
+                <Input
+                  type="file"
+                  accept="image/*"
+                  multiple
+                  onChange={async (e) => {
+                    const files = Array.from(e.target.files ?? []);
+                    if (!files.length || !editing) return;
+                    const urls = await Promise.all(files.map((f) => new Promise<string>((res) => {
+                      const r = new FileReader(); r.onload = () => res(String(r.result)); r.readAsDataURL(f);
+                    })));
+                    setEditing({ ...editing, imagenes: [...(editing.imagenes ?? []), ...urls] });
+                    e.target.value = "";
+                  }}
+                />
+                {editing.imagenes && editing.imagenes.length > 0 && (
+                  <div className="flex flex-wrap gap-2">
+                    {editing.imagenes.map((src, i) => (
+                      <div key={i} className="relative">
+                        <img src={src} alt="" className="h-16 w-16 rounded-lg object-cover" />
+                        <button type="button" onClick={() => setEditing({ ...editing, imagenes: editing.imagenes!.filter((_, j) => j !== i) })} className="absolute -right-1 -top-1 flex h-5 w-5 items-center justify-center rounded-full bg-destructive text-destructive-foreground"><X className="h-3 w-3" /></button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
             </div>
           )}
           <DialogFooter>
@@ -826,6 +868,33 @@ export default function Minutas() {
                   />
                 </div>
               </div>
+              <div className="space-y-2">
+                <Label>Imágenes</Label>
+                <Input
+                  type="file"
+                  accept="image/*"
+                  multiple
+                  onChange={async (e) => {
+                    const files = Array.from(e.target.files ?? []);
+                    if (!files.length || !creatingAcuerdo) return;
+                    const urls = await Promise.all(files.map((f) => new Promise<string>((res) => {
+                      const r = new FileReader(); r.onload = () => res(String(r.result)); r.readAsDataURL(f);
+                    })));
+                    setCreatingAcuerdo({ ...creatingAcuerdo, imagenes: [...(creatingAcuerdo.imagenes ?? []), ...urls] });
+                    e.target.value = "";
+                  }}
+                />
+                {creatingAcuerdo.imagenes && creatingAcuerdo.imagenes.length > 0 && (
+                  <div className="flex flex-wrap gap-2">
+                    {creatingAcuerdo.imagenes.map((src, i) => (
+                      <div key={i} className="relative">
+                        <img src={src} alt="" className="h-16 w-16 rounded-lg object-cover" />
+                        <button type="button" onClick={() => setCreatingAcuerdo({ ...creatingAcuerdo, imagenes: creatingAcuerdo.imagenes!.filter((_, j) => j !== i) })} className="absolute -right-1 -top-1 flex h-5 w-5 items-center justify-center rounded-full bg-destructive text-destructive-foreground"><X className="h-3 w-3" /></button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
             </div>
           )}
           <DialogFooter>
@@ -881,13 +950,36 @@ export default function Minutas() {
               </div>
               <div className="grid grid-cols-2 gap-3">
                 <div className="space-y-2">
-                  <Label>Fecha</Label>
+                  <Label>Fecha de inicio</Label>
                   <Input
                     value={editingMinuta.fecha}
                     onChange={(e) => setEditingMinuta({ ...editingMinuta, fecha: e.target.value })}
                   />
                 </div>
                 <div className="space-y-2">
+                  <Label>Fecha de terminación</Label>
+                  <Input
+                    value={editingMinuta.fechaFin ?? ""}
+                    onChange={(e) => setEditingMinuta({ ...editingMinuta, fechaFin: e.target.value })}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>Hora de inicio</Label>
+                  <Input
+                    type="time"
+                    value={editingMinuta.horaInicio ?? ""}
+                    onChange={(e) => setEditingMinuta({ ...editingMinuta, horaInicio: e.target.value })}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>Hora final</Label>
+                  <Input
+                    type="time"
+                    value={editingMinuta.horaFin ?? ""}
+                    onChange={(e) => setEditingMinuta({ ...editingMinuta, horaFin: e.target.value })}
+                  />
+                </div>
+                <div className="col-span-2 space-y-2">
                   <Label>Estado</Label>
                   <Select
                     value={editingMinuta.estado}

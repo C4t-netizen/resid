@@ -103,9 +103,22 @@ export default function Acta() {
   };
 
   const handleUpload = async (file: { nombre: string; archivo_url: string }) => {
-    if (!form.id) throw new Error("Guarda el acta primero antes de subir archivos");
+    let actaId = form.id;
+    if (!actaId) {
+      if (!form.fecha_acta) throw new Error("Captura la fecha del acta antes de adjuntar archivos");
+      const { error: e1, data: d1 } = await supabase.from("acta_constitucion").insert({
+        ...form,
+        hora: form.hora || null,
+        vigencia_inicio: form.vigencia_inicio || null,
+        vigencia_fin: form.vigencia_fin || null,
+        created_by: user?.id,
+      }).select().single();
+      if (e1) throw e1;
+      actaId = d1.id;
+      setForm((p) => ({ ...p, id: actaId }));
+    }
     const { error, data } = await supabase.from("acta_archivos").insert({
-      acta_id: form.id, nombre: file.nombre, archivo_url: file.archivo_url, created_by: user?.id,
+      acta_id: actaId, nombre: file.nombre, archivo_url: file.archivo_url, created_by: user?.id,
     }).select().single();
     if (error) throw error;
     setArchivos((p) => [data as ArchivoItem, ...p]);
@@ -167,14 +180,14 @@ export default function Acta() {
             <div className="border-t border-border/60 pt-5">
               <FileUploader
                 archivos={archivos}
-                canEdit={canEdit && !!form.id}
+                canEdit={canEdit}
                 folder={`actas/${form.id ?? "nueva"}`}
                 onUpload={handleUpload}
                 onDelete={handleDelete}
                 label="Actas y documentos adjuntos"
               />
               {!form.id && canEdit && (
-                <p className="mt-2 text-xs text-muted-foreground">Guarda el acta antes de adjuntar archivos.</p>
+                <p className="mt-2 text-xs text-muted-foreground">Captura la fecha del acta; al subir se guardará automáticamente.</p>
               )}
             </div>
 
