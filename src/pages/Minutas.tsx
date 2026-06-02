@@ -950,13 +950,36 @@ export default function Minutas() {
               </div>
               <div className="grid grid-cols-2 gap-3">
                 <div className="space-y-2">
-                  <Label>Fecha</Label>
+                  <Label>Fecha de inicio</Label>
                   <Input
                     value={editingMinuta.fecha}
                     onChange={(e) => setEditingMinuta({ ...editingMinuta, fecha: e.target.value })}
                   />
                 </div>
                 <div className="space-y-2">
+                  <Label>Fecha de terminación</Label>
+                  <Input
+                    value={editingMinuta.fechaFin ?? ""}
+                    onChange={(e) => setEditingMinuta({ ...editingMinuta, fechaFin: e.target.value })}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>Hora de inicio</Label>
+                  <Input
+                    type="time"
+                    value={editingMinuta.horaInicio ?? ""}
+                    onChange={(e) => setEditingMinuta({ ...editingMinuta, horaInicio: e.target.value })}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>Hora final</Label>
+                  <Input
+                    type="time"
+                    value={editingMinuta.horaFin ?? ""}
+                    onChange={(e) => setEditingMinuta({ ...editingMinuta, horaFin: e.target.value })}
+                  />
+                </div>
+                <div className="col-span-2 space-y-2">
                   <Label>Estado</Label>
                   <Select
                     value={editingMinuta.estado}
