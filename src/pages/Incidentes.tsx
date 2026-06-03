@@ -86,6 +86,7 @@ export default function Incidentes() {
   const [editId, setEditId] = useState<string | null>(null);
   const [form, setForm] = useState<any>(empty);
   const [accForm, setAccForm] = useState<Accion[]>([]);
+  const { openPdfPreview, PdfPreviewDialogElement } = usePdfPreview();
 
   const load = async () => {
     setLoading(true);
