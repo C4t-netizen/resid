@@ -107,6 +107,7 @@ export default function Accidentes() {
   const [step, setStep] = useState(0);
   const [editId, setEditId] = useState<string | null>(null);
   const [form, setForm] = useState<any>(empty);
+  const { openPdfPreview, PdfPreviewDialogElement } = usePdfPreview();
 
   const load = async () => {
     setLoading(true);
