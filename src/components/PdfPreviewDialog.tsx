@@ -34,10 +34,10 @@ export function PdfPreviewDialog({ state, onClose }: Props) {
       setUrl(null);
       return;
     }
-    const blob = state.doc.output("blob");
-    const u = URL.createObjectURL(blob);
-    setUrl(u);
-    return () => URL.revokeObjectURL(u);
+    // Use data URI instead of blob URL to avoid Chrome blocking
+    // blob: PDFs inside sandboxed/cross-origin iframes (preview environments).
+    const dataUri = state.doc.output("datauristring");
+    setUrl(dataUri);
   }, [state]);
 
   const handleDownload = () => {
