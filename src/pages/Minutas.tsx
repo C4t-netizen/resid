@@ -79,6 +79,7 @@ import { toast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
+import { usePdfPreview } from "@/components/PdfPreviewDialog";
 
 type Status = "Cumplido" | "Pendiente" | "No cumplido";
 
@@ -164,6 +165,7 @@ export default function Minutas() {
   const [comentariosByAcuerdo, setComentariosByAcuerdo] = useState<Record<string, { id: number; texto: string; fecha: string }[]>>({});
   const [nuevoComentario, setNuevoComentario] = useState("");
   const chartRef = useRef<HTMLDivElement | null>(null);
+  const { openPdfPreview, PdfPreviewDialogElement } = usePdfPreview();
 
   const minuta = minutas.find((m) => m.id === selectedMinutaId) ?? minutas[0];
   const acuerdos = minuta ? acuerdosByMinuta[minuta.id] ?? [] : [];
@@ -326,8 +328,8 @@ export default function Minutas() {
       theme: "striped",
     });
 
-    doc.save(`${minuta.titulo.replace(/\s+/g, "_")}_resumen.pdf`);
-    toast({ title: "PDF generado", description: "El resumen se descargó correctamente." });
+    openPdfPreview(doc, `${minuta.titulo.replace(/\s+/g, "_")}_resumen.pdf`);
+    toast({ title: "Vista previa lista", description: "Revisa el documento antes de descargarlo." });
   };
 
   if (!minuta) {
@@ -421,6 +423,7 @@ export default function Minutas() {
 
   return (
     <>
+      {PdfPreviewDialogElement}
       <PageHeader
         title={minuta.titulo}
         subtitle={`Seguimiento de acuerdos · Comisión de Seguridad e Higiene · ${minuta.anio}`}

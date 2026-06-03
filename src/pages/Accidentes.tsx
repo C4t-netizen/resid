@@ -14,6 +14,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
+import { usePdfPreview } from "@/components/PdfPreviewDialog";
 
 interface Registro {
   id: string;
@@ -106,6 +107,7 @@ export default function Accidentes() {
   const [step, setStep] = useState(0);
   const [editId, setEditId] = useState<string | null>(null);
   const [form, setForm] = useState<any>(empty);
+  const { openPdfPreview, PdfPreviewDialogElement } = usePdfPreview();
 
   const load = async () => {
     setLoading(true);
@@ -254,11 +256,12 @@ export default function Accidentes() {
       margin: { left: M, right: M },
     });
 
-    doc.save(`registro_accidente_${r.fecha}.pdf`);
+    openPdfPreview(doc, `registro_accidente_${r.fecha}.pdf`);
   };
 
   return (
     <>
+      {PdfPreviewDialogElement}
       <PageHeader
         title="Registro de Accidentes"
         subtitle="Formato ITD-SS-PO-03-02 · ISO 45001:2018 8.2, 10.2"
