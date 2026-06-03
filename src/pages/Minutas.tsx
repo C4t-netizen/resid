@@ -165,6 +165,7 @@ export default function Minutas() {
   const [comentariosByAcuerdo, setComentariosByAcuerdo] = useState<Record<string, { id: number; texto: string; fecha: string }[]>>({});
   const [nuevoComentario, setNuevoComentario] = useState("");
   const chartRef = useRef<HTMLDivElement | null>(null);
+  const { openPdfPreview, PdfPreviewDialogElement } = usePdfPreview();
 
   const minuta = minutas.find((m) => m.id === selectedMinutaId) ?? minutas[0];
   const acuerdos = minuta ? acuerdosByMinuta[minuta.id] ?? [] : [];
