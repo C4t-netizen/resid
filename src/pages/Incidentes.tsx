@@ -268,7 +268,7 @@ export default function Incidentes() {
       margin: { left: M, right: M },
     });
 
-    doc.save(`investigacion_${inv.nombre_persona.replace(/\s+/g, "_")}.pdf`);
+    openPdfPreview(doc, `investigacion_${inv.nombre_persona.replace(/\s+/g, "_")}.pdf`);
   };
 
   return (
