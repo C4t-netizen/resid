@@ -57,11 +57,23 @@ export function PdfPreviewDialog({ state, onClose }: Props) {
         </DialogHeader>
         <div className="flex-1 px-6 overflow-hidden">
           {url && (
-            <iframe
-              src={url}
-              title="Vista previa PDF"
+            <object
+              data={url}
+              type="application/pdf"
               className="h-full w-full rounded-lg border border-border/60 bg-muted"
-            />
+            >
+              <div className="flex h-full w-full flex-col items-center justify-center gap-3 p-6 text-center text-sm text-muted-foreground">
+                <p>Tu navegador bloqueó la vista previa embebida.</p>
+                <a
+                  href={url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-primary underline"
+                >
+                  Abrir vista previa en una pestaña nueva
+                </a>
+              </div>
+            </object>
           )}
         </div>
         <DialogFooter className="px-6 py-4 border-t">
