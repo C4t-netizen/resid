@@ -39,6 +39,7 @@ export default function Informes() {
     verificaciones: [] as any[],
     recorridos: [] as any[],
   });
+  const { openPdfPreview, PdfPreviewDialogElement } = usePdfPreview();
 
   const load = async () => {
     setLoading(true);
