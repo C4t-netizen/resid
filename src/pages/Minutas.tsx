@@ -328,8 +328,8 @@ export default function Minutas() {
       theme: "striped",
     });
 
-    doc.save(`${minuta.titulo.replace(/\s+/g, "_")}_resumen.pdf`);
-    toast({ title: "PDF generado", description: "El resumen se descargó correctamente." });
+    openPdfPreview(doc, `${minuta.titulo.replace(/\s+/g, "_")}_resumen.pdf`);
+    toast({ title: "Vista previa lista", description: "Revisa el documento antes de descargarlo." });
   };
 
   if (!minuta) {
