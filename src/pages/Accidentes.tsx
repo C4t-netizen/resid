@@ -256,7 +256,7 @@ export default function Accidentes() {
       margin: { left: M, right: M },
     });
 
-    doc.save(`registro_accidente_${r.fecha}.pdf`);
+    openPdfPreview(doc, `registro_accidente_${r.fecha}.pdf`);
   };
 
   return (
