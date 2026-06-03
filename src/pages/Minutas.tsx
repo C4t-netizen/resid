@@ -423,6 +423,7 @@ export default function Minutas() {
 
   return (
     <>
+      {PdfPreviewDialogElement}
       <PageHeader
         title={minuta.titulo}
         subtitle={`Seguimiento de acuerdos · Comisión de Seguridad e Higiene · ${minuta.anio}`}
