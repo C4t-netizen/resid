@@ -79,6 +79,7 @@ import { toast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
+import { usePdfPreview } from "@/components/PdfPreviewDialog";
 
 type Status = "Cumplido" | "Pendiente" | "No cumplido";
 
