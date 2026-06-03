@@ -273,6 +273,7 @@ export default function Incidentes() {
 
   return (
     <>
+      {PdfPreviewDialogElement}
       <PageHeader
         title="Investigación de Incidentes y Accidentes"
         subtitle="Formato ITD-SS-PO-03-01 · ISO 45001:2018 8.2, 10.2"
