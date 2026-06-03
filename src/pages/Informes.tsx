@@ -170,8 +170,8 @@ export default function Informes() {
       doc.text(`Página ${p} de ${pages} · Generado ${new Date().toLocaleDateString("es-MX")}`, 14, doc.internal.pageSize.getHeight() - 8);
     }
 
-    doc.save(`informe-csh-${year}.pdf`);
-    toast.success("Informe PDF generado");
+    openPdfPreview(doc, `informe-csh-${year}.pdf`);
+    toast.success("Vista previa generada");
   };
 
   if (loading) {
