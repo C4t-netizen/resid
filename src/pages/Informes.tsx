@@ -184,6 +184,7 @@ export default function Informes() {
 
   return (
     <>
+      {PdfPreviewDialogElement}
       <PageHeader
         title="Informes y métricas"
         subtitle="Tablero ejecutivo del desempeño anual de la Comisión de Seguridad e Higiene."
