@@ -82,6 +82,45 @@ export default function Nom019() {
     setAnswers({});
   };
 
+  const exportPdf = () => {
+    const doc = new jsPDF({ orientation: "portrait", unit: "pt", format: "a4" });
+    const pageWidth = doc.internal.pageSize.getWidth();
+    doc.setFontSize(16);
+    doc.text("Cuestionario NOM-019-STPS", pageWidth / 2, 40, { align: "center" });
+    doc.setFontSize(10);
+    doc.text(`Fecha: ${new Date().toLocaleDateString()}`, pageWidth / 2, 58, { align: "center" });
+    doc.text(
+      `Respondidas: ${stats.answered}/${stats.total} (${stats.pct}%)  ·  Sí: ${stats.si}  ·  No: ${stats.no}  ·  N/A: ${stats.na}`,
+      pageWidth / 2,
+      74,
+      { align: "center" }
+    );
+
+    let startY = 95;
+    sections.forEach(([sectionName, items]) => {
+      const body = items.map((it) => {
+        const ans = answers[it.code] ?? { status: "", comment: "" };
+        const subs = it.subitems.length ? `\n\n• ${it.subitems.join("\n• ")}` : "";
+        const ind = it.indicator ? `\n\n${it.indicator}` : "";
+        const status = ans.status === "Si" ? "Sí" : ans.status === "NA" ? "N/A" : ans.status || "—";
+        return [it.code, `${it.question}${subs}${ind}`, status, ans.comment || "—"];
+      });
+      autoTable(doc, {
+        startY,
+        head: [[{ content: sectionName, colSpan: 4, styles: { halign: "left", fillColor: [37, 99, 235], textColor: 255 } }],
+               ["Código", "Disposición", "Respuesta", "Comentarios / Evidencia"]],
+        body,
+        styles: { fontSize: 8, cellPadding: 4, valign: "top" },
+        headStyles: { fillColor: [30, 41, 59], textColor: 255 },
+        columnStyles: { 0: { cellWidth: 50 }, 2: { cellWidth: 50, halign: "center" }, 3: { cellWidth: 130 } },
+        margin: { left: 30, right: 30 },
+      });
+      startY = (doc as any).lastAutoTable.finalY + 14;
+    });
+
+    doc.save(`NOM-019-STPS_${new Date().toISOString().slice(0, 10)}.pdf`);
+  };
+
   return (
     <div className="min-h-screen bg-background">
       <PageHeader
@@ -93,6 +132,9 @@ export default function Nom019() {
           <>
             <Button variant="outline" onClick={reset}>
               <RotateCcw className="mr-2 h-4 w-4" /> Reiniciar
+            </Button>
+            <Button variant="outline" onClick={exportPdf}>
+              <FileDown className="mr-2 h-4 w-4" /> Exportar PDF
             </Button>
             <Button onClick={save}>
               <Save className="mr-2 h-4 w-4" /> Guardar
