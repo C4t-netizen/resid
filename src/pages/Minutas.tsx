@@ -337,7 +337,7 @@ export default function Minutas() {
       <>
         <PageHeader
           title="Minutas"
-          subtitle="Crea tu primera minuta para comenzar."
+          subtitle={yearFilter === "todos" ? "Crea tu primera minuta para comenzar." : `No hay minutas registradas en ${yearFilter}.`}
           breadcrumbs={[{ label: "Minutas", href: "/minutas" }]}
           actions={
             <Button
@@ -348,13 +348,33 @@ export default function Minutas() {
             </Button>
           }
         />
-        <div className="px-4 py-12 text-center text-sm text-muted-foreground md:px-8">
-          No hay minutas registradas.
+        <div className="space-y-6 px-4 py-6 md:px-8">
+          <Card className="rounded-2xl border-border/50 p-4 shadow-soft">
+            <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+              <div className="flex items-center gap-2">
+                <Label className="text-xs uppercase tracking-wider text-muted-foreground">Filtrar por año</Label>
+                <Select value={yearFilter} onValueChange={setYearFilter}>
+                  <SelectTrigger className="h-9 w-32 rounded-xl"><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="todos">Todos</SelectItem>
+                    {AÑOS_DISPONIBLES.map((y) => (
+                      <SelectItem key={y} value={y}>{y}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <p className="text-xs text-muted-foreground">0 minuta(s)</p>
+            </div>
+          </Card>
+          <div className="px-4 py-8 text-center text-sm text-muted-foreground">
+            {yearFilter === "todos" ? "No hay minutas registradas." : `Sin minutas en ${yearFilter}.`}
+          </div>
         </div>
         {renderNewMinutaDialog()}
       </>
     );
   }
+
 
   function renderNewMinutaDialog() {
     return (
