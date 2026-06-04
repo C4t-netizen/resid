@@ -53,6 +53,7 @@ const incidentItems = [
 
 const reportItems = [
   { title: "Informes", url: "/informes", icon: BarChart3 },
+  { title: "NOM-019-STPS", url: "/nom-019", icon: ShieldAlert },
   { title: "Guías / Formatos", url: "/guias", icon: BookOpen },
 ];
 
