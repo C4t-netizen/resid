@@ -307,7 +307,7 @@ export default function Incidentes() {
               </div>
               <div><Label>Departamento de adscripción</Label><Input value={form.departamento} onChange={(e) => setForm({ ...form, departamento: e.target.value })} /></div>
               <div><Label>Edad</Label><Input type="number" value={form.edad} onChange={(e) => setForm({ ...form, edad: e.target.value })} /></div>
-              <div className="md:col-span-2"><Label>Puesto de trabajo</Label><Input value={form.puesto} onChange={(e) => setForm({ ...form, puesto: e.target.value })} /></div>
+              <div className="md:col-span-2"><Label>Puesto de trabajo</Label><Input value={form.puesto} onChange={(e) => setForm({ ...form, puesto: e.target.value })} placeholder="Ej. brigadista, jefe de piso, alumno, docente, etc." /></div>
             </div>
           )}
 
