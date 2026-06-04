@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { ArrowLeft, CheckCircle2, Loader2, Plus, ShieldCheck, Trash2, XCircle, MinusCircle, FileDown } from "lucide-react";
+import { ArrowLeft, CalendarRange, CheckCircle2, FileBarChart, Loader2, Plus, Save, ShieldCheck, Trash2, XCircle, MinusCircle, FileDown } from "lucide-react";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import { PageHeader } from "@/components/PageHeader";
@@ -7,9 +7,9 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
@@ -24,6 +24,9 @@ interface Verif {
   responsable: string | null;
   porcentaje_cumplimiento: number | null;
   estatus: "borrador" | "cerrada";
+  observaciones: string | null;
+  fecha_inicio: string | null;
+  fecha_fin: string | null;
 }
 interface Item {
   id: string;
@@ -34,6 +37,30 @@ interface Item {
   observaciones: string | null;
 }
 
+const toLocalInput = (iso: string | null) => {
+  if (!iso) return "";
+  const d = new Date(iso);
+  const off = d.getTimezoneOffset();
+  return new Date(d.getTime() - off * 60000).toISOString().slice(0, 16);
+};
+const fmtDateTime = (iso: string | null) =>
+  iso ? new Date(iso).toLocaleString("es-MX", { dateStyle: "short", timeStyle: "short" }) : "-";
+
+const diffStr = (a: string | null, b: string | null) => {
+  if (!a || !b) return "-";
+  const ms = new Date(b).getTime() - new Date(a).getTime();
+  if (ms <= 0) return "-";
+  const totalMin = Math.floor(ms / 60000);
+  const days = Math.floor(totalMin / 1440);
+  const hours = Math.floor((totalMin % 1440) / 60);
+  const mins = totalMin % 60;
+  const parts = [];
+  if (days) parts.push(`${days}d`);
+  if (hours) parts.push(`${hours}h`);
+  if (mins || (!days && !hours)) parts.push(`${mins}m`);
+  return parts.join(" ");
+};
+
 export default function Verificaciones() {
   const { user, canEdit, isAdmin } = useAuth();
   const [list, setList] = useState<Verif[]>([]);
@@ -43,6 +70,18 @@ export default function Verificaciones() {
   const [items, setItems] = useState<Item[]>([]);
   const [form, setForm] = useState({ norma: "NOM-019-STPS", titulo: "", area: "", fecha: new Date().toISOString().slice(0,10), responsable: "" });
   const [newItem, setNewItem] = useState("");
+
+  // Detail editable fields
+  const [detailObs, setDetailObs] = useState("");
+  const [detailInicio, setDetailInicio] = useState("");
+  const [detailFin, setDetailFin] = useState("");
+  const [savingDetail, setSavingDetail] = useState(false);
+
+  // Reporte por período
+  const [reportOpen, setReportOpen] = useState(false);
+  const today = new Date().toISOString().slice(0, 10);
+  const monthAgo = new Date(Date.now() - 30 * 86400000).toISOString().slice(0, 10);
+  const [rep, setRep] = useState({ desde: monthAgo, hasta: today });
 
   const load = async () => {
     setLoading(true);
@@ -57,7 +96,29 @@ export default function Verificaciones() {
     setItems((data ?? []) as Item[]);
   };
 
-  const openDetail = async (v: Verif) => { setSelected(v); await loadItems(v.id); };
+  const openDetail = async (v: Verif) => {
+    setSelected(v);
+    setDetailObs(v.observaciones ?? "");
+    setDetailInicio(toLocalInput(v.fecha_inicio));
+    setDetailFin(toLocalInput(v.fecha_fin));
+    await loadItems(v.id);
+  };
+
+  const saveDetail = async () => {
+    if (!selected) return;
+    setSavingDetail(true);
+    const payload = {
+      observaciones: detailObs || null,
+      fecha_inicio: detailInicio ? new Date(detailInicio).toISOString() : null,
+      fecha_fin: detailFin ? new Date(detailFin).toISOString() : null,
+    };
+    const { error } = await supabase.from("verificaciones").update(payload).eq("id", selected.id);
+    setSavingDetail(false);
+    if (error) return toast.error(error.message);
+    setSelected({ ...selected, ...payload });
+    load();
+    toast.success("Detalles guardados");
+  };
 
   const create = async () => {
     if (!form.titulo.trim()) { toast.error("Título requerido"); return; }
@@ -82,7 +143,6 @@ export default function Verificaciones() {
     await supabase.from("verificacion_items").update({ cumple }).eq("id", id);
     if (selected) {
       await loadItems(selected.id);
-      // recalc % cumplimiento
       const { data: refreshed } = await supabase.from("verificacion_items").select("cumple").eq("verificacion_id", selected.id);
       const aplicables = (refreshed ?? []).filter((x: any) => x.cumple !== "na");
       const cumplidos = aplicables.filter((x: any) => x.cumple === "si").length;
@@ -125,6 +185,9 @@ export default function Verificaciones() {
         ["Norma", v.norma],
         ["Área", v.area ?? "-"],
         ["Fecha", v.fecha],
+        ["Inicio", fmtDateTime(v.fecha_inicio)],
+        ["Fin", fmtDateTime(v.fecha_fin)],
+        ["Duración", diffStr(v.fecha_inicio, v.fecha_fin)],
         ["Responsable", v.responsable ?? "-"],
         ["Cumplimiento", `${pct}%`],
         ["Estatus", v.estatus],
@@ -133,6 +196,16 @@ export default function Verificaciones() {
       styles: { fontSize: 9 },
     });
     let y = (doc as any).lastAutoTable.finalY + 8;
+    if (v.observaciones) {
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(11);
+      doc.text("Observaciones", 14, y);
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(9);
+      const lines = doc.splitTextToSize(v.observaciones, w - 28);
+      doc.text(lines, 14, y + 5);
+      y += 5 + lines.length * 4 + 4;
+    }
     doc.setFont("helvetica", "bold");
     doc.setFontSize(12);
     doc.text(`Puntos de verificación (${its.length})`, 14, y);
@@ -156,6 +229,76 @@ export default function Verificaciones() {
       doc.text(`Página ${p} de ${pages} · Generado ${new Date().toLocaleDateString("es-MX")}`, 14, doc.internal.pageSize.getHeight() - 8);
     }
     doc.save(`verificacion-${v.titulo}-${v.fecha}.pdf`);
+  };
+
+  const exportRangePdf = () => {
+    const desde = rep.desde;
+    const hasta = rep.hasta;
+    if (!desde || !hasta) { toast.error("Selecciona ambas fechas"); return; }
+    const filtered = list.filter((v) => v.fecha >= desde && v.fecha <= hasta);
+    if (filtered.length === 0) { toast.error("Sin verificaciones en el período"); return; }
+
+    const doc = new jsPDF();
+    const w = doc.internal.pageSize.getWidth();
+    doc.setFillColor(30, 64, 175);
+    doc.rect(0, 0, w, 28, "F");
+    doc.setTextColor(255);
+    doc.setFontSize(15);
+    doc.setFont("helvetica", "bold");
+    doc.text("Reporte de Verificaciones", 14, 14);
+    doc.setFontSize(10);
+    doc.setFont("helvetica", "normal");
+    doc.text(`Período: ${desde} al ${hasta}`, 14, 22);
+    doc.setTextColor(0);
+
+    const total = filtered.length;
+    const cerradas = filtered.filter((v) => v.estatus === "cerrada").length;
+    const promedio = total ? filtered.reduce((s, v) => s + (v.porcentaje_cumplimiento ?? 0), 0) / total : 0;
+
+    autoTable(doc, {
+      startY: 36,
+      head: [["Indicador", "Valor"]],
+      body: [
+        ["Total de verificaciones", String(total)],
+        ["Cerradas", String(cerradas)],
+        ["Borradores", String(total - cerradas)],
+        ["Cumplimiento promedio", `${promedio.toFixed(1)}%`],
+      ],
+      headStyles: { fillColor: [30, 64, 175] },
+      styles: { fontSize: 9 },
+    });
+
+    let y = (doc as any).lastAutoTable.finalY + 8;
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(12);
+    doc.text("Detalle", 14, y);
+    autoTable(doc, {
+      startY: y + 4,
+      head: [["Fecha", "Norma", "Título", "Área", "Inicio", "Fin", "Duración", "% Cumpl.", "Estatus"]],
+      body: filtered.map((v) => [
+        v.fecha,
+        v.norma,
+        v.titulo,
+        v.area ?? "-",
+        fmtDateTime(v.fecha_inicio),
+        fmtDateTime(v.fecha_fin),
+        diffStr(v.fecha_inicio, v.fecha_fin),
+        `${(v.porcentaje_cumplimiento ?? 0).toFixed(0)}%`,
+        v.estatus,
+      ]),
+      headStyles: { fillColor: [30, 64, 175] },
+      styles: { fontSize: 7, cellPadding: 2 },
+    });
+
+    const pages = doc.getNumberOfPages();
+    for (let p = 1; p <= pages; p++) {
+      doc.setPage(p);
+      doc.setFontSize(8);
+      doc.setTextColor(120);
+      doc.text(`Página ${p} de ${pages} · Generado ${new Date().toLocaleDateString("es-MX")}`, 14, doc.internal.pageSize.getHeight() - 8);
+    }
+    doc.save(`reporte-verificaciones-${desde}_${hasta}.pdf`);
+    setReportOpen(false);
   };
 
   // ============ DETAIL ============
@@ -184,6 +327,34 @@ export default function Verificaciones() {
                 <p className="font-display text-3xl font-bold">{pct.toFixed(0)}%</p>
               </div>
               <div className="w-1/2"><Progress value={pct} className="h-3" /></div>
+            </div>
+          </Card>
+
+          <Card className="rounded-2xl border-border/50 p-5 shadow-soft space-y-4">
+            <div className="flex items-center justify-between">
+              <h3 className="font-display text-lg font-bold">Datos del recorrido</h3>
+              {canEdit && (
+                <Button size="sm" onClick={saveDetail} disabled={savingDetail} className="rounded-xl bg-gradient-primary">
+                  {savingDetail ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />} Guardar
+                </Button>
+              )}
+            </div>
+            <div className="grid gap-4 md:grid-cols-2">
+              <div className="space-y-1.5">
+                <Label>Fecha y hora de inicio</Label>
+                <Input type="datetime-local" value={detailInicio} onChange={(e) => setDetailInicio(e.target.value)} disabled={!canEdit} className="h-11 rounded-xl" />
+              </div>
+              <div className="space-y-1.5">
+                <Label>Fecha y hora de fin</Label>
+                <Input type="datetime-local" value={detailFin} onChange={(e) => setDetailFin(e.target.value)} disabled={!canEdit} className="h-11 rounded-xl" />
+              </div>
+            </div>
+            <div className="text-xs text-muted-foreground">
+              Duración: <span className="font-semibold text-foreground">{diffStr(detailInicio ? new Date(detailInicio).toISOString() : null, detailFin ? new Date(detailFin).toISOString() : null)}</span>
+            </div>
+            <div className="space-y-1.5">
+              <Label>Observaciones</Label>
+              <Textarea value={detailObs} onChange={(e) => setDetailObs(e.target.value)} disabled={!canEdit} placeholder="Notas generales del recorrido, hallazgos, contexto…" rows={4} className="rounded-xl" />
             </div>
           </Card>
 
@@ -244,34 +415,61 @@ export default function Verificaciones() {
         title="Listas de verificación"
         subtitle="Auditorías de cumplimiento normativo en seguridad e higiene."
         breadcrumbs={[{ label: "Operación CSH" }, { label: "Verificaciones" }]}
-        actions={canEdit && (
-          <Dialog open={open} onOpenChange={setOpen}>
-            <DialogTrigger asChild>
-              <Button className="rounded-xl bg-gradient-primary shadow-elegant"><Plus className="mr-2 h-4 w-4" /> Nueva lista</Button>
-            </DialogTrigger>
-            <DialogContent className="rounded-2xl">
-              <DialogHeader><DialogTitle>Nueva lista de verificación</DialogTitle></DialogHeader>
-              <div className="grid gap-4 py-2">
-                <div className="space-y-1.5"><Label>Norma</Label>
-                  <Input value={form.norma} onChange={(e) => setForm({...form, norma: e.target.value})} className="h-11 rounded-xl" /></div>
-                <div className="space-y-1.5"><Label>Título</Label>
-                  <Input value={form.titulo} onChange={(e) => setForm({...form, titulo: e.target.value})} className="h-11 rounded-xl" /></div>
-                <div className="grid grid-cols-2 gap-3">
-                  <div className="space-y-1.5"><Label>Área</Label>
-                    <Input value={form.area} onChange={(e) => setForm({...form, area: e.target.value})} className="h-11 rounded-xl" /></div>
-                  <div className="space-y-1.5"><Label>Fecha</Label>
-                    <Input type="date" value={form.fecha} onChange={(e) => setForm({...form, fecha: e.target.value})} className="h-11 rounded-xl" /></div>
+        actions={
+          <div className="flex gap-2">
+            <Dialog open={reportOpen} onOpenChange={setReportOpen}>
+              <DialogTrigger asChild>
+                <Button variant="outline" className="rounded-xl"><FileBarChart className="mr-2 h-4 w-4" /> Reporte por período</Button>
+              </DialogTrigger>
+              <DialogContent className="rounded-2xl">
+                <DialogHeader><DialogTitle>Generar reporte por período</DialogTitle></DialogHeader>
+                <div className="grid gap-4 py-2">
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="space-y-1.5"><Label>Desde</Label>
+                      <Input type="date" value={rep.desde} onChange={(e) => setRep({ ...rep, desde: e.target.value })} className="h-11 rounded-xl" /></div>
+                    <div className="space-y-1.5"><Label>Hasta</Label>
+                      <Input type="date" value={rep.hasta} onChange={(e) => setRep({ ...rep, hasta: e.target.value })} className="h-11 rounded-xl" /></div>
+                  </div>
+                  <p className="text-xs text-muted-foreground flex items-center gap-2">
+                    <CalendarRange className="h-4 w-4" /> Se incluirán todas las verificaciones cuya fecha esté en el rango.
+                  </p>
                 </div>
-                <div className="space-y-1.5"><Label>Responsable</Label>
-                  <Input value={form.responsable} onChange={(e) => setForm({...form, responsable: e.target.value})} className="h-11 rounded-xl" /></div>
-              </div>
-              <DialogFooter>
-                <Button variant="outline" onClick={() => setOpen(false)} className="rounded-xl">Cancelar</Button>
-                <Button onClick={create} className="rounded-xl bg-gradient-primary">Crear</Button>
-              </DialogFooter>
-            </DialogContent>
-          </Dialog>
-        )}
+                <DialogFooter>
+                  <Button variant="outline" onClick={() => setReportOpen(false)} className="rounded-xl">Cancelar</Button>
+                  <Button onClick={exportRangePdf} className="rounded-xl bg-gradient-primary"><FileDown className="mr-2 h-4 w-4" /> Generar PDF</Button>
+                </DialogFooter>
+              </DialogContent>
+            </Dialog>
+            {canEdit && (
+              <Dialog open={open} onOpenChange={setOpen}>
+                <DialogTrigger asChild>
+                  <Button className="rounded-xl bg-gradient-primary shadow-elegant"><Plus className="mr-2 h-4 w-4" /> Nueva lista</Button>
+                </DialogTrigger>
+                <DialogContent className="rounded-2xl">
+                  <DialogHeader><DialogTitle>Nueva lista de verificación</DialogTitle></DialogHeader>
+                  <div className="grid gap-4 py-2">
+                    <div className="space-y-1.5"><Label>Norma</Label>
+                      <Input value={form.norma} onChange={(e) => setForm({...form, norma: e.target.value})} className="h-11 rounded-xl" /></div>
+                    <div className="space-y-1.5"><Label>Título</Label>
+                      <Input value={form.titulo} onChange={(e) => setForm({...form, titulo: e.target.value})} className="h-11 rounded-xl" /></div>
+                    <div className="grid grid-cols-2 gap-3">
+                      <div className="space-y-1.5"><Label>Área</Label>
+                        <Input value={form.area} onChange={(e) => setForm({...form, area: e.target.value})} className="h-11 rounded-xl" /></div>
+                      <div className="space-y-1.5"><Label>Fecha</Label>
+                        <Input type="date" value={form.fecha} onChange={(e) => setForm({...form, fecha: e.target.value})} className="h-11 rounded-xl" /></div>
+                    </div>
+                    <div className="space-y-1.5"><Label>Responsable</Label>
+                      <Input value={form.responsable} onChange={(e) => setForm({...form, responsable: e.target.value})} className="h-11 rounded-xl" /></div>
+                  </div>
+                  <DialogFooter>
+                    <Button variant="outline" onClick={() => setOpen(false)} className="rounded-xl">Cancelar</Button>
+                    <Button onClick={create} className="rounded-xl bg-gradient-primary">Crear</Button>
+                  </DialogFooter>
+                </DialogContent>
+              </Dialog>
+            )}
+          </div>
+        }
       />
       <div className="px-4 py-6 md:px-8">
         <Card className="overflow-hidden rounded-2xl border-border/50 shadow-soft">
@@ -294,7 +492,10 @@ export default function Verificaciones() {
                       </div>
                       <div className="min-w-0 flex-1">
                         <p className="font-display text-sm font-bold">{v.titulo}</p>
-                        <p className="text-xs text-muted-foreground">{v.norma} · {v.fecha} · {v.area || "Sin área"}</p>
+                        <p className="text-xs text-muted-foreground">
+                          {v.norma} · {v.fecha} · {v.area || "Sin área"}
+                          {v.fecha_inicio && v.fecha_fin ? ` · ${diffStr(v.fecha_inicio, v.fecha_fin)}` : ""}
+                        </p>
                       </div>
                       <div className="hidden w-32 md:block">
                         <Progress value={pct} className="h-2" />

@@ -911,8 +911,11 @@ export type Database = {
           created_by: string | null
           estatus: string
           fecha: string
+          fecha_fin: string | null
+          fecha_inicio: string | null
           id: string
           norma: string
+          observaciones: string | null
           porcentaje_cumplimiento: number | null
           responsable: string | null
           titulo: string
@@ -924,8 +927,11 @@ export type Database = {
           created_by?: string | null
           estatus?: string
           fecha: string
+          fecha_fin?: string | null
+          fecha_inicio?: string | null
           id?: string
           norma: string
+          observaciones?: string | null
           porcentaje_cumplimiento?: number | null
           responsable?: string | null
           titulo: string
@@ -937,8 +943,11 @@ export type Database = {
           created_by?: string | null
           estatus?: string
           fecha?: string
+          fecha_fin?: string | null
+          fecha_inicio?: string | null
           id?: string
           norma?: string
+          observaciones?: string | null
           porcentaje_cumplimiento?: number | null
           responsable?: string | null
           titulo?: string
