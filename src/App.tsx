@@ -22,6 +22,7 @@ import Incidentes from "./pages/Incidentes";
 import Acciones from "./pages/Acciones";
 import Informes from "./pages/Informes";
 import Guias from "./pages/Guias";
+import Nom019 from "./pages/Nom019";
 import Placeholder from "./pages/Placeholder";
 import NotFound from "./pages/NotFound";
 
