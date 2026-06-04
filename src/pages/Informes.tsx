@@ -24,7 +24,7 @@ import {
 } from "recharts";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
-import { usePdfPreview } from "@/components/PdfPreviewDialog";
+
 
 const COLORS = ["hsl(var(--primary))", "hsl(var(--warning))", "hsl(var(--destructive))", "hsl(var(--success))"];
 const meses = ["Ene","Feb","Mar","Abr","May","Jun","Jul","Ago","Sep","Oct","Nov","Dic"];
@@ -39,7 +39,7 @@ export default function Informes() {
     verificaciones: [] as any[],
     recorridos: [] as any[],
   });
-  const { openPdfPreview, PdfPreviewDialogElement } = usePdfPreview();
+  
 
   const load = async () => {
     setLoading(true);
@@ -170,7 +170,7 @@ export default function Informes() {
       doc.text(`Página ${p} de ${pages} · Generado ${new Date().toLocaleDateString("es-MX")}`, 14, doc.internal.pageSize.getHeight() - 8);
     }
 
-    openPdfPreview(doc, `informe-csh-${year}.pdf`);
+    doc.save(`informe-csh-${year}.pdf`);
     toast.success("Vista previa generada");
   };
 
@@ -184,7 +184,7 @@ export default function Informes() {
 
   return (
     <>
-      {PdfPreviewDialogElement}
+      
       <PageHeader
         title="Informes y métricas"
         subtitle="Tablero ejecutivo del desempeño anual de la Comisión de Seguridad e Higiene."

@@ -261,7 +261,7 @@ export default function Accidentes() {
 
   return (
     <>
-      {PdfPreviewDialogElement}
+      
       <PageHeader
         title="Registro de Accidentes"
         subtitle="Formato ITD-SS-PO-03-02 · ISO 45001:2018 8.2, 10.2"
