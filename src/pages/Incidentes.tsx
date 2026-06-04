@@ -14,7 +14,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, Dialog
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
-import { usePdfPreview } from "@/components/PdfPreviewDialog";
+
 
 interface Accion {
   id?: string;
@@ -86,7 +86,7 @@ export default function Incidentes() {
   const [editId, setEditId] = useState<string | null>(null);
   const [form, setForm] = useState<any>(empty);
   const [accForm, setAccForm] = useState<Accion[]>([]);
-  const { openPdfPreview, PdfPreviewDialogElement } = usePdfPreview();
+  
 
   const load = async () => {
     setLoading(true);
@@ -268,7 +268,7 @@ export default function Incidentes() {
       margin: { left: M, right: M },
     });
 
-    openPdfPreview(doc, `investigacion_${inv.nombre_persona.replace(/\s+/g, "_")}.pdf`);
+    doc.save(`investigacion_${inv.nombre_persona.replace(/\s+/g, "_")}.pdf`);
   };
 
   return (
