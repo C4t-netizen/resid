@@ -1,5 +1,7 @@
 import { useEffect, useState } from "react";
-import { ArrowLeft, CheckCircle2, Loader2, Plus, ShieldCheck, Trash2, XCircle, MinusCircle } from "lucide-react";
+import { ArrowLeft, CheckCircle2, Loader2, Plus, ShieldCheck, Trash2, XCircle, MinusCircle, FileDown } from "lucide-react";
+import jsPDF from "jspdf";
+import autoTable from "jspdf-autotable";
 import { PageHeader } from "@/components/PageHeader";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -100,6 +102,62 @@ export default function Verificaciones() {
     load();
   };
 
+  const exportVerifPdf = (v: Verif, its: Item[]) => {
+    const doc = new jsPDF();
+    const w = doc.internal.pageSize.getWidth();
+    doc.setFillColor(30, 64, 175);
+    doc.rect(0, 0, w, 28, "F");
+    doc.setTextColor(255);
+    doc.setFontSize(15);
+    doc.setFont("helvetica", "bold");
+    doc.text("Lista de Verificación", 14, 14);
+    doc.setFontSize(10);
+    doc.setFont("helvetica", "normal");
+    doc.text(`${v.norma} · ${v.titulo}`, 14, 22);
+    doc.setTextColor(0);
+    const aplicables = its.filter((x) => x.cumple !== "na");
+    const cumplidos = aplicables.filter((x) => x.cumple === "si").length;
+    const pct = aplicables.length ? Math.round((cumplidos / aplicables.length) * 100) : 0;
+    autoTable(doc, {
+      startY: 36,
+      head: [["Campo", "Valor"]],
+      body: [
+        ["Norma", v.norma],
+        ["Área", v.area ?? "-"],
+        ["Fecha", v.fecha],
+        ["Responsable", v.responsable ?? "-"],
+        ["Cumplimiento", `${pct}%`],
+        ["Estatus", v.estatus],
+      ],
+      headStyles: { fillColor: [30, 64, 175] },
+      styles: { fontSize: 9 },
+    });
+    let y = (doc as any).lastAutoTable.finalY + 8;
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(12);
+    doc.text(`Puntos de verificación (${its.length})`, 14, y);
+    autoTable(doc, {
+      startY: y + 4,
+      head: [["#", "Descripción", "Cumple", "Observaciones"]],
+      body: its.map((it) => [
+        it.numero ?? "-",
+        it.descripcion,
+        it.cumple === "si" ? "Sí" : it.cumple === "no" ? "No" : "N/A",
+        it.observaciones ?? "-",
+      ]),
+      headStyles: { fillColor: [30, 64, 175] },
+      styles: { fontSize: 8, cellPadding: 2 },
+    });
+    const pages = doc.getNumberOfPages();
+    for (let p = 1; p <= pages; p++) {
+      doc.setPage(p);
+      doc.setFontSize(8);
+      doc.setTextColor(120);
+      doc.text(`Página ${p} de ${pages} · Generado ${new Date().toLocaleDateString("es-MX")}`, 14, doc.internal.pageSize.getHeight() - 8);
+    }
+    doc.save(`verificacion-${v.titulo}-${v.fecha}.pdf`);
+  };
+
   // ============ DETAIL ============
   if (selected) {
     const pct = selected.porcentaje_cumplimiento ?? 0;
@@ -109,7 +167,14 @@ export default function Verificaciones() {
           title={selected.titulo}
           subtitle={`${selected.norma} · ${selected.fecha} · ${selected.area || "Sin área"}`}
           breadcrumbs={[{ label: "Verificaciones", href: "/verificaciones" }, { label: selected.titulo }]}
-          actions={<Button variant="outline" onClick={() => setSelected(null)} className="rounded-xl"><ArrowLeft className="mr-2 h-4 w-4" /> Volver</Button>}
+          actions={
+            <div className="flex gap-2">
+              <Button variant="outline" onClick={() => exportVerifPdf(selected, items)} className="rounded-xl">
+                <FileDown className="mr-2 h-4 w-4" /> Exportar PDF
+              </Button>
+              <Button variant="outline" onClick={() => setSelected(null)} className="rounded-xl"><ArrowLeft className="mr-2 h-4 w-4" /> Volver</Button>
+            </div>
+          }
         />
         <div className="space-y-6 px-4 py-6 md:px-8">
           <Card className="rounded-2xl border-border/50 p-5 shadow-soft">

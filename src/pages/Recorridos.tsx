@@ -1,5 +1,7 @@
 import { useEffect, useState } from "react";
-import { Loader2, Plus, Search, Trash2, AlertTriangle, ArrowLeft } from "lucide-react";
+import { Loader2, Plus, Search, Trash2, AlertTriangle, ArrowLeft, FileDown } from "lucide-react";
+import jsPDF from "jspdf";
+import autoTable from "jspdf-autotable";
 import { PageHeader } from "@/components/PageHeader";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -111,6 +113,53 @@ export default function Recorridos() {
     load();
   };
 
+  const exportRecorridoPdf = (r: Recorrido, hs: Hallazgo[]) => {
+    const doc = new jsPDF();
+    const w = doc.internal.pageSize.getWidth();
+    doc.setFillColor(30, 64, 175);
+    doc.rect(0, 0, w, 28, "F");
+    doc.setTextColor(255);
+    doc.setFontSize(15);
+    doc.setFont("helvetica", "bold");
+    doc.text("Recorrido de Seguridad", 14, 14);
+    doc.setFontSize(10);
+    doc.setFont("helvetica", "normal");
+    doc.text(`Área: ${r.area}  ·  Tipo: ${r.tipo}`, 14, 22);
+    doc.setTextColor(0);
+    autoTable(doc, {
+      startY: 36,
+      head: [["Campo", "Valor"]],
+      body: [
+        ["Fecha inicio", `${r.fecha_inicio ?? r.fecha}${r.hora_inicio ? ` ${r.hora_inicio.slice(0,5)}` : ""}`],
+        ["Fecha fin", r.fecha_fin ? `${r.fecha_fin}${r.hora_fin ? ` ${r.hora_fin.slice(0,5)}` : ""}` : "-"],
+        ["Integrantes", r.integrantes ?? "-"],
+        ["Observaciones", r.observaciones_generales ?? "-"],
+        ["Estatus", r.estatus],
+      ],
+      headStyles: { fillColor: [30, 64, 175] },
+      styles: { fontSize: 9 },
+    });
+    let y = (doc as any).lastAutoTable.finalY + 8;
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(12);
+    doc.text(`Hallazgos (${hs.length})`, 14, y);
+    autoTable(doc, {
+      startY: y + 4,
+      head: [["#", "Descripción", "Ubicación", "Riesgo", "Recomendación", "Estatus"]],
+      body: hs.map((h, i) => [i + 1, h.descripcion, h.ubicacion ?? "-", h.nivel_riesgo, h.recomendacion ?? "-", h.estatus]),
+      headStyles: { fillColor: [30, 64, 175] },
+      styles: { fontSize: 8, cellPadding: 2 },
+    });
+    const pages = doc.getNumberOfPages();
+    for (let p = 1; p <= pages; p++) {
+      doc.setPage(p);
+      doc.setFontSize(8);
+      doc.setTextColor(120);
+      doc.text(`Página ${p} de ${pages} · Generado ${new Date().toLocaleDateString("es-MX")}`, 14, doc.internal.pageSize.getHeight() - 8);
+    }
+    doc.save(`recorrido-${r.area}-${r.fecha_inicio ?? r.fecha}.pdf`);
+  };
+
   // ============ DETAIL VIEW ============
   if (selected) {
     return (
@@ -119,7 +168,14 @@ export default function Recorridos() {
           title={`Recorrido · ${selected.area}`}
           subtitle={`${selected.fecha_inicio ?? selected.fecha}${selected.hora_inicio ? ` ${selected.hora_inicio.slice(0,5)}` : ""}${selected.fecha_fin ? ` → ${selected.fecha_fin}` : ""}${selected.hora_fin ? ` ${selected.hora_fin.slice(0,5)}` : ""} · ${selected.tipo}`}
           breadcrumbs={[{ label: "Recorridos", href: "/recorridos" }, { label: selected.area }]}
-          actions={<Button variant="outline" onClick={() => setSelected(null)} className="rounded-xl"><ArrowLeft className="mr-2 h-4 w-4" /> Volver</Button>}
+          actions={
+            <div className="flex gap-2">
+              <Button variant="outline" onClick={() => exportRecorridoPdf(selected, hallazgos)} className="rounded-xl">
+                <FileDown className="mr-2 h-4 w-4" /> Exportar PDF
+              </Button>
+              <Button variant="outline" onClick={() => setSelected(null)} className="rounded-xl"><ArrowLeft className="mr-2 h-4 w-4" /> Volver</Button>
+            </div>
+          }
         />
         <div className="space-y-6 px-4 py-6 md:px-8">
           {canEdit && (
