@@ -78,16 +78,6 @@ const Index = () => {
             Sistema activo
           </Badge>
         }
-        actions={
-          <>
-            <Button variant="outline" className="rounded-xl">
-              <FileText className="mr-2 h-4 w-4" /> Exportar reporte
-            </Button>
-            <Button className="rounded-xl bg-gradient-primary shadow-elegant hover:shadow-glow">
-              <ClipboardList className="mr-2 h-4 w-4" /> Nueva minuta
-            </Button>
-          </>
-        }
       />
 
       <div className="space-y-8 px-4 py-8 md:px-8">

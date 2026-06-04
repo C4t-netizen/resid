@@ -167,9 +167,9 @@ export default function Minutas() {
   const chartRef = useRef<HTMLDivElement | null>(null);
   
 
-  const minuta = minutas.find((m) => m.id === selectedMinutaId) ?? minutas[0];
-  const acuerdos = minuta ? acuerdosByMinuta[minuta.id] ?? [] : [];
   const filteredMinutas = yearFilter === "todos" ? minutas : minutas.filter((m) => m.anio === yearFilter);
+  const minuta = filteredMinutas.find((m) => m.id === selectedMinutaId) ?? filteredMinutas[0];
+  const acuerdos = minuta ? acuerdosByMinuta[minuta.id] ?? [] : [];
 
   const cumplidos = acuerdos.filter((a) => a.estado === "Cumplido").length;
   const pendientesCount = acuerdos.filter((a) => a.estado === "Pendiente").length;
@@ -786,6 +786,12 @@ export default function Minutas() {
                   onChange={async (e) => {
                     const files = Array.from(e.target.files ?? []);
                     if (!files.length || !editing) return;
+                    const oversize = files.find((f) => f.size > 20 * 1024 * 1024);
+                    if (oversize) {
+                      toast({ title: "Archivo demasiado grande", description: `"${oversize.name}" supera el tamaño máximo de 20 MB.` });
+                      e.target.value = "";
+                      return;
+                    }
                     const urls = await Promise.all(files.map((f) => new Promise<string>((res) => {
                       const r = new FileReader(); r.onload = () => res(String(r.result)); r.readAsDataURL(f);
                     })));
@@ -793,6 +799,7 @@ export default function Minutas() {
                     e.target.value = "";
                   }}
                 />
+                <p className="text-[11px] text-muted-foreground">Tamaño máximo por imagen: 20 MB.</p>
                 {editing.imagenes && editing.imagenes.length > 0 && (
                   <div className="flex flex-wrap gap-2">
                     {editing.imagenes.map((src, i) => (

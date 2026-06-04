@@ -27,6 +27,11 @@ export function FileUploader({ archivos, canEdit, bucket = "documentos-csh", fol
   const handleFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
+    if (file.size > 20 * 1024 * 1024) {
+      toast.error("El archivo supera el tamaño máximo de 20 MB");
+      if (inputRef.current) inputRef.current.value = "";
+      return;
+    }
     setUploading(true);
     const path = `${folder}/${Date.now()}-${file.name.replace(/\s+/g, "_")}`;
     const { error } = await supabase.storage.from(bucket).upload(path, file, { upsert: false });
@@ -63,6 +68,9 @@ export function FileUploader({ archivos, canEdit, bucket = "documentos-csh", fol
           </>
         )}
       </div>
+      {canEdit && (
+        <p className="text-[11px] text-muted-foreground">Tamaño máximo por archivo: 20 MB.</p>
+      )}
       {archivos.length === 0 ? (
         <p className="rounded-xl border border-dashed border-border/60 p-4 text-center text-xs text-muted-foreground">Sin archivos cargados.</p>
       ) : (
