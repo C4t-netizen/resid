@@ -1141,6 +1141,27 @@ export default function Minutas() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Lightbox de imagen */}
+      <Dialog open={!!lightbox} onOpenChange={(open) => !open && setLightbox(null)}>
+        <DialogContent className="sm:max-w-3xl">
+          <DialogHeader>
+            <DialogTitle>Vista previa</DialogTitle>
+          </DialogHeader>
+          {lightbox && (
+            <div className="space-y-3">
+              <img src={lightbox} alt="Vista previa" className="max-h-[70vh] w-full rounded-xl object-contain" />
+              <div className="flex justify-end gap-2">
+                <a href={lightbox} download="imagen.png">
+                  <Button variant="outline" className="rounded-xl">
+                    <Download className="mr-2 h-4 w-4" /> Descargar
+                  </Button>
+                </a>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </>
   );
 }
