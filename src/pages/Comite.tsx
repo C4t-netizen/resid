@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Loader2, Plus, Trash2, Users } from "lucide-react";
+import { Loader2, Pencil, Plus, Trash2, Users } from "lucide-react";
 import { PageHeader } from "@/components/PageHeader";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -25,8 +25,9 @@ interface Miembro {
 }
 
 const empty = {
-  nombre: "", puesto: "", representacion: "patronal" as const,
-  cargo_csh: "vocal" as const, email: "", telefono: "", fecha_designacion: "",
+  nombre: "", puesto: "", representacion: "patronal" as "patronal" | "trabajadores",
+  cargo_csh: "vocal" as "coordinador" | "secretario" | "vocal",
+  email: "", telefono: "", fecha_designacion: "",
 };
 
 export default function Comite() {
@@ -34,6 +35,7 @@ export default function Comite() {
   const [rows, setRows] = useState<Miembro[]>([]);
   const [loading, setLoading] = useState(true);
   const [open, setOpen] = useState(false);
+  const [editId, setEditId] = useState<string | null>(null);
   const [form, setForm] = useState(empty);
   const [saving, setSaving] = useState(false);
 
@@ -46,18 +48,40 @@ export default function Comite() {
 
   useEffect(() => { load(); }, []);
 
+  const openNew = () => {
+    setEditId(null);
+    setForm(empty);
+    setOpen(true);
+  };
+
+  const openEdit = (m: Miembro) => {
+    setEditId(m.id);
+    setForm({
+      nombre: m.nombre,
+      puesto: m.puesto ?? "",
+      representacion: m.representacion,
+      cargo_csh: m.cargo_csh,
+      email: m.email ?? "",
+      telefono: m.telefono ?? "",
+      fecha_designacion: m.fecha_designacion ?? "",
+    });
+    setOpen(true);
+  };
+
   const save = async () => {
     if (!form.nombre.trim()) { toast.error("El nombre es obligatorio"); return; }
     setSaving(true);
-    const { error } = await supabase.from("comite_miembros").insert({
+    const payload = {
       ...form,
       fecha_designacion: form.fecha_designacion || null,
-      created_by: user?.id,
-    });
+    };
+    const { error } = editId
+      ? await supabase.from("comite_miembros").update(payload).eq("id", editId)
+      : await supabase.from("comite_miembros").insert({ ...payload, created_by: user?.id });
     setSaving(false);
     if (error) return toast.error(error.message);
-    toast.success("Integrante agregado");
-    setForm(empty); setOpen(false); load();
+    toast.success(editId ? "Integrante actualizado" : "Integrante agregado");
+    setForm(empty); setEditId(null); setOpen(false); load();
   };
 
   const remove = async (id: string) => {
@@ -77,59 +101,63 @@ export default function Comite() {
         subtitle="Integrantes designados para la Comisión de Seguridad e Higiene."
         breadcrumbs={[{ label: "Operación CSH" }, { label: "Comisión" }]}
         actions={canEdit && (
-          <Dialog open={open} onOpenChange={setOpen}>
-            <DialogTrigger asChild>
-              <Button className="rounded-xl bg-gradient-primary shadow-elegant hover:shadow-glow">
-                <Plus className="mr-2 h-4 w-4" /> Agregar integrante
-              </Button>
-            </DialogTrigger>
-            <DialogContent className="rounded-2xl">
-              <DialogHeader><DialogTitle>Nuevo integrante de la comisión</DialogTitle></DialogHeader>
-              <div className="grid gap-4 py-2">
-                <div className="space-y-1.5"><Label>Nombre completo</Label>
-                  <Input value={form.nombre} onChange={(e) => setForm({...form, nombre: e.target.value})} className="h-11 rounded-xl" /></div>
-                <div className="grid grid-cols-2 gap-3">
-                  <div className="space-y-1.5"><Label>Puesto</Label>
-                    <Input value={form.puesto} onChange={(e) => setForm({...form, puesto: e.target.value})} className="h-11 rounded-xl" /></div>
-                  <div className="space-y-1.5"><Label>Fecha designación</Label>
-                    <Input type="date" value={form.fecha_designacion} onChange={(e) => setForm({...form, fecha_designacion: e.target.value})} className="h-11 rounded-xl" /></div>
-                </div>
-                <div className="grid grid-cols-2 gap-3">
-                  <div className="space-y-1.5"><Label>Representación</Label>
-                    <Select value={form.representacion} onValueChange={(v: any) => setForm({...form, representacion: v})}>
-                      <SelectTrigger className="h-11 rounded-xl"><SelectValue /></SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="patronal">Patronal</SelectItem>
-                        <SelectItem value="trabajadores">Trabajadores</SelectItem>
-                      </SelectContent>
-                    </Select></div>
-                  <div className="space-y-1.5"><Label>Cargo en CSH</Label>
-                    <Select value={form.cargo_csh} onValueChange={(v: any) => setForm({...form, cargo_csh: v})}>
-                      <SelectTrigger className="h-11 rounded-xl"><SelectValue /></SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="coordinador">Coordinador</SelectItem>
-                        <SelectItem value="secretario">Secretario</SelectItem>
-                        <SelectItem value="vocal">Vocal</SelectItem>
-                      </SelectContent>
-                    </Select></div>
-                </div>
-                <div className="grid grid-cols-2 gap-3">
-                  <div className="space-y-1.5"><Label>Correo</Label>
-                    <Input type="email" value={form.email} onChange={(e) => setForm({...form, email: e.target.value})} className="h-11 rounded-xl" /></div>
-                  <div className="space-y-1.5"><Label>Teléfono</Label>
-                    <Input value={form.telefono} onChange={(e) => setForm({...form, telefono: e.target.value})} className="h-11 rounded-xl" /></div>
-                </div>
-              </div>
-              <DialogFooter>
-                <Button variant="outline" onClick={() => setOpen(false)} className="rounded-xl">Cancelar</Button>
-                <Button onClick={save} disabled={saving} className="rounded-xl bg-gradient-primary">
-                  {saving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}Guardar
-                </Button>
-              </DialogFooter>
-            </DialogContent>
-          </Dialog>
+          <Button onClick={openNew} className="rounded-xl bg-gradient-primary shadow-elegant hover:shadow-glow">
+            <Plus className="mr-2 h-4 w-4" /> Agregar integrante
+          </Button>
         )}
       />
+
+      {canEdit && (
+        <Dialog open={open} onOpenChange={(v) => { setOpen(v); if (!v) { setEditId(null); setForm(empty); } }}>
+          <DialogContent className="rounded-2xl">
+            <DialogHeader>
+              <DialogTitle>{editId ? "Editar integrante" : "Nuevo integrante de la comisión"}</DialogTitle>
+            </DialogHeader>
+            <div className="grid gap-4 py-2">
+              <div className="space-y-1.5"><Label>Nombre completo</Label>
+                <Input value={form.nombre} onChange={(e) => setForm({...form, nombre: e.target.value})} className="h-11 rounded-xl" /></div>
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-1.5"><Label>Puesto</Label>
+                  <Input value={form.puesto} onChange={(e) => setForm({...form, puesto: e.target.value})} className="h-11 rounded-xl" /></div>
+                <div className="space-y-1.5"><Label>Fecha designación</Label>
+                  <Input type="date" value={form.fecha_designacion} onChange={(e) => setForm({...form, fecha_designacion: e.target.value})} className="h-11 rounded-xl" /></div>
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-1.5"><Label>Representación</Label>
+                  <Select value={form.representacion} onValueChange={(v: any) => setForm({...form, representacion: v})}>
+                    <SelectTrigger className="h-11 rounded-xl"><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="patronal">Patronal</SelectItem>
+                      <SelectItem value="trabajadores">Trabajadores</SelectItem>
+                    </SelectContent>
+                  </Select></div>
+                <div className="space-y-1.5"><Label>Cargo en CSH</Label>
+                  <Select value={form.cargo_csh} onValueChange={(v: any) => setForm({...form, cargo_csh: v})}>
+                    <SelectTrigger className="h-11 rounded-xl"><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="coordinador">Coordinador</SelectItem>
+                      <SelectItem value="secretario">Secretario</SelectItem>
+                      <SelectItem value="vocal">Vocal</SelectItem>
+                    </SelectContent>
+                  </Select></div>
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-1.5"><Label>Correo</Label>
+                  <Input type="email" value={form.email} onChange={(e) => setForm({...form, email: e.target.value})} className="h-11 rounded-xl" /></div>
+                <div className="space-y-1.5"><Label>Teléfono</Label>
+                  <Input value={form.telefono} onChange={(e) => setForm({...form, telefono: e.target.value})} className="h-11 rounded-xl" /></div>
+              </div>
+            </div>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setOpen(false)} className="rounded-xl">Cancelar</Button>
+              <Button onClick={save} disabled={saving} className="rounded-xl bg-gradient-primary">
+                {saving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}{editId ? "Actualizar" : "Guardar"}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+      )}
+
       <div className="px-4 py-6 md:px-8">
         <Card className="overflow-hidden rounded-2xl border-border/50 shadow-soft">
           {loading ? (
@@ -150,6 +178,11 @@ export default function Comite() {
                   <div className="flex flex-wrap items-center gap-2">
                     <Badge className={repColor(m.representacion)}>{m.representacion === "patronal" ? "Patronal" : "Trabajadores"}</Badge>
                     <Badge variant="outline">{cargoLabel[m.cargo_csh]}</Badge>
+                    {canEdit && (
+                      <Button variant="ghost" size="icon" onClick={() => openEdit(m)} className="rounded-xl text-primary hover:bg-primary/10">
+                        <Pencil className="h-4 w-4" />
+                      </Button>
+                    )}
                     {isAdmin && (
                       <Button variant="ghost" size="icon" onClick={() => remove(m.id)} className="rounded-xl text-destructive hover:bg-destructive/10">
                         <Trash2 className="h-4 w-4" />
