@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { ArrowLeft, CalendarRange, CheckCircle2, FileBarChart, Loader2, Plus, Save, ShieldCheck, Trash2, XCircle, MinusCircle, FileDown } from "lucide-react";
+import { FileUploader, ArchivoItem } from "@/components/FileUploader";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import { PageHeader } from "@/components/PageHeader";
