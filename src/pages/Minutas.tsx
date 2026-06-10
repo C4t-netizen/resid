@@ -628,7 +628,7 @@ export default function Minutas() {
                           {a.estado}
                         </Badge>
                       </TableCell>
-                      <TableCell className="text-sm text-muted-foreground">{a.cumplimiento}</TableCell>
+                      <TableCell className="text-sm text-muted-foreground">{a.fechaCumplimiento || "—"}</TableCell>
                       <TableCell onClick={(e) => e.stopPropagation()}>
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild>
