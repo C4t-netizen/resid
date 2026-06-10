@@ -78,6 +78,8 @@ export default function Verificaciones() {
   const [detailFin, setDetailFin] = useState("");
   const [savingDetail, setSavingDetail] = useState(false);
 
+  const [archivos, setArchivos] = useState<ArchivoItem[]>([]);
+
   // Reporte por período
   const [reportOpen, setReportOpen] = useState(false);
   const today = new Date().toISOString().slice(0, 10);
