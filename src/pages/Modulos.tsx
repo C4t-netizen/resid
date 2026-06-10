@@ -1,6 +1,7 @@
 import { Link } from "react-router-dom";
 import {
   AlertTriangle,
+  LayoutGrid,
   BarChart3,
   BookOpen,
   CalendarCheck,
