@@ -384,6 +384,17 @@ export default function Verificaciones() {
             </div>
           </Card>
 
+          <Card className="rounded-2xl border-border/50 p-5 shadow-soft">
+            <FileUploader
+              archivos={archivos}
+              canEdit={canEdit}
+              folder={`verificaciones/${selected.id}`}
+              onUpload={handleUpload}
+              onDelete={handleDelete}
+              label="Archivos adjuntos"
+            />
+          </Card>
+
           {canEdit && (
             <Card className="rounded-2xl border-border/50 p-5 shadow-soft">
               <Label>Agregar punto de verificación</Label>
