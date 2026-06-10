@@ -249,19 +249,31 @@ export default function Acta() {
                       {list.map((a) => {
                         const active = a.id && a.id === form.id;
                         return (
-                          <li key={a.id}>
-                            <button
-                              type="button"
-                              onClick={() => selectActa(a)}
-                              className={`w-full rounded-xl border px-3 py-2 text-left text-xs transition ${active ? "border-primary bg-primary/10" : "border-border/60 hover:bg-muted/50"}`}
-                            >
-                              <div className="font-medium">{formatFecha(a.fecha_acta)}</div>
-                              <div className="mt-0.5 flex items-center gap-1.5 text-[10px] text-muted-foreground">
-                                <Badge variant="outline" className={`${estatusColor[a.estatus]} px-1.5 py-0 text-[9px]`}>{a.estatus}</Badge>
-                                {a.lugar && <span className="truncate">{a.lugar}</span>}
-                              </div>
-                            </button>
-                          </li>
+                      <li key={a.id} className="flex items-start gap-1">
+                        <button
+                          type="button"
+                          onClick={() => selectActa(a)}
+                          className={`flex-1 rounded-xl border px-3 py-2 text-left text-xs transition ${active ? "border-primary bg-primary/10" : "border-border/60 hover:bg-muted/50"}`}
+                        >
+                          <div className="font-medium">{formatFecha(a.fecha_acta)}</div>
+                          <div className="mt-0.5 flex items-center gap-1.5 text-[10px] text-muted-foreground">
+                            <Badge variant="outline" className={`${estatusColor[a.estatus]} px-1.5 py-0 text-[9px]`}>{a.estatus}</Badge>
+                            {a.lugar && <span className="truncate">{a.lugar}</span>}
+                          </div>
+                        </button>
+                        {canEdit && (
+                          <Button
+                            size="icon"
+                            variant="ghost"
+                            className="h-7 w-7 rounded-lg text-destructive hover:bg-destructive/10 shrink-0 mt-0.5"
+                            onClick={(e) => { e.stopPropagation(); deleteActa(a); }}
+                            disabled={deletingId === a.id}
+                            title="Eliminar acta"
+                          >
+                            {deletingId === a.id ? <Loader2 className="h-3 w-3 animate-spin" /> : <Trash2 className="h-3 w-3" />}
+                          </Button>
+                        )}
+                      </li>
                         );
                       })}
                     </ul>
