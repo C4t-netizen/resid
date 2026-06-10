@@ -18,6 +18,7 @@ import { PageHeader } from "@/components/PageHeader";
 import { Card } from "@/components/ui/card";
 
 const modules = [
+  { title: "Índice", desc: "Panel principal del sistema", icon: LayoutGrid, to: "/", color: "from-slate-500 to-slate-700" },
   { title: "Configuración", desc: "Parámetros generales y CSH", icon: Settings, to: "/configuracion", color: "from-slate-500 to-slate-700" },
   { title: "Comisión", desc: "Acta de elección de representantes", icon: Users, to: "/eleccion", color: "from-amber-400 to-orange-500" },
   { title: "Acta constitutiva", desc: "Constitución formal de la CSH", icon: FileSignature, to: "/acta", color: "from-emerald-400 to-teal-600" },
