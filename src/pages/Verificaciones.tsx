@@ -172,6 +172,22 @@ export default function Verificaciones() {
     load();
   };
 
+  const handleUpload = async (file: { nombre: string; archivo_url: string }) => {
+    if (!selected) throw new Error("Selecciona una verificación primero");
+    const { error, data } = await supabase.from("verificacion_archivos").insert({
+      verificacion_id: selected.id, nombre: file.nombre, archivo_url: file.archivo_url, created_by: user?.id,
+    }).select().single();
+    if (error) throw error;
+    setArchivos((p) => [data as ArchivoItem, ...p]);
+  };
+
+  const handleDelete = async (item: ArchivoItem) => {
+    const { error } = await supabase.from("verificacion_archivos").delete().eq("id", item.id);
+    if (error) { toast.error(error.message); return; }
+    setArchivos((p) => p.filter((a) => a.id !== item.id));
+    toast.success("Archivo eliminado");
+  };
+
   const exportVerifPdf = (v: Verif, its: Item[]) => {
     const doc = new jsPDF();
     const w = doc.internal.pageSize.getWidth();
