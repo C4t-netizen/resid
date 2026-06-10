@@ -128,6 +128,18 @@ const statusStyles: Record<Status, string> = {
   Reprogramado: "bg-primary/10 text-primary border-primary/20 hover:bg-primary/15",
 };
 
+// Convierte "HH:mm" (24h) a "h:mm AM/PM"
+const formatTime12 = (time?: string): string => {
+  if (!time) return "";
+  const [hStr, mStr] = time.split(":");
+  const h = parseInt(hStr, 10);
+  const m = parseInt(mStr, 10);
+  if (isNaN(h) || isNaN(m)) return time;
+  const period = h >= 12 ? "PM" : "AM";
+  const h12 = h % 12 === 0 ? 12 : h % 12;
+  return `${h12}:${String(m).padStart(2, "0")} ${period}`;
+};
+
 const statusIcons: Record<Status, typeof CheckCircle2> = {
   Cumplido: CheckCircle2,
   Pendiente: Clock,
@@ -329,7 +341,7 @@ export default function Minutas() {
     autoTable(doc, {
       startY: y + 4,
       head: [["#", "Actividad", "Responsable", "Fecha", "Estado", "Cumplimiento"]],
-      body: acuerdos.map((a) => [a.id, a.actividad, a.responsable, a.fecha, a.estado, a.cumplimiento]),
+      body: acuerdos.map((a) => [a.id, a.actividad, a.responsable, a.fecha, a.estado, a.fechaCumplimiento || "—"]),
       headStyles: { fillColor: [101, 22, 47] },
       styles: { fontSize: 9 },
       theme: "striped",
@@ -616,7 +628,7 @@ export default function Minutas() {
                           {a.estado}
                         </Badge>
                       </TableCell>
-                      <TableCell className="text-sm text-muted-foreground">{a.cumplimiento}</TableCell>
+                      <TableCell className="text-sm text-muted-foreground">{a.fechaCumplimiento || "—"}</TableCell>
                       <TableCell onClick={(e) => e.stopPropagation()}>
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild>
@@ -665,7 +677,7 @@ export default function Minutas() {
                   </Avatar>
                   <div>
                     <p className="text-sm font-semibold">{detail.responsable}</p>
-                    <p className="text-xs text-muted-foreground">Compromiso: {detail.fecha}{detail.horaInicio ? ` · ${detail.horaInicio}${detail.horaFin ? `–${detail.horaFin}` : ""}` : ""}</p>
+                    <p className="text-xs text-muted-foreground">Compromiso: {detail.fecha}{detail.horaInicio ? ` · ${formatTime12(detail.horaInicio)}${detail.horaFin ? `–${formatTime12(detail.horaFin)}` : ""}` : ""}</p>
                     {detail.fechaCumplimiento && (
                       <p className="text-xs text-muted-foreground">Cumplimiento: {detail.fechaCumplimiento}</p>
                     )}
@@ -791,14 +803,6 @@ export default function Minutas() {
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="cumplimiento">Cumplimiento (texto)</Label>
-                  <Input
-                    id="cumplimiento"
-                    value={editing.cumplimiento}
-                    onChange={(e) => setEditing({ ...editing, cumplimiento: e.target.value })}
-                  />
-                </div>
-                <div className="space-y-2">
                   <Label>Hora de inicio</Label>
                   <Input
                     type="time"
@@ -916,14 +920,6 @@ export default function Minutas() {
                     type="date"
                     value={creatingAcuerdo.fechaCumplimiento ?? ""}
                     onChange={(e) => setCreatingAcuerdo({ ...creatingAcuerdo, fechaCumplimiento: e.target.value })}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label>Cumplimiento (texto)</Label>
-                  <Input
-                    value={creatingAcuerdo.cumplimiento}
-                    onChange={(e) => setCreatingAcuerdo({ ...creatingAcuerdo, cumplimiento: e.target.value })}
-                    placeholder="—"
                   />
                 </div>
                 <div className="space-y-2">
