@@ -28,6 +28,38 @@ export function FileUploader({ archivos, canEdit, bucket = "documentos-csh", fol
   const inputRef = useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = useState(false);
   const [preview, setPreview] = useState<ArchivoItem | null>(null);
+  const [previewBlobUrl, setPreviewBlobUrl] = useState<string | null>(null);
+  const [previewLoading, setPreviewLoading] = useState(false);
+
+  useEffect(() => {
+    if (!preview) {
+      if (previewBlobUrl) URL.revokeObjectURL(previewBlobUrl);
+      setPreviewBlobUrl(null);
+      return;
+    }
+    let revoked = false;
+    let createdUrl: string | null = null;
+    setPreviewLoading(true);
+    (async () => {
+      try {
+        const res = await fetch(preview.archivo_url);
+        const blob = await res.blob();
+        const mime = isPdf(preview.nombre) ? "application/pdf" : blob.type;
+        const typed = mime && mime !== blob.type ? new Blob([blob], { type: mime }) : blob;
+        createdUrl = URL.createObjectURL(typed);
+        if (!revoked) setPreviewBlobUrl(createdUrl);
+      } catch {
+        if (!revoked) setPreviewBlobUrl(null);
+      } finally {
+        if (!revoked) setPreviewLoading(false);
+      }
+    })();
+    return () => {
+      revoked = true;
+      if (createdUrl) URL.revokeObjectURL(createdUrl);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [preview]);
 
   const handleFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
