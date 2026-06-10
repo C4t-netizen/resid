@@ -110,6 +110,7 @@ export default function Verificaciones() {
     setDetailInicio(toLocalInput(v.fecha_inicio));
     setDetailFin(toLocalInput(v.fecha_fin));
     await loadItems(v.id);
+    await loadArchivos(v.id);
   };
 
   const saveDetail = async () => {
