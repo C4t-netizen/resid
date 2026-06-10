@@ -42,7 +42,7 @@ const operationItems = [
   { title: "Acta constitutiva", url: "/acta", icon: FileSignature },
   { title: "Programa anual", url: "/programa", icon: CalendarCheck },
   { title: "Minutas", url: "/minutas", icon: ClipboardList },
-  { title: "Recorridos", url: "/recorridos", icon: Search },
+  { title: "Acta de Verificación de Recorridos", url: "/recorridos", icon: Search },
   { title: "Verificaciones", url: "/verificaciones", icon: ShieldCheck },
 ];
 
