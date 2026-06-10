@@ -923,14 +923,6 @@ export default function Minutas() {
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label>Cumplimiento (texto)</Label>
-                  <Input
-                    value={creatingAcuerdo.cumplimiento}
-                    onChange={(e) => setCreatingAcuerdo({ ...creatingAcuerdo, cumplimiento: e.target.value })}
-                    placeholder="—"
-                  />
-                </div>
-                <div className="space-y-2">
                   <Label>Hora de inicio</Label>
                   <Input
                     type="time"
