@@ -183,6 +183,23 @@ export default function Acta() {
     toast.success("Archivo eliminado");
   };
 
+  const deleteActa = async (a: Acta) => {
+    if (!a.id) return;
+    if (!window.confirm(`¿Eliminar el acta del ${formatFecha(a.fecha_acta)}? Esta acción no se puede deshacer.`)) return;
+    setDeletingId(a.id);
+    await supabase.from("acta_archivos").delete().eq("acta_id", a.id);
+    const { error } = await supabase.from("acta_constitucion").delete().eq("id", a.id);
+    if (error) { toast.error(error.message); setDeletingId(null); return; }
+    toast.success("Acta eliminada");
+    const updated = await loadActas();
+    setActas(updated);
+    if (form.id === a.id) {
+      if (updated[0]) await selectActa(updated[0]);
+      else { setForm(empty); setArchivos([]); }
+    }
+    setDeletingId(null);
+  };
+
   const grouped = useMemo(() => {
     const g: Record<string, Acta[]> = {};
     for (const a of actas) {
