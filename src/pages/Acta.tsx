@@ -1,5 +1,5 @@
-import { useEffect, useMemo, useState } from "react";
-import { FileSignature, Loader2, Save, Plus, FileText, Calendar } from "lucide-react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { FileSignature, Loader2, Save, Plus, FileText, Calendar, Check } from "lucide-react";
 import { PageHeader } from "@/components/PageHeader";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -54,6 +54,9 @@ export default function Acta() {
   const [saving, setSaving] = useState(false);
   const [archivos, setArchivos] = useState<ArchivoItem[]>([]);
   const [actas, setActas] = useState<Acta[]>([]);
+  const [autoSaveStatus, setAutoSaveStatus] = useState<"idle" | "saving" | "saved">("idle");
+  const dirtyRef = useRef(false);
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const loadArchivos = async (actaId: string) => {
     const { data } = await supabase.from("acta_archivos").select("*").eq("acta_id", actaId).order("created_at", { ascending: false });
@@ -66,6 +69,9 @@ export default function Acta() {
   };
 
   const selectActa = async (a: Acta) => {
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+    dirtyRef.current = false;
+    setAutoSaveStatus("idle");
     setForm({
       ...empty, ...a,
       fecha_acta: a.fecha_acta ?? "", hora: a.hora ?? "",
@@ -84,12 +90,47 @@ export default function Acta() {
     })();
   }, []);
 
-  const set = <K extends keyof Acta>(k: K, v: Acta[K]) => setForm((p) => ({ ...p, [k]: v }));
+  const set = <K extends keyof Acta>(k: K, v: Acta[K]) => {
+    dirtyRef.current = true;
+    setForm((p) => ({ ...p, [k]: v }));
+  };
 
   const nuevaActa = () => {
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+    dirtyRef.current = false;
+    setAutoSaveStatus("idle");
     setForm(empty);
     setArchivos([]);
   };
+
+  // Autoguardado con debounce
+  useEffect(() => {
+    if (!canEdit) return;
+    if (!dirtyRef.current) return;
+    if (!form.fecha_acta) return;
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+    debounceRef.current = setTimeout(async () => {
+      setAutoSaveStatus("saving");
+      const payload: any = {
+        ...form,
+        hora: form.hora || null,
+        vigencia_inicio: form.vigencia_inicio || null,
+        vigencia_fin: form.vigencia_fin || null,
+        created_by: user?.id,
+      };
+      const { error, data } = form.id
+        ? await supabase.from("acta_constitucion").update(payload).eq("id", form.id).select().single()
+        : await supabase.from("acta_constitucion").insert(payload).select().single();
+      if (error) { setAutoSaveStatus("idle"); toast.error(error.message); return; }
+      dirtyRef.current = false;
+      if (data && !form.id) setForm((p) => ({ ...p, id: data.id }));
+      setActas(await loadActas());
+      setAutoSaveStatus("saved");
+      setTimeout(() => setAutoSaveStatus((s) => (s === "saved" ? "idle" : s)), 1500);
+    }, 900);
+    return () => { if (debounceRef.current) clearTimeout(debounceRef.current); };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [form, canEdit]);
 
   const save = async () => {
     if (!form.fecha_acta) { toast.error("La fecha del acta es obligatoria"); return; }
@@ -215,9 +256,17 @@ export default function Acta() {
           {/* Formulario del acta */}
           <Card className="rounded-2xl border-border/50 p-6 shadow-soft md:p-8">
             <fieldset disabled={!canEdit} className="space-y-6 disabled:opacity-70">
-              <div className="flex items-center gap-2 border-b border-border/60 pb-3">
-                <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/10"><FileSignature className="h-4 w-4 text-primary" /></div>
-                <h3 className="font-display text-base font-bold">{form.id ? "Editar acta" : "Nueva acta"}</h3>
+              <div className="flex items-center justify-between gap-2 border-b border-border/60 pb-3">
+                <div className="flex items-center gap-2">
+                  <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/10"><FileSignature className="h-4 w-4 text-primary" /></div>
+                  <h3 className="font-display text-base font-bold">{form.id ? "Editar acta" : "Nueva acta"}</h3>
+                </div>
+                {canEdit && (
+                  <span className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                    {autoSaveStatus === "saving" && (<><Loader2 className="h-3 w-3 animate-spin" /> Guardando…</>)}
+                    {autoSaveStatus === "saved" && (<><Check className="h-3 w-3 text-success" /> Guardado</>)}
+                  </span>
+                )}
               </div>
               <div className="grid gap-4 md:grid-cols-2">
                 <div className="space-y-1.5 md:col-span-2"><Label>Lugar</Label><Input value={form.lugar} onChange={(e) => set("lugar", e.target.value)} className="h-11 rounded-xl" /></div>
