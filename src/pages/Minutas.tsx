@@ -171,6 +171,7 @@ export default function Minutas() {
   const [comentariosByAcuerdo, setComentariosByAcuerdo] = useState<Record<string, { id: number; texto: string; fecha: string }[]>>({});
   const [nuevoComentario, setNuevoComentario] = useState("");
   const chartRef = useRef<HTMLDivElement | null>(null);
+  const [lightbox, setLightbox] = useState<string | null>(null);
   
 
   const filteredMinutas = yearFilter === "todos" ? minutas : minutas.filter((m) => m.anio === yearFilter);
