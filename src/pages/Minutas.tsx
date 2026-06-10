@@ -341,7 +341,7 @@ export default function Minutas() {
     autoTable(doc, {
       startY: y + 4,
       head: [["#", "Actividad", "Responsable", "Fecha", "Estado", "Cumplimiento"]],
-      body: acuerdos.map((a) => [a.id, a.actividad, a.responsable, a.fecha, a.estado, a.cumplimiento]),
+      body: acuerdos.map((a) => [a.id, a.actividad, a.responsable, a.fecha, a.estado, a.fechaCumplimiento || "—"]),
       headStyles: { fillColor: [101, 22, 47] },
       styles: { fontSize: 9 },
       theme: "striped",
