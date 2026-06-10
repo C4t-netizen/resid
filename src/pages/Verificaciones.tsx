@@ -341,7 +341,7 @@ export default function Verificaciones() {
               <Button variant="outline" onClick={() => exportVerifPdf(selected, items)} className="rounded-xl">
                 <FileDown className="mr-2 h-4 w-4" /> Exportar PDF
               </Button>
-              <Button variant="outline" onClick={() => setSelected(null)} className="rounded-xl"><ArrowLeft className="mr-2 h-4 w-4" /> Volver</Button>
+              <Button variant="outline" onClick={() => { setSelected(null); setArchivos([]); }} className="rounded-xl"><ArrowLeft className="mr-2 h-4 w-4" /> Volver</Button>
             </div>
           }
         />
