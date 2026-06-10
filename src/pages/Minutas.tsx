@@ -908,6 +908,38 @@ export default function Minutas() {
               </div>
               <div className="grid grid-cols-2 gap-3">
                 <div className="space-y-2">
+                  <Label>Fecha de cumplimiento</Label>
+                  <Input
+                    type="date"
+                    value={creatingAcuerdo.fechaCumplimiento ?? ""}
+                    onChange={(e) => setCreatingAcuerdo({ ...creatingAcuerdo, fechaCumplimiento: e.target.value })}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>Cumplimiento (texto)</Label>
+                  <Input
+                    value={creatingAcuerdo.cumplimiento}
+                    onChange={(e) => setCreatingAcuerdo({ ...creatingAcuerdo, cumplimiento: e.target.value })}
+                    placeholder="—"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>Hora de inicio</Label>
+                  <Input
+                    type="time"
+                    value={creatingAcuerdo.horaInicio ?? ""}
+                    onChange={(e) => setCreatingAcuerdo({ ...creatingAcuerdo, horaInicio: e.target.value })}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>Hora final</Label>
+                  <Input
+                    type="time"
+                    value={creatingAcuerdo.horaFin ?? ""}
+                    onChange={(e) => setCreatingAcuerdo({ ...creatingAcuerdo, horaFin: e.target.value })}
+                  />
+                </div>
+                <div className="col-span-2 space-y-2">
                   <Label>Estado</Label>
                   <Select
                     value={creatingAcuerdo.estado}
@@ -917,17 +949,10 @@ export default function Minutas() {
                     <SelectContent>
                       <SelectItem value="Cumplido">Cumplido</SelectItem>
                       <SelectItem value="Pendiente">Pendiente</SelectItem>
+                      <SelectItem value="Reprogramado">Pendiente / Reprogramado</SelectItem>
                       <SelectItem value="No cumplido">No cumplido</SelectItem>
                     </SelectContent>
                   </Select>
-                </div>
-                <div className="space-y-2">
-                  <Label>Cumplimiento</Label>
-                  <Input
-                    value={creatingAcuerdo.cumplimiento}
-                    onChange={(e) => setCreatingAcuerdo({ ...creatingAcuerdo, cumplimiento: e.target.value })}
-                    placeholder="—"
-                  />
                 </div>
               </div>
               <div className="space-y-2">
