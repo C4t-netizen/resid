@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { FileSignature, Loader2, Save, Plus, FileText, Calendar } from "lucide-react";
+import { FileSignature, Loader2, Save, Plus, FileText, Calendar, Check } from "lucide-react";
 import { PageHeader } from "@/components/PageHeader";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
