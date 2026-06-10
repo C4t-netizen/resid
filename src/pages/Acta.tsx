@@ -54,6 +54,9 @@ export default function Acta() {
   const [saving, setSaving] = useState(false);
   const [archivos, setArchivos] = useState<ArchivoItem[]>([]);
   const [actas, setActas] = useState<Acta[]>([]);
+  const [autoSaveStatus, setAutoSaveStatus] = useState<"idle" | "saving" | "saved">("idle");
+  const dirtyRef = useRef(false);
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const loadArchivos = async (actaId: string) => {
     const { data } = await supabase.from("acta_archivos").select("*").eq("acta_id", actaId).order("created_at", { ascending: false });
@@ -66,6 +69,9 @@ export default function Acta() {
   };
 
   const selectActa = async (a: Acta) => {
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+    dirtyRef.current = false;
+    setAutoSaveStatus("idle");
     setForm({
       ...empty, ...a,
       fecha_acta: a.fecha_acta ?? "", hora: a.hora ?? "",
@@ -84,12 +90,47 @@ export default function Acta() {
     })();
   }, []);
 
-  const set = <K extends keyof Acta>(k: K, v: Acta[K]) => setForm((p) => ({ ...p, [k]: v }));
+  const set = <K extends keyof Acta>(k: K, v: Acta[K]) => {
+    dirtyRef.current = true;
+    setForm((p) => ({ ...p, [k]: v }));
+  };
 
   const nuevaActa = () => {
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+    dirtyRef.current = false;
+    setAutoSaveStatus("idle");
     setForm(empty);
     setArchivos([]);
   };
+
+  // Autoguardado con debounce
+  useEffect(() => {
+    if (!canEdit) return;
+    if (!dirtyRef.current) return;
+    if (!form.fecha_acta) return;
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+    debounceRef.current = setTimeout(async () => {
+      setAutoSaveStatus("saving");
+      const payload: any = {
+        ...form,
+        hora: form.hora || null,
+        vigencia_inicio: form.vigencia_inicio || null,
+        vigencia_fin: form.vigencia_fin || null,
+        created_by: user?.id,
+      };
+      const { error, data } = form.id
+        ? await supabase.from("acta_constitucion").update(payload).eq("id", form.id).select().single()
+        : await supabase.from("acta_constitucion").insert(payload).select().single();
+      if (error) { setAutoSaveStatus("idle"); toast.error(error.message); return; }
+      dirtyRef.current = false;
+      if (data && !form.id) setForm((p) => ({ ...p, id: data.id }));
+      setActas(await loadActas());
+      setAutoSaveStatus("saved");
+      setTimeout(() => setAutoSaveStatus((s) => (s === "saved" ? "idle" : s)), 1500);
+    }, 900);
+    return () => { if (debounceRef.current) clearTimeout(debounceRef.current); };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [form, canEdit]);
 
   const save = async () => {
     if (!form.fecha_acta) { toast.error("La fecha del acta es obligatoria"); return; }
