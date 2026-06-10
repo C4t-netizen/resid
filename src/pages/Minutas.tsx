@@ -81,7 +81,7 @@ import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 
 
-type Status = "Cumplido" | "Pendiente" | "No cumplido";
+type Status = "Cumplido" | "Pendiente" | "No cumplido" | "Reprogramado";
 
 type Acuerdo = {
   id: number;
@@ -89,6 +89,9 @@ type Acuerdo = {
   responsable: string;
   iniciales: string;
   fecha: string;
+  fechaCumplimiento?: string;
+  horaInicio?: string;
+  horaFin?: string;
   estado: Status;
   cumplimiento: string;
   imagenes?: string[];
