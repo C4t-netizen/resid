@@ -125,12 +125,14 @@ const statusStyles: Record<Status, string> = {
   Cumplido: "bg-success/10 text-success border-success/20 hover:bg-success/15",
   Pendiente: "bg-warning/10 text-warning border-warning/20 hover:bg-warning/15",
   "No cumplido": "bg-destructive/10 text-destructive border-destructive/20 hover:bg-destructive/15",
+  Reprogramado: "bg-primary/10 text-primary border-primary/20 hover:bg-primary/15",
 };
 
 const statusIcons: Record<Status, typeof CheckCircle2> = {
   Cumplido: CheckCircle2,
   Pendiente: Clock,
   "No cumplido": XCircle,
+  Reprogramado: Clock,
 };
 
 const getIniciales = (nombre: string) =>
