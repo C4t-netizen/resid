@@ -153,6 +153,7 @@ const ESTADO_COLORS: Record<Status, string> = {
   Cumplido: "hsl(var(--success))",
   Pendiente: "hsl(var(--warning))",
   "No cumplido": "hsl(var(--destructive))",
+  Reprogramado: "hsl(var(--primary))",
 };
 
 export default function Minutas() {
