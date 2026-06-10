@@ -674,9 +674,9 @@ export default function Minutas() {
                   {detail.imagenes && detail.imagenes.length > 0 ? (
                     <div className="grid grid-cols-2 gap-2">
                       {detail.imagenes.map((src, i) => (
-                        <a key={i} href={src} target="_blank" rel="noreferrer">
-                          <img src={src} alt="" className="aspect-video w-full rounded-lg object-cover ring-1 ring-border" />
-                        </a>
+                        <button key={i} type="button" onClick={() => setLightbox(src)} className="block">
+                          <img src={src} alt="" className="aspect-video w-full rounded-lg object-cover ring-1 ring-border transition-transform hover:scale-[1.02]" />
+                        </button>
                       ))}
                     </div>
                   ) : (
