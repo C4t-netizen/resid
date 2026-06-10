@@ -677,7 +677,7 @@ export default function Minutas() {
                   </Avatar>
                   <div>
                     <p className="text-sm font-semibold">{detail.responsable}</p>
-                    <p className="text-xs text-muted-foreground">Compromiso: {detail.fecha}{detail.horaInicio ? ` · ${detail.horaInicio}${detail.horaFin ? `–${detail.horaFin}` : ""}` : ""}</p>
+                    <p className="text-xs text-muted-foreground">Compromiso: {detail.fecha}{detail.horaInicio ? ` · ${formatTime12(detail.horaInicio)}${detail.horaFin ? `–${formatTime12(detail.horaFin)}` : ""}` : ""}</p>
                     {detail.fechaCumplimiento && (
                       <p className="text-xs text-muted-foreground">Cumplimiento: {detail.fechaCumplimiento}</p>
                     )}
