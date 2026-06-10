@@ -1,6 +1,7 @@
 import { useRef, useState } from "react";
-import { Loader2, Paperclip, Trash2, Upload, FileText, ExternalLink } from "lucide-react";
+import { Loader2, Paperclip, Trash2, Upload, FileText, Eye, Download } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
@@ -20,9 +21,13 @@ interface Props {
   label?: string;
 }
 
+const isImage = (name: string) => /\.(png|jpe?g|gif|webp|bmp|svg)$/i.test(name);
+const isPdf = (name: string) => /\.pdf$/i.test(name);
+
 export function FileUploader({ archivos, canEdit, bucket = "documentos-csh", folder, onUpload, onDelete, label = "Archivos adjuntos" }: Props) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = useState(false);
+  const [preview, setPreview] = useState<ArchivoItem | null>(null);
 
   const handleFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -49,6 +54,23 @@ export function FileUploader({ archivos, canEdit, bucket = "documentos-csh", fol
     }
     setUploading(false);
     if (inputRef.current) inputRef.current.value = "";
+  };
+
+  const downloadFile = async (item: ArchivoItem) => {
+    try {
+      const res = await fetch(item.archivo_url);
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = item.nombre;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      setTimeout(() => URL.revokeObjectURL(url), 1000);
+    } catch {
+      window.open(item.archivo_url, "_blank", "noopener,noreferrer");
+    }
   };
 
   return (
@@ -79,9 +101,12 @@ export function FileUploader({ archivos, canEdit, bucket = "documentos-csh", fol
             <li key={a.id} className="flex items-center gap-3 p-3">
               <FileText className="h-4 w-4 shrink-0 text-primary" />
               <span className="flex-1 truncate text-sm">{a.nombre}</span>
-              <a href={a.archivo_url} target="_blank" rel="noreferrer" className="text-muted-foreground hover:text-primary">
-                <ExternalLink className="h-4 w-4" />
-              </a>
+              <Button type="button" variant="ghost" size="icon" className="h-8 w-8 rounded-lg" onClick={() => setPreview(a)} title="Ver">
+                <Eye className="h-4 w-4" />
+              </Button>
+              <Button type="button" variant="ghost" size="icon" className="h-8 w-8 rounded-lg" onClick={() => downloadFile(a)} title="Descargar">
+                <Download className="h-4 w-4" />
+              </Button>
               {canEdit && (
                 <Button type="button" variant="ghost" size="icon" className="h-8 w-8 rounded-lg text-destructive hover:bg-destructive/10" onClick={() => onDelete(a)}>
                   <Trash2 className="h-4 w-4" />
@@ -91,6 +116,32 @@ export function FileUploader({ archivos, canEdit, bucket = "documentos-csh", fol
           ))}
         </ul>
       )}
+
+      <Dialog open={!!preview} onOpenChange={(o) => !o && setPreview(null)}>
+        <DialogContent className="max-w-4xl rounded-2xl">
+          <DialogHeader>
+            <DialogTitle className="truncate pr-8">{preview?.nombre}</DialogTitle>
+          </DialogHeader>
+          {preview && (
+            <div className="space-y-3">
+              <div className="flex justify-end">
+                <Button size="sm" variant="outline" className="rounded-xl" onClick={() => downloadFile(preview)}>
+                  <Download className="mr-2 h-4 w-4" /> Descargar
+                </Button>
+              </div>
+              {isImage(preview.nombre) ? (
+                <img src={preview.archivo_url} alt={preview.nombre} className="mx-auto max-h-[70vh] rounded-xl object-contain" />
+              ) : isPdf(preview.nombre) ? (
+                <iframe src={preview.archivo_url} title={preview.nombre} className="h-[70vh] w-full rounded-xl border" />
+              ) : (
+                <p className="rounded-xl border border-dashed border-border/60 p-6 text-center text-sm text-muted-foreground">
+                  Vista previa no disponible para este tipo de archivo. Usa "Descargar" para abrirlo.
+                </p>
+              )}
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
