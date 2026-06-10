@@ -99,6 +99,11 @@ export default function Verificaciones() {
     setItems((data ?? []) as Item[]);
   };
 
+  const loadArchivos = async (vid: string) => {
+    const { data } = await supabase.from("verificacion_archivos").select("*").eq("verificacion_id", vid).order("created_at", { ascending: false });
+    setArchivos((data ?? []) as ArchivoItem[]);
+  };
+
   const openDetail = async (v: Verif) => {
     setSelected(v);
     setDetailObs(v.observaciones ?? "");
