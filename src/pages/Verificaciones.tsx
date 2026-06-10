@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { ArrowLeft, CalendarRange, CheckCircle2, FileBarChart, Loader2, Plus, Save, ShieldCheck, Trash2, XCircle, MinusCircle, FileDown } from "lucide-react";
+import { FileUploader, ArchivoItem } from "@/components/FileUploader";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import { PageHeader } from "@/components/PageHeader";
@@ -77,6 +78,8 @@ export default function Verificaciones() {
   const [detailFin, setDetailFin] = useState("");
   const [savingDetail, setSavingDetail] = useState(false);
 
+  const [archivos, setArchivos] = useState<ArchivoItem[]>([]);
+
   // Reporte por período
   const [reportOpen, setReportOpen] = useState(false);
   const today = new Date().toISOString().slice(0, 10);
@@ -96,12 +99,18 @@ export default function Verificaciones() {
     setItems((data ?? []) as Item[]);
   };
 
+  const loadArchivos = async (vid: string) => {
+    const { data } = await supabase.from("verificacion_archivos").select("*").eq("verificacion_id", vid).order("created_at", { ascending: false });
+    setArchivos((data ?? []) as ArchivoItem[]);
+  };
+
   const openDetail = async (v: Verif) => {
     setSelected(v);
     setDetailObs(v.observaciones ?? "");
     setDetailInicio(toLocalInput(v.fecha_inicio));
     setDetailFin(toLocalInput(v.fecha_fin));
     await loadItems(v.id);
+    await loadArchivos(v.id);
   };
 
   const saveDetail = async () => {
@@ -161,6 +170,22 @@ export default function Verificaciones() {
   const removeVerif = async (id: string) => {
     await supabase.from("verificaciones").delete().eq("id", id);
     load();
+  };
+
+  const handleUpload = async (file: { nombre: string; archivo_url: string }) => {
+    if (!selected) throw new Error("Selecciona una verificación primero");
+    const { error, data } = await supabase.from("verificacion_archivos").insert({
+      verificacion_id: selected.id, nombre: file.nombre, archivo_url: file.archivo_url, created_by: user?.id,
+    }).select().single();
+    if (error) throw error;
+    setArchivos((p) => [data as ArchivoItem, ...p]);
+  };
+
+  const handleDelete = async (item: ArchivoItem) => {
+    const { error } = await supabase.from("verificacion_archivos").delete().eq("id", item.id);
+    if (error) { toast.error(error.message); return; }
+    setArchivos((p) => p.filter((a) => a.id !== item.id));
+    toast.success("Archivo eliminado");
   };
 
   const exportVerifPdf = (v: Verif, its: Item[]) => {
@@ -316,7 +341,7 @@ export default function Verificaciones() {
               <Button variant="outline" onClick={() => exportVerifPdf(selected, items)} className="rounded-xl">
                 <FileDown className="mr-2 h-4 w-4" /> Exportar PDF
               </Button>
-              <Button variant="outline" onClick={() => setSelected(null)} className="rounded-xl"><ArrowLeft className="mr-2 h-4 w-4" /> Volver</Button>
+              <Button variant="outline" onClick={() => { setSelected(null); setArchivos([]); }} className="rounded-xl"><ArrowLeft className="mr-2 h-4 w-4" /> Volver</Button>
             </div>
           }
         />
@@ -357,6 +382,17 @@ export default function Verificaciones() {
               <Label>Observaciones</Label>
               <Textarea value={detailObs} onChange={(e) => setDetailObs(e.target.value)} disabled={!canEdit} placeholder="Notas generales del recorrido, hallazgos, contexto…" rows={4} className="rounded-xl" />
             </div>
+          </Card>
+
+          <Card className="rounded-2xl border-border/50 p-5 shadow-soft">
+            <FileUploader
+              archivos={archivos}
+              canEdit={canEdit}
+              folder={`verificaciones/${selected.id}`}
+              onUpload={handleUpload}
+              onDelete={handleDelete}
+              label="Archivos adjuntos"
+            />
           </Card>
 
           {canEdit && (

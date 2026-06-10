@@ -863,6 +863,41 @@ export type Database = {
         }
         Relationships: []
       }
+      verificacion_archivos: {
+        Row: {
+          archivo_url: string
+          created_at: string
+          created_by: string | null
+          id: string
+          nombre: string
+          verificacion_id: string
+        }
+        Insert: {
+          archivo_url: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          nombre: string
+          verificacion_id: string
+        }
+        Update: {
+          archivo_url?: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          nombre?: string
+          verificacion_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "verificacion_archivos_verificacion_id_fkey"
+            columns: ["verificacion_id"]
+            isOneToOne: false
+            referencedRelation: "verificaciones"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       verificacion_items: {
         Row: {
           created_at: string
