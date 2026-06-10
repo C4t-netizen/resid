@@ -1,5 +1,5 @@
 import { Outlet } from "react-router-dom";
-import { Bell, LogOut, Plus, Search } from "lucide-react";
+import { Bell, Eye, LogOut, Plus, Search } from "lucide-react";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "./AppSidebar";
 import { Button } from "@/components/ui/button";
@@ -70,7 +70,15 @@ export default function AppLayout() {
             </div>
           </header>
 
-          <main className="flex-1 overflow-x-hidden">
+          {role === "viewer" && (
+            <div className="flex items-center gap-2 border-b border-warning/30 bg-warning/10 px-4 py-2 text-xs font-medium text-warning-foreground md:px-6">
+              <Eye className="h-3.5 w-3.5 text-warning" />
+              <span className="text-warning">Modo solo lectura</span>
+              <span className="hidden text-muted-foreground md:inline">— puedes consultar la información, pero no crear, editar ni eliminar registros.</span>
+            </div>
+          )}
+
+          <main className={`flex-1 overflow-x-hidden ${role === "viewer" ? "[&_form]:pointer-events-auto" : ""}`}>
             <Outlet />
           </main>
 
