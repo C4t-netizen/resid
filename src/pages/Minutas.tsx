@@ -81,7 +81,7 @@ import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 
 
-type Status = "Cumplido" | "Pendiente" | "No cumplido";
+type Status = "Cumplido" | "Pendiente" | "No cumplido" | "Reprogramado";
 
 type Acuerdo = {
   id: number;
@@ -89,6 +89,9 @@ type Acuerdo = {
   responsable: string;
   iniciales: string;
   fecha: string;
+  fechaCumplimiento?: string;
+  horaInicio?: string;
+  horaFin?: string;
   estado: Status;
   cumplimiento: string;
   imagenes?: string[];
@@ -122,12 +125,14 @@ const statusStyles: Record<Status, string> = {
   Cumplido: "bg-success/10 text-success border-success/20 hover:bg-success/15",
   Pendiente: "bg-warning/10 text-warning border-warning/20 hover:bg-warning/15",
   "No cumplido": "bg-destructive/10 text-destructive border-destructive/20 hover:bg-destructive/15",
+  Reprogramado: "bg-primary/10 text-primary border-primary/20 hover:bg-primary/15",
 };
 
 const statusIcons: Record<Status, typeof CheckCircle2> = {
   Cumplido: CheckCircle2,
   Pendiente: Clock,
   "No cumplido": XCircle,
+  Reprogramado: Clock,
 };
 
 const getIniciales = (nombre: string) =>
@@ -148,6 +153,7 @@ const ESTADO_COLORS: Record<Status, string> = {
   Cumplido: "hsl(var(--success))",
   Pendiente: "hsl(var(--warning))",
   "No cumplido": "hsl(var(--destructive))",
+  Reprogramado: "hsl(var(--primary))",
 };
 
 export default function Minutas() {
@@ -165,6 +171,7 @@ export default function Minutas() {
   const [comentariosByAcuerdo, setComentariosByAcuerdo] = useState<Record<string, { id: number; texto: string; fecha: string }[]>>({});
   const [nuevoComentario, setNuevoComentario] = useState("");
   const chartRef = useRef<HTMLDivElement | null>(null);
+  const [lightbox, setLightbox] = useState<string | null>(null);
   
 
   const filteredMinutas = yearFilter === "todos" ? minutas : minutas.filter((m) => m.anio === yearFilter);
@@ -658,7 +665,10 @@ export default function Minutas() {
                   </Avatar>
                   <div>
                     <p className="text-sm font-semibold">{detail.responsable}</p>
-                    <p className="text-xs text-muted-foreground">{detail.fecha}</p>
+                    <p className="text-xs text-muted-foreground">Compromiso: {detail.fecha}{detail.horaInicio ? ` · ${detail.horaInicio}${detail.horaFin ? `–${detail.horaFin}` : ""}` : ""}</p>
+                    {detail.fechaCumplimiento && (
+                      <p className="text-xs text-muted-foreground">Cumplimiento: {detail.fechaCumplimiento}</p>
+                    )}
                   </div>
                 </div>
 
@@ -667,9 +677,9 @@ export default function Minutas() {
                   {detail.imagenes && detail.imagenes.length > 0 ? (
                     <div className="grid grid-cols-2 gap-2">
                       {detail.imagenes.map((src, i) => (
-                        <a key={i} href={src} target="_blank" rel="noreferrer">
-                          <img src={src} alt="" className="aspect-video w-full rounded-lg object-cover ring-1 ring-border" />
-                        </a>
+                        <button key={i} type="button" onClick={() => setLightbox(src)} className="block">
+                          <img src={src} alt="" className="aspect-video w-full rounded-lg object-cover ring-1 ring-border transition-transform hover:scale-[1.02]" />
+                        </button>
                       ))}
                     </div>
                   ) : (
@@ -773,6 +783,38 @@ export default function Minutas() {
               </div>
               <div className="grid grid-cols-2 gap-3">
                 <div className="space-y-2">
+                  <Label>Fecha de cumplimiento</Label>
+                  <Input
+                    type="date"
+                    value={editing.fechaCumplimiento ?? ""}
+                    onChange={(e) => setEditing({ ...editing, fechaCumplimiento: e.target.value })}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="cumplimiento">Cumplimiento (texto)</Label>
+                  <Input
+                    id="cumplimiento"
+                    value={editing.cumplimiento}
+                    onChange={(e) => setEditing({ ...editing, cumplimiento: e.target.value })}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>Hora de inicio</Label>
+                  <Input
+                    type="time"
+                    value={editing.horaInicio ?? ""}
+                    onChange={(e) => setEditing({ ...editing, horaInicio: e.target.value })}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>Hora final</Label>
+                  <Input
+                    type="time"
+                    value={editing.horaFin ?? ""}
+                    onChange={(e) => setEditing({ ...editing, horaFin: e.target.value })}
+                  />
+                </div>
+                <div className="col-span-2 space-y-2">
                   <Label>Estado</Label>
                   <Select
                     value={editing.estado}
@@ -784,17 +826,10 @@ export default function Minutas() {
                     <SelectContent>
                       <SelectItem value="Cumplido">Cumplido</SelectItem>
                       <SelectItem value="Pendiente">Pendiente</SelectItem>
+                      <SelectItem value="Reprogramado">Pendiente / Reprogramado</SelectItem>
                       <SelectItem value="No cumplido">No cumplido</SelectItem>
                     </SelectContent>
                   </Select>
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="cumplimiento">Cumplimiento</Label>
-                  <Input
-                    id="cumplimiento"
-                    value={editing.cumplimiento}
-                    onChange={(e) => setEditing({ ...editing, cumplimiento: e.target.value })}
-                  />
                 </div>
               </div>
               <div className="space-y-2">
@@ -876,6 +911,38 @@ export default function Minutas() {
               </div>
               <div className="grid grid-cols-2 gap-3">
                 <div className="space-y-2">
+                  <Label>Fecha de cumplimiento</Label>
+                  <Input
+                    type="date"
+                    value={creatingAcuerdo.fechaCumplimiento ?? ""}
+                    onChange={(e) => setCreatingAcuerdo({ ...creatingAcuerdo, fechaCumplimiento: e.target.value })}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>Cumplimiento (texto)</Label>
+                  <Input
+                    value={creatingAcuerdo.cumplimiento}
+                    onChange={(e) => setCreatingAcuerdo({ ...creatingAcuerdo, cumplimiento: e.target.value })}
+                    placeholder="—"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>Hora de inicio</Label>
+                  <Input
+                    type="time"
+                    value={creatingAcuerdo.horaInicio ?? ""}
+                    onChange={(e) => setCreatingAcuerdo({ ...creatingAcuerdo, horaInicio: e.target.value })}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>Hora final</Label>
+                  <Input
+                    type="time"
+                    value={creatingAcuerdo.horaFin ?? ""}
+                    onChange={(e) => setCreatingAcuerdo({ ...creatingAcuerdo, horaFin: e.target.value })}
+                  />
+                </div>
+                <div className="col-span-2 space-y-2">
                   <Label>Estado</Label>
                   <Select
                     value={creatingAcuerdo.estado}
@@ -885,17 +952,10 @@ export default function Minutas() {
                     <SelectContent>
                       <SelectItem value="Cumplido">Cumplido</SelectItem>
                       <SelectItem value="Pendiente">Pendiente</SelectItem>
+                      <SelectItem value="Reprogramado">Pendiente / Reprogramado</SelectItem>
                       <SelectItem value="No cumplido">No cumplido</SelectItem>
                     </SelectContent>
                   </Select>
-                </div>
-                <div className="space-y-2">
-                  <Label>Cumplimiento</Label>
-                  <Input
-                    value={creatingAcuerdo.cumplimiento}
-                    onChange={(e) => setCreatingAcuerdo({ ...creatingAcuerdo, cumplimiento: e.target.value })}
-                    placeholder="—"
-                  />
                 </div>
               </div>
               <div className="space-y-2">
@@ -1082,6 +1142,27 @@ export default function Minutas() {
               <Download className="mr-2 h-4 w-4" /> Descargar PDF
             </Button>
           </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Lightbox de imagen */}
+      <Dialog open={!!lightbox} onOpenChange={(open) => !open && setLightbox(null)}>
+        <DialogContent className="sm:max-w-3xl">
+          <DialogHeader>
+            <DialogTitle>Vista previa</DialogTitle>
+          </DialogHeader>
+          {lightbox && (
+            <div className="space-y-3">
+              <img src={lightbox} alt="Vista previa" className="max-h-[70vh] w-full rounded-xl object-contain" />
+              <div className="flex justify-end gap-2">
+                <a href={lightbox} download="imagen.png">
+                  <Button variant="outline" className="rounded-xl">
+                    <Download className="mr-2 h-4 w-4" /> Descargar
+                  </Button>
+                </a>
+              </div>
+            </div>
+          )}
         </DialogContent>
       </Dialog>
     </>
