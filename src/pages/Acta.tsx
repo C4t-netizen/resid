@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { FileSignature, Loader2, Save, Plus, FileText, Calendar, Check } from "lucide-react";
+import { FileSignature, Loader2, Save, Plus, FileText, Calendar, Check, Trash2 } from "lucide-react";
 import { PageHeader } from "@/components/PageHeader";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -55,6 +55,7 @@ export default function Acta() {
   const [archivos, setArchivos] = useState<ArchivoItem[]>([]);
   const [actas, setActas] = useState<Acta[]>([]);
   const [autoSaveStatus, setAutoSaveStatus] = useState<"idle" | "saving" | "saved">("idle");
+  const [deletingId, setDeletingId] = useState<string | null>(null);
   const dirtyRef = useRef(false);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -182,6 +183,23 @@ export default function Acta() {
     toast.success("Archivo eliminado");
   };
 
+  const deleteActa = async (a: Acta) => {
+    if (!a.id) return;
+    if (!window.confirm(`¿Eliminar el acta del ${formatFecha(a.fecha_acta)}? Esta acción no se puede deshacer.`)) return;
+    setDeletingId(a.id);
+    await supabase.from("acta_archivos").delete().eq("acta_id", a.id);
+    const { error } = await supabase.from("acta_constitucion").delete().eq("id", a.id);
+    if (error) { toast.error(error.message); setDeletingId(null); return; }
+    toast.success("Acta eliminada");
+    const updated = await loadActas();
+    setActas(updated);
+    if (form.id === a.id) {
+      if (updated[0]) await selectActa(updated[0]);
+      else { setForm(empty); setArchivos([]); }
+    }
+    setDeletingId(null);
+  };
+
   const grouped = useMemo(() => {
     const g: Record<string, Acta[]> = {};
     for (const a of actas) {
@@ -231,19 +249,31 @@ export default function Acta() {
                       {list.map((a) => {
                         const active = a.id && a.id === form.id;
                         return (
-                          <li key={a.id}>
-                            <button
-                              type="button"
-                              onClick={() => selectActa(a)}
-                              className={`w-full rounded-xl border px-3 py-2 text-left text-xs transition ${active ? "border-primary bg-primary/10" : "border-border/60 hover:bg-muted/50"}`}
-                            >
-                              <div className="font-medium">{formatFecha(a.fecha_acta)}</div>
-                              <div className="mt-0.5 flex items-center gap-1.5 text-[10px] text-muted-foreground">
-                                <Badge variant="outline" className={`${estatusColor[a.estatus]} px-1.5 py-0 text-[9px]`}>{a.estatus}</Badge>
-                                {a.lugar && <span className="truncate">{a.lugar}</span>}
-                              </div>
-                            </button>
-                          </li>
+                      <li key={a.id} className="flex items-start gap-1">
+                        <button
+                          type="button"
+                          onClick={() => selectActa(a)}
+                          className={`flex-1 rounded-xl border px-3 py-2 text-left text-xs transition ${active ? "border-primary bg-primary/10" : "border-border/60 hover:bg-muted/50"}`}
+                        >
+                          <div className="font-medium">{formatFecha(a.fecha_acta)}</div>
+                          <div className="mt-0.5 flex items-center gap-1.5 text-[10px] text-muted-foreground">
+                            <Badge variant="outline" className={`${estatusColor[a.estatus]} px-1.5 py-0 text-[9px]`}>{a.estatus}</Badge>
+                            {a.lugar && <span className="truncate">{a.lugar}</span>}
+                          </div>
+                        </button>
+                        {canEdit && (
+                          <Button
+                            size="icon"
+                            variant="ghost"
+                            className="h-7 w-7 rounded-lg text-destructive hover:bg-destructive/10 shrink-0 mt-0.5"
+                            onClick={(e) => { e.stopPropagation(); deleteActa(a); }}
+                            disabled={deletingId === a.id}
+                            title="Eliminar acta"
+                          >
+                            {deletingId === a.id ? <Loader2 className="h-3 w-3 animate-spin" /> : <Trash2 className="h-3 w-3" />}
+                          </Button>
+                        )}
+                      </li>
                         );
                       })}
                     </ul>
