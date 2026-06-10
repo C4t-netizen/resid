@@ -30,7 +30,7 @@ const modules = [
   { title: "Registro de Accidentes", desc: "Reportes con afectación", icon: HeartPulse, to: "/accidentes", color: "from-rose-400 to-red-600" },
   { title: "Informes", desc: "Reportes y estadísticas", icon: BarChart3, to: "/informes", color: "from-violet-400 to-fuchsia-600" },
   { title: "NOM-019-STPS", desc: "Norma oficial mexicana", icon: ShieldAlert, to: "/nom-019", color: "from-red-400 to-pink-600" },
-  { title: "Acciones correctivas", desc: "Plan ACR y seguimiento", icon: ShieldAlert, to: "/acciones", color: "from-orange-400 to-rose-600" },
+  
   { title: "Guías / Formatos", desc: "Documentación de referencia", icon: BookOpen, to: "/guias", color: "from-blue-400 to-indigo-600" },
 ];
 
