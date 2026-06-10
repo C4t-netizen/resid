@@ -803,14 +803,6 @@ export default function Minutas() {
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="cumplimiento">Cumplimiento (texto)</Label>
-                  <Input
-                    id="cumplimiento"
-                    value={editing.cumplimiento}
-                    onChange={(e) => setEditing({ ...editing, cumplimiento: e.target.value })}
-                  />
-                </div>
-                <div className="space-y-2">
                   <Label>Hora de inicio</Label>
                   <Input
                     type="time"
