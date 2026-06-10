@@ -126,7 +126,13 @@ export default function Accidentes() {
   const openNew = () => { resetForm(); setOpen(true); };
 
   const onInvSelect = (id: string) => {
-    if (id === "none") return setForm({ ...form, investigacion_id: "none" });
+    if (id === "none") {
+      return setForm({
+        ...empty,
+        investigacion_id: "none",
+        fecha: form.fecha,
+      });
+    }
     const inv = investigaciones.find((i) => i.id === id);
     if (!inv) return;
     const parts = inv.nombre_persona.split(/\s+/);
