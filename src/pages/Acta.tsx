@@ -256,9 +256,17 @@ export default function Acta() {
           {/* Formulario del acta */}
           <Card className="rounded-2xl border-border/50 p-6 shadow-soft md:p-8">
             <fieldset disabled={!canEdit} className="space-y-6 disabled:opacity-70">
-              <div className="flex items-center gap-2 border-b border-border/60 pb-3">
-                <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/10"><FileSignature className="h-4 w-4 text-primary" /></div>
-                <h3 className="font-display text-base font-bold">{form.id ? "Editar acta" : "Nueva acta"}</h3>
+              <div className="flex items-center justify-between gap-2 border-b border-border/60 pb-3">
+                <div className="flex items-center gap-2">
+                  <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/10"><FileSignature className="h-4 w-4 text-primary" /></div>
+                  <h3 className="font-display text-base font-bold">{form.id ? "Editar acta" : "Nueva acta"}</h3>
+                </div>
+                {canEdit && (
+                  <span className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                    {autoSaveStatus === "saving" && (<><Loader2 className="h-3 w-3 animate-spin" /> Guardando…</>)}
+                    {autoSaveStatus === "saved" && (<><Check className="h-3 w-3 text-success" /> Guardado</>)}
+                  </span>
+                )}
               </div>
               <div className="grid gap-4 md:grid-cols-2">
                 <div className="space-y-1.5 md:col-span-2"><Label>Lugar</Label><Input value={form.lugar} onChange={(e) => set("lugar", e.target.value)} className="h-11 rounded-xl" /></div>
