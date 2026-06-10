@@ -780,6 +780,38 @@ export default function Minutas() {
               </div>
               <div className="grid grid-cols-2 gap-3">
                 <div className="space-y-2">
+                  <Label>Fecha de cumplimiento</Label>
+                  <Input
+                    type="date"
+                    value={editing.fechaCumplimiento ?? ""}
+                    onChange={(e) => setEditing({ ...editing, fechaCumplimiento: e.target.value })}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="cumplimiento">Cumplimiento (texto)</Label>
+                  <Input
+                    id="cumplimiento"
+                    value={editing.cumplimiento}
+                    onChange={(e) => setEditing({ ...editing, cumplimiento: e.target.value })}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>Hora de inicio</Label>
+                  <Input
+                    type="time"
+                    value={editing.horaInicio ?? ""}
+                    onChange={(e) => setEditing({ ...editing, horaInicio: e.target.value })}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>Hora final</Label>
+                  <Input
+                    type="time"
+                    value={editing.horaFin ?? ""}
+                    onChange={(e) => setEditing({ ...editing, horaFin: e.target.value })}
+                  />
+                </div>
+                <div className="col-span-2 space-y-2">
                   <Label>Estado</Label>
                   <Select
                     value={editing.estado}
@@ -791,17 +823,10 @@ export default function Minutas() {
                     <SelectContent>
                       <SelectItem value="Cumplido">Cumplido</SelectItem>
                       <SelectItem value="Pendiente">Pendiente</SelectItem>
+                      <SelectItem value="Reprogramado">Pendiente / Reprogramado</SelectItem>
                       <SelectItem value="No cumplido">No cumplido</SelectItem>
                     </SelectContent>
                   </Select>
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="cumplimiento">Cumplimiento</Label>
-                  <Input
-                    id="cumplimiento"
-                    value={editing.cumplimiento}
-                    onChange={(e) => setEditing({ ...editing, cumplimiento: e.target.value })}
-                  />
                 </div>
               </div>
               <div className="space-y-2">
