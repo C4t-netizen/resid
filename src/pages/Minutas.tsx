@@ -128,6 +128,18 @@ const statusStyles: Record<Status, string> = {
   Reprogramado: "bg-primary/10 text-primary border-primary/20 hover:bg-primary/15",
 };
 
+// Convierte "HH:mm" (24h) a "h:mm AM/PM"
+const formatTime12 = (time?: string): string => {
+  if (!time) return "";
+  const [hStr, mStr] = time.split(":");
+  const h = parseInt(hStr, 10);
+  const m = parseInt(mStr, 10);
+  if (isNaN(h) || isNaN(m)) return time;
+  const period = h >= 12 ? "PM" : "AM";
+  const h12 = h % 12 === 0 ? 12 : h % 12;
+  return `${h12}:${String(m).padStart(2, "0")} ${period}`;
+};
+
 const statusIcons: Record<Status, typeof CheckCircle2> = {
   Cumplido: CheckCircle2,
   Pendiente: Clock,
