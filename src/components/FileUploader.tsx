@@ -161,13 +161,19 @@ export function FileUploader({ archivos, canEdit, bucket = "documentos-csh", fol
                   <Download className="mr-2 h-4 w-4" /> Descargar
                 </Button>
               </div>
-              {isImage(preview.nombre) ? (
-                <img src={preview.archivo_url} alt={preview.nombre} className="mx-auto max-h-[70vh] rounded-xl object-contain" />
-              ) : isPdf(preview.nombre) ? (
-                <iframe src={preview.archivo_url} title={preview.nombre} className="h-[70vh] w-full rounded-xl border" />
+              {previewLoading ? (
+                <div className="flex h-[70vh] items-center justify-center rounded-xl border border-dashed border-border/60">
+                  <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+                </div>
+              ) : isImage(preview.nombre) ? (
+                <img src={previewBlobUrl ?? preview.archivo_url} alt={preview.nombre} className="mx-auto max-h-[70vh] rounded-xl object-contain" />
+              ) : isPdf(preview.nombre) && previewBlobUrl ? (
+                <object data={previewBlobUrl} type="application/pdf" className="h-[70vh] w-full rounded-xl border">
+                  <iframe src={previewBlobUrl} title={preview.nombre} className="h-[70vh] w-full rounded-xl border" />
+                </object>
               ) : (
                 <p className="rounded-xl border border-dashed border-border/60 p-6 text-center text-sm text-muted-foreground">
-                  Vista previa no disponible para este tipo de archivo. Usa "Descargar" para abrirlo.
+                  Vista previa no disponible. Usa "Descargar" para abrirlo.
                 </p>
               )}
             </div>
