@@ -149,6 +149,7 @@ export default function Verificaciones() {
       const pct = aplicables.length ? (cumplidos / aplicables.length) * 100 : 0;
       await supabase.from("verificaciones").update({ porcentaje_cumplimiento: pct }).eq("id", selected.id);
       setSelected({ ...selected, porcentaje_cumplimiento: pct });
+      setList((prev) => prev.map((v) => (v.id === selected.id ? { ...v, porcentaje_cumplimiento: pct } : v)));
     }
   };
 
