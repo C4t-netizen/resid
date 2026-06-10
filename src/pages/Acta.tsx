@@ -55,6 +55,7 @@ export default function Acta() {
   const [archivos, setArchivos] = useState<ArchivoItem[]>([]);
   const [actas, setActas] = useState<Acta[]>([]);
   const [autoSaveStatus, setAutoSaveStatus] = useState<"idle" | "saving" | "saved">("idle");
+  const [deletingId, setDeletingId] = useState<string | null>(null);
   const dirtyRef = useRef(false);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
