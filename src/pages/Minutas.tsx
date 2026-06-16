@@ -77,6 +77,7 @@ import {
 } from "@/components/ui/select";
 import { toast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
+import { useAuth } from "@/contexts/AuthContext";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 
@@ -169,6 +170,7 @@ const ESTADO_COLORS: Record<Status, string> = {
 };
 
 export default function Minutas() {
+  const { canEdit } = useAuth();
   const [minutas, setMinutas] = useState<MinutaInfo[]>(initialMinutas);
   const [acuerdosByMinuta, setAcuerdosByMinuta] = useState<Record<number, Acuerdo[]>>({ 1: initialAcuerdos });
   const [selectedMinutaId, setSelectedMinutaId] = useState<number>(1);
@@ -359,12 +361,14 @@ export default function Minutas() {
           subtitle={yearFilter === "todos" ? "Crea tu primera minuta para comenzar." : `No hay minutas registradas en ${yearFilter}.`}
           breadcrumbs={[{ label: "Minutas", href: "/minutas" }]}
           actions={
-            <Button
-              className="rounded-xl bg-gradient-primary"
-              onClick={() => setNewMinuta({ id: 0, titulo: "", coordinador: "", iniciales: "", fecha: new Date().toLocaleDateString("es-MX", { day: "numeric", month: "long", year: "numeric" }), estado: "En proceso", anio: new Date().getFullYear().toString() })}
-            >
-              <Plus className="mr-2 h-4 w-4" /> Nueva minuta
-            </Button>
+            canEdit ? (
+              <Button
+                className="rounded-xl bg-gradient-primary"
+                onClick={() => setNewMinuta({ id: 0, titulo: "", coordinador: "", iniciales: "", fecha: new Date().toLocaleDateString("es-MX", { day: "numeric", month: "long", year: "numeric" }), estado: "En proceso", anio: new Date().getFullYear().toString() })}
+              >
+                <Plus className="mr-2 h-4 w-4" /> Nueva minuta
+              </Button>
+            ) : null
           }
         />
         <div className="space-y-6 px-4 py-6 md:px-8">
@@ -470,21 +474,25 @@ export default function Minutas() {
         badge={<Badge className="bg-warning/10 text-warning border-warning/20">{minuta.estado}</Badge>}
         actions={
           <>
-            <Button variant="outline" className="rounded-xl" onClick={() => setEditingMinuta(minuta)}>
-              <Pencil className="mr-2 h-4 w-4" /> Editar minuta
-            </Button>
+            {canEdit && (
+              <Button variant="outline" className="rounded-xl" onClick={() => setEditingMinuta(minuta)}>
+                <Pencil className="mr-2 h-4 w-4" /> Editar minuta
+              </Button>
+            )}
             <Button variant="outline" className="rounded-xl" onClick={() => setStatsOpen(true)}>
               <BarChart3 className="mr-2 h-4 w-4" /> Estadísticas
             </Button>
             <Button variant="outline" className="rounded-xl" onClick={downloadPDF}>
               <Download className="mr-2 h-4 w-4" /> PDF
             </Button>
-            <Button
-              className="rounded-xl bg-gradient-primary shadow-elegant hover:shadow-glow"
-              onClick={() => setNewMinuta({ id: 0, titulo: "", coordinador: "", iniciales: "", fecha: new Date().toLocaleDateString("es-MX", { day: "numeric", month: "long", year: "numeric" }), estado: "En proceso", anio: new Date().getFullYear().toString() })}
-            >
-              <Plus className="mr-2 h-4 w-4" /> Nueva minuta
-            </Button>
+            {canEdit && (
+              <Button
+                className="rounded-xl bg-gradient-primary shadow-elegant hover:shadow-glow"
+                onClick={() => setNewMinuta({ id: 0, titulo: "", coordinador: "", iniciales: "", fecha: new Date().toLocaleDateString("es-MX", { day: "numeric", month: "long", year: "numeric" }), estado: "En proceso", anio: new Date().getFullYear().toString() })}
+              >
+                <Plus className="mr-2 h-4 w-4" /> Nueva minuta
+              </Button>
+            )}
           </>
         }
       />
@@ -575,9 +583,11 @@ export default function Minutas() {
           <Card className="overflow-hidden rounded-2xl border-border/50 bg-card shadow-soft">
             <div className="flex items-center justify-between border-b border-border/40 px-5 py-3">
               <p className="text-sm font-semibold">Acuerdos y actividades</p>
-              <Button size="sm" className="rounded-xl bg-gradient-primary" onClick={openNewAcuerdo}>
-                <Plus className="mr-2 h-4 w-4" /> Nueva actividad
-              </Button>
+              {canEdit && (
+                <Button size="sm" className="rounded-xl bg-gradient-primary" onClick={openNewAcuerdo}>
+                  <Plus className="mr-2 h-4 w-4" /> Nueva actividad
+                </Button>
+              )}
             </div>
             <Table>
               <TableHeader>
@@ -630,25 +640,27 @@ export default function Minutas() {
                       </TableCell>
                       <TableCell className="text-sm text-muted-foreground">{a.fechaCumplimiento || "—"}</TableCell>
                       <TableCell onClick={(e) => e.stopPropagation()}>
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" size="icon" className="h-8 w-8 rounded-lg">
-                              <MoreHorizontal className="h-4 w-4" />
-                            </Button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end" className="w-40">
-                            <DropdownMenuItem onClick={() => setEditing(a)}>
-                              <Pencil className="mr-2 h-4 w-4" /> Editar
-                            </DropdownMenuItem>
-                            <DropdownMenuSeparator />
-                            <DropdownMenuItem
-                              className="text-destructive focus:text-destructive"
-                              onClick={() => setDeletingId(a.id)}
-                            >
-                              <Trash2 className="mr-2 h-4 w-4" /> Eliminar
-                            </DropdownMenuItem>
-                          </DropdownMenuContent>
-                        </DropdownMenu>
+                        {canEdit && (
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button variant="ghost" size="icon" className="h-8 w-8 rounded-lg">
+                                <MoreHorizontal className="h-4 w-4" />
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end" className="w-40">
+                              <DropdownMenuItem onClick={() => setEditing(a)}>
+                                <Pencil className="mr-2 h-4 w-4" /> Editar
+                              </DropdownMenuItem>
+                              <DropdownMenuSeparator />
+                              <DropdownMenuItem
+                                className="text-destructive focus:text-destructive"
+                                onClick={() => setDeletingId(a.id)}
+                              >
+                                <Trash2 className="mr-2 h-4 w-4" /> Eliminar
+                              </DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                        )}
                       </TableCell>
                     </TableRow>
                   );
