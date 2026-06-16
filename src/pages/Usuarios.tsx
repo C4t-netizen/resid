@@ -26,10 +26,23 @@ interface UserRow {
 const ROLES: AppRole[] = ["super_admin", "admin", "editor", "viewer"];
 
 export default function Usuarios() {
-  const { user: me } = useAuth();
+  const { user: me, isSuperAdmin } = useAuth();
   const [rows, setRows] = useState<UserRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [updating, setUpdating] = useState<string | null>(null);
+  const [deleting, setDeleting] = useState<string | null>(null);
+
+  const deleteUser = async (userId: string) => {
+    setDeleting(userId);
+    const { data, error } = await supabase.functions.invoke("delete-user", { body: { userId } });
+    setDeleting(null);
+    if (error || (data as any)?.error) {
+      toast.error((data as any)?.error || error?.message || "No se pudo eliminar el usuario");
+      return;
+    }
+    toast.success("Usuario eliminado");
+    setRows((prev) => prev.filter((r) => r.id !== userId));
+  };
 
   const load = async () => {
     setLoading(true);
