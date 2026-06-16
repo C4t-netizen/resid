@@ -74,11 +74,11 @@ Deno.serve(async (req) => {
 
     let requesterId = "";
     try {
-      console.log("[delete-user] Verifying requester with auth.getUser()");
-      const { data: { user }, error: authError } = await authClient.auth.getUser();
+      console.log("[delete-user] Verifying requester with auth.getClaims()");
+      const { data: claimsData, error: authError } = await authClient.auth.getClaims(token);
 
       if (authError) {
-        console.error("[delete-user] auth.getUser failed", {
+        console.error("[delete-user] auth.getClaims failed", {
           name: authError.name,
           message: authError.message,
           status: authError.status,
@@ -86,12 +86,20 @@ Deno.serve(async (req) => {
         throw authError;
       }
 
-      if (!user?.id) {
-        console.error("[delete-user] auth.getUser returned no user");
-        throw new Error("auth.getUser returned no user");
+      const subject = claimsData?.claims?.sub;
+      console.log("[delete-user] Claims verified", {
+        hasSubject: Boolean(subject),
+        issuer: claimsData?.claims?.iss ?? null,
+        audience: claimsData?.claims?.aud ?? null,
+        role: claimsData?.claims?.role ?? null,
+      });
+
+      if (!subject || typeof subject !== "string") {
+        console.error("[delete-user] auth.getClaims returned no valid subject");
+        throw new Error("auth.getClaims returned no valid subject");
       }
 
-      requesterId = user.id;
+      requesterId = subject;
       console.log("[delete-user] Authenticated requester", { requesterId });
     } catch (err) {
       const error = err as Error & { status?: number };
