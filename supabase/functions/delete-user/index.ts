@@ -1,6 +1,4 @@
-import "https://deno.land/x/xhr@0.1.0/mod.ts";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
-import { createLocalJWKSet, jwtVerify } from "npm:jose@5.9.6";
+import { createClient } from "npm:@supabase/supabase-js@2";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -8,77 +6,127 @@ const corsHeaders = {
   "Access-Control-Allow-Methods": "POST, OPTIONS",
 };
 
-const getAuthenticatedUserId = async (token: string, supabaseUrl: string) => {
-  const jwksRaw = Deno.env.get("SUPABASE_JWKS");
-  if (!jwksRaw) throw new Error("Missing SUPABASE_JWKS");
-
-  const jwks = createLocalJWKSet(JSON.parse(jwksRaw));
-  const { payload } = await jwtVerify(token, jwks, {
-    issuer: `${supabaseUrl}/auth/v1`,
-    audience: "authenticated",
+const jsonResponse = (body: Record<string, unknown>, status = 200) =>
+  new Response(JSON.stringify(body), {
+    status,
+    headers: { ...corsHeaders, "Content-Type": "application/json" },
   });
 
-  if (!payload.sub || typeof payload.sub !== "string") throw new Error("Invalid token subject");
-  return payload.sub;
+const inspectJwksConfig = () => {
+  const jwksRaw = Deno.env.get("SUPABASE_JWKS");
+  if (!jwksRaw) {
+    console.error("[delete-user] SUPABASE_JWKS missing");
+    return { exists: false, validJson: false };
+  }
+
+  try {
+    const parsed = JSON.parse(jwksRaw);
+    const hasKeys = Array.isArray(parsed?.keys);
+    console.log("[delete-user] SUPABASE_JWKS present", { validJson: true, hasKeys });
+    return { exists: true, validJson: true, hasKeys };
+  } catch (error) {
+    console.error("[delete-user] SUPABASE_JWKS invalid JSON", { message: (error as Error).message });
+    return { exists: true, validJson: false };
+  }
 };
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
   try {
-    const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
-    const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+    const supabaseUrl = Deno.env.get("SUPABASE_URL");
+    const anonKey = Deno.env.get("SUPABASE_ANON_KEY");
+    const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+
+    console.log("[delete-user] Environment check", {
+      hasSupabaseUrl: Boolean(supabaseUrl),
+      hasAnonKey: Boolean(anonKey),
+      hasServiceKey: Boolean(serviceKey),
+      jwks: inspectJwksConfig(),
+    });
+
+    if (!supabaseUrl || !anonKey || !serviceKey) {
+      return jsonResponse({ error: "Server configuration error" }, 500);
+    }
 
     const authHeader = req.headers.get("Authorization") ?? "";
+    console.log("[delete-user] Authorization header", {
+      present: Boolean(authHeader),
+      startsWithBearer: authHeader.startsWith("Bearer "),
+    });
+
+    if (!authHeader) {
+      console.error("[delete-user] Missing Authorization header");
+      return jsonResponse({ error: "Unauthorized: Missing Authorization header" }, 401);
+    }
+
     const token = authHeader.replace(/^Bearer\s+/i, "");
     if (!token) {
-      return new Response(JSON.stringify({ error: "Unauthorized" }), {
-        status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+      console.error("[delete-user] Empty token after Bearer extraction");
+      return jsonResponse({ error: "Unauthorized: Empty token" }, 401);
     }
+    console.log("[delete-user] Token extracted", { present: Boolean(token), length: token.length });
 
     const admin = createClient(supabaseUrl, serviceKey);
-    let requesterId: string;
+    const authClient = createClient(supabaseUrl, anonKey, {
+      global: { headers: { Authorization: authHeader } },
+    });
+
+    let requesterId = "";
     try {
-      requesterId = await getAuthenticatedUserId(token, supabaseUrl);
-    } catch (_err) {
-      return new Response(JSON.stringify({ error: "Unauthorized" }), {
-        status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+      console.log("[delete-user] Verifying requester with auth.getUser()");
+      const { data: { user }, error: authError } = await authClient.auth.getUser(token);
+
+      if (authError) {
+        console.error("[delete-user] auth.getUser failed", {
+          name: authError.name,
+          message: authError.message,
+          status: authError.status,
+        });
+        throw authError;
+      }
+
+      if (!user?.id) {
+        console.error("[delete-user] auth.getUser returned no user");
+        throw new Error("auth.getUser returned no user");
+      }
+
+      requesterId = user.id;
+      console.log("[delete-user] Authenticated requester", { requesterId });
+    } catch (err) {
+      const error = err as Error & { status?: number };
+      return jsonResponse({
+        error: "Unauthorized",
+        detail: error.message,
+        status: error.status ?? null,
+      }, 401);
     }
 
-    const { data: isSuper } = await admin.rpc("has_role", { _user_id: requesterId, _role: "super_admin" });
+    console.log("[delete-user] Reached super_admin role check", { requesterId });
+    const { data: isSuper, error: roleError } = await admin.rpc("has_role", { _user_id: requesterId, _role: "super_admin" });
+    console.log("[delete-user] has_role result", { isSuper, roleError: roleError?.message ?? null });
+    if (roleError) {
+      return jsonResponse({ error: `Role check failed: ${roleError.message}` }, 500);
+    }
     if (!isSuper) {
-      return new Response(JSON.stringify({ error: "Forbidden: super_admin required" }), {
-        status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+      return jsonResponse({ error: "Forbidden: super_admin required" }, 403);
     }
 
     const { userId } = await req.json();
     if (!userId || typeof userId !== "string") {
-      return new Response(JSON.stringify({ error: "Missing userId" }), {
-        status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+      return jsonResponse({ error: "Missing userId" }, 400);
     }
     if (userId === requesterId) {
-      return new Response(JSON.stringify({ error: "No puedes eliminar tu propia cuenta" }), {
-        status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+      return jsonResponse({ error: "No puedes eliminar tu propia cuenta" }, 400);
     }
 
     const { error: delErr } = await admin.auth.admin.deleteUser(userId);
     if (delErr) {
-      return new Response(JSON.stringify({ error: delErr.message }), {
-        status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+      return jsonResponse({ error: delErr.message }, 500);
     }
 
-    return new Response(JSON.stringify({ success: true }), {
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-    });
+    return jsonResponse({ success: true });
   } catch (e) {
-    return new Response(JSON.stringify({ error: (e as Error).message }), {
-      status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
-    });
+    return jsonResponse({ error: (e as Error).message }, 500);
   }
 });

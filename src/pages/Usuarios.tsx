@@ -34,7 +34,19 @@ export default function Usuarios() {
 
   const deleteUser = async (userId: string) => {
     setDeleting(userId);
-    const { data, error } = await supabase.functions.invoke("delete-user", { body: { userId } });
+    const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
+    const accessToken = sessionData.session?.access_token;
+
+    if (sessionError || !accessToken) {
+      setDeleting(null);
+      toast.error("Tu sesión no está disponible. Inicia sesión nuevamente.");
+      return;
+    }
+
+    const { data, error } = await supabase.functions.invoke("delete-user", {
+      body: { userId },
+      headers: { Authorization: `Bearer ${accessToken}` },
+    });
     setDeleting(null);
     if (error || (data as any)?.error) {
       toast.error((data as any)?.error || error?.message || "No se pudo eliminar el usuario");
