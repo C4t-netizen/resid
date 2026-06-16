@@ -1,0 +1,1 @@
+ALTER TABLE public.investigaciones ADD COLUMN IF NOT EXISTS telefono TEXT;
