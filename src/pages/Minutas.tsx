@@ -170,6 +170,7 @@ const ESTADO_COLORS: Record<Status, string> = {
 };
 
 export default function Minutas() {
+  const { canEdit } = useAuth();
   const [minutas, setMinutas] = useState<MinutaInfo[]>(initialMinutas);
   const [acuerdosByMinuta, setAcuerdosByMinuta] = useState<Record<number, Acuerdo[]>>({ 1: initialAcuerdos });
   const [selectedMinutaId, setSelectedMinutaId] = useState<number>(1);
