@@ -36,6 +36,7 @@ interface Investigacion {
   sexo: string | null;
   departamento: string | null;
   edad: number | null;
+  telefono: string | null;
   puesto: string | null;
   tipo: string;
   lugar_accidente: string | null;
