@@ -88,6 +88,21 @@ export default function Auth() {
     setLoginPassword("Demo1234!");
   };
 
+  const handleForgot = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const parsed = z.string().email("Correo inválido").safeParse(forgotEmail.trim());
+    if (!parsed.success) return toast.error(parsed.error.issues[0].message);
+    setLoading(true);
+    const { error } = await supabase.auth.resetPasswordForEmail(parsed.data, {
+      redirectTo: `${window.location.origin}/reset-password`,
+    });
+    setLoading(false);
+    if (error) return toast.error(error.message);
+    toast.success("Te enviamos un correo con el enlace para restablecer la contraseña");
+    setForgotOpen(false);
+    setForgotEmail("");
+  };
+
   return (
     <div className="flex min-h-screen items-center justify-center bg-mesh bg-background p-4">
       <div className="w-full max-w-md space-y-6">
