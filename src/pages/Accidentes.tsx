@@ -149,6 +149,7 @@ export default function Accidentes() {
       fecha_accidente: inv.fecha_evento ?? form.fecha_accidente,
       edad: inv.edad?.toString() ?? form.edad,
       sexo: inv.sexo ?? form.sexo,
+      telefono: inv.telefono ?? form.telefono,
     });
   };
 
