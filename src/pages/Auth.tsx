@@ -26,6 +26,8 @@ export default function Auth() {
   const location = useLocation();
   const { user, loading: authLoading } = useAuth();
   const [loading, setLoading] = useState(false);
+  const [forgotOpen, setForgotOpen] = useState(false);
+  const [forgotEmail, setForgotEmail] = useState("");
 
   const [loginEmail, setLoginEmail] = useState("");
   const [loginPassword, setLoginPassword] = useState("");
