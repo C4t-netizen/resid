@@ -474,21 +474,25 @@ export default function Minutas() {
         badge={<Badge className="bg-warning/10 text-warning border-warning/20">{minuta.estado}</Badge>}
         actions={
           <>
-            <Button variant="outline" className="rounded-xl" onClick={() => setEditingMinuta(minuta)}>
-              <Pencil className="mr-2 h-4 w-4" /> Editar minuta
-            </Button>
+            {canEdit && (
+              <Button variant="outline" className="rounded-xl" onClick={() => setEditingMinuta(minuta)}>
+                <Pencil className="mr-2 h-4 w-4" /> Editar minuta
+              </Button>
+            )}
             <Button variant="outline" className="rounded-xl" onClick={() => setStatsOpen(true)}>
               <BarChart3 className="mr-2 h-4 w-4" /> Estadísticas
             </Button>
             <Button variant="outline" className="rounded-xl" onClick={downloadPDF}>
               <Download className="mr-2 h-4 w-4" /> PDF
             </Button>
-            <Button
-              className="rounded-xl bg-gradient-primary shadow-elegant hover:shadow-glow"
-              onClick={() => setNewMinuta({ id: 0, titulo: "", coordinador: "", iniciales: "", fecha: new Date().toLocaleDateString("es-MX", { day: "numeric", month: "long", year: "numeric" }), estado: "En proceso", anio: new Date().getFullYear().toString() })}
-            >
-              <Plus className="mr-2 h-4 w-4" /> Nueva minuta
-            </Button>
+            {canEdit && (
+              <Button
+                className="rounded-xl bg-gradient-primary shadow-elegant hover:shadow-glow"
+                onClick={() => setNewMinuta({ id: 0, titulo: "", coordinador: "", iniciales: "", fecha: new Date().toLocaleDateString("es-MX", { day: "numeric", month: "long", year: "numeric" }), estado: "En proceso", anio: new Date().getFullYear().toString() })}
+              >
+                <Plus className="mr-2 h-4 w-4" /> Nueva minuta
+              </Button>
+            )}
           </>
         }
       />
