@@ -132,6 +132,7 @@ export default function Accidentes() {
         ...empty,
         investigacion_id: "none",
         fecha: form.fecha,
+        telefono: "",
       });
     }
     const inv = investigaciones.find((i) => i.id === id);
