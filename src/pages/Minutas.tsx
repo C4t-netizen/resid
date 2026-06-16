@@ -583,9 +583,11 @@ export default function Minutas() {
           <Card className="overflow-hidden rounded-2xl border-border/50 bg-card shadow-soft">
             <div className="flex items-center justify-between border-b border-border/40 px-5 py-3">
               <p className="text-sm font-semibold">Acuerdos y actividades</p>
-              <Button size="sm" className="rounded-xl bg-gradient-primary" onClick={openNewAcuerdo}>
-                <Plus className="mr-2 h-4 w-4" /> Nueva actividad
-              </Button>
+              {canEdit && (
+                <Button size="sm" className="rounded-xl bg-gradient-primary" onClick={openNewAcuerdo}>
+                  <Plus className="mr-2 h-4 w-4" /> Nueva actividad
+                </Button>
+              )}
             </div>
             <Table>
               <TableHeader>
