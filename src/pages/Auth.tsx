@@ -42,6 +42,14 @@ export default function Auth() {
     }
   }, [user, authLoading, navigate, location]);
 
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    if (params.get("forgot") === "1") {
+      setForgotOpen(true);
+      navigate("/auth", { replace: true });
+    }
+  }, [location.search, navigate]);
+
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     const parsed = loginSchema.safeParse({ email: loginEmail, password: loginPassword });

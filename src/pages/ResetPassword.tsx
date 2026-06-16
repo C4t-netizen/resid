@@ -10,6 +10,25 @@ import { Label } from "@/components/ui/label";
 import { Card } from "@/components/ui/card";
 import { toast } from "sonner";
 
+const RECOVERY_VERIFIED_KEY = "sgi-password-recovery-verified";
+
+const getRecoveryParams = () => {
+  const search = new URLSearchParams(window.location.search);
+  const hash = new URLSearchParams(window.location.hash.replace(/^#/, ""));
+
+  return {
+    type: search.get("type") ?? hash.get("type"),
+    tokenHash: search.get("token_hash") ?? hash.get("token_hash"),
+    code: search.get("code") ?? hash.get("code"),
+    accessToken: search.get("access_token") ?? hash.get("access_token"),
+    errorDescription: search.get("error_description") ?? hash.get("error_description"),
+  };
+};
+
+const cleanResetUrl = () => {
+  window.history.replaceState(window.history.state, "", "/reset-password");
+};
+
 const schema = z.object({
   password: z.string().min(6, "Mínimo 6 caracteres").max(72),
 });
@@ -19,25 +38,100 @@ export default function ResetPassword() {
   const [loading, setLoading] = useState(false);
   const [verified, setVerified] = useState(false);
   const [checking, setChecking] = useState(true);
+  const [errorMessage, setErrorMessage] = useState("El enlace no es válido o ha expirado. Solicita un nuevo correo de restablecimiento desde la pantalla de inicio de sesión.");
   const [password, setPassword] = useState("");
   const [confirm, setConfirm] = useState("");
 
   useEffect(() => {
-    // When the user clicks the recovery link, Supabase sets a session via the hash.
-    // onAuthStateChange fires with event "PASSWORD_RECOVERY" or sets a session.
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-      if (event === "PASSWORD_RECOVERY" || session) {
-        setVerified(true);
-        setChecking(false);
-      }
-    });
+    let mounted = true;
 
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      if (session) setVerified(true);
+    const markVerified = () => {
+      sessionStorage.setItem(RECOVERY_VERIFIED_KEY, "true");
+      if (!mounted) return;
+      setVerified(true);
       setChecking(false);
+    };
+
+    const markInvalid = (message?: string) => {
+      sessionStorage.removeItem(RECOVERY_VERIFIED_KEY);
+      if (!mounted) return;
+      if (message) setErrorMessage(message);
+      setVerified(false);
+      setChecking(false);
+    };
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      if (event === "PASSWORD_RECOVERY" && session) markVerified();
     });
 
-    return () => subscription.unsubscribe();
+    const verifyRecoveryLink = async () => {
+      const params = getRecoveryParams();
+
+      if (params.errorDescription) {
+        markInvalid(decodeURIComponent(params.errorDescription.replace(/\+/g, " ")));
+        cleanResetUrl();
+        return;
+      }
+
+      if (params.tokenHash && params.type === "recovery") {
+        const { data, error } = await supabase.auth.verifyOtp({
+          token_hash: params.tokenHash,
+          type: "recovery",
+        });
+
+        if (error || !data.session) {
+          console.error("Password recovery token_hash verification failed", error);
+          markInvalid();
+          cleanResetUrl();
+          return;
+        }
+
+        cleanResetUrl();
+        markVerified();
+        return;
+      }
+
+      if (params.code && params.type === "recovery") {
+        const { data, error } = await supabase.auth.exchangeCodeForSession(params.code);
+
+        if (error || !data.session) {
+          console.error("Password recovery code exchange failed", error);
+          markInvalid();
+          cleanResetUrl();
+          return;
+        }
+
+        cleanResetUrl();
+        markVerified();
+        return;
+      }
+
+      if (params.type === "recovery" && params.accessToken) {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (session) {
+          cleanResetUrl();
+          markVerified();
+          return;
+        }
+      }
+
+      if (sessionStorage.getItem(RECOVERY_VERIFIED_KEY) === "true") {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (session) {
+          markVerified();
+          return;
+        }
+      }
+
+      markInvalid();
+    };
+
+    verifyRecoveryLink();
+
+    return () => {
+      mounted = false;
+      subscription.unsubscribe();
+    };
   }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -50,9 +144,16 @@ export default function ResetPassword() {
     const { error } = await supabase.auth.updateUser({ password });
     setLoading(false);
     if (error) return toast.error(error.message);
+    sessionStorage.removeItem(RECOVERY_VERIFIED_KEY);
     toast.success("Contraseña actualizada");
     await supabase.auth.signOut();
     navigate("/auth", { replace: true });
+  };
+
+  const handleRequestNewLink = async () => {
+    sessionStorage.removeItem(RECOVERY_VERIFIED_KEY);
+    await supabase.auth.signOut();
+    navigate("/auth?forgot=1", { replace: true });
   };
 
   return (
@@ -72,9 +173,9 @@ export default function ResetPassword() {
           ) : !verified ? (
             <div className="space-y-4 text-center">
               <p className="text-sm text-muted-foreground">
-                El enlace no es válido o ha expirado. Solicita un nuevo correo de restablecimiento desde la pantalla de inicio de sesión.
+                {errorMessage}
               </p>
-              <Button onClick={() => navigate("/auth")} className="w-full rounded-xl">Volver a iniciar sesión</Button>
+              <Button onClick={handleRequestNewLink} className="w-full rounded-xl">Solicitar nuevo enlace</Button>
             </div>
           ) : (
             <form onSubmit={handleSubmit} className="space-y-4">
