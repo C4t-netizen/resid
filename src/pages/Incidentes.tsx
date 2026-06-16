@@ -60,6 +60,7 @@ const empty = {
   sexo: "M",
   departamento: "",
   edad: "",
+  telefono: "",
   puesto: "",
   fecha_evento: new Date().toISOString().slice(0, 10),
   tipo: "incidente",
