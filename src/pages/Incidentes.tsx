@@ -133,6 +133,7 @@ export default function Incidentes() {
       sexo: inv.sexo ?? "M",
       departamento: inv.departamento ?? "",
       edad: inv.edad?.toString() ?? "",
+      telefono: inv.telefono ?? "",
       puesto: inv.puesto ?? "",
       fecha_evento: inv.fecha_evento,
       tipo: inv.tipo,
