@@ -1,11 +1,15 @@
 import { useEffect, useState } from "react";
-import { Loader2, ShieldCheck, UserCog } from "lucide-react";
+import { Loader2, ShieldCheck, UserCog, Trash2 } from "lucide-react";
 import { PageHeader } from "@/components/PageHeader";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import { supabase } from "@/integrations/supabase/client";
 import { AppRole, ROLE_BADGE_COLORS, ROLE_LABELS, useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
@@ -22,10 +26,23 @@ interface UserRow {
 const ROLES: AppRole[] = ["super_admin", "admin", "editor", "viewer"];
 
 export default function Usuarios() {
-  const { user: me } = useAuth();
+  const { user: me, isSuperAdmin } = useAuth();
   const [rows, setRows] = useState<UserRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [updating, setUpdating] = useState<string | null>(null);
+  const [deleting, setDeleting] = useState<string | null>(null);
+
+  const deleteUser = async (userId: string) => {
+    setDeleting(userId);
+    const { data, error } = await supabase.functions.invoke("delete-user", { body: { userId } });
+    setDeleting(null);
+    if (error || (data as any)?.error) {
+      toast.error((data as any)?.error || error?.message || "No se pudo eliminar el usuario");
+      return;
+    }
+    toast.success("Usuario eliminado");
+    setRows((prev) => prev.filter((r) => r.id !== userId));
+  };
 
   const load = async () => {
     setLoading(true);
@@ -130,6 +147,38 @@ export default function Usuarios() {
                         ))}
                       </SelectContent>
                     </Select>
+                    {isSuperAdmin && u.id !== me?.id && (
+                      <AlertDialog>
+                        <AlertDialogTrigger asChild>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-10 w-10 rounded-xl text-destructive hover:bg-destructive/10 hover:text-destructive"
+                            disabled={deleting === u.id}
+                            title="Eliminar usuario"
+                          >
+                            {deleting === u.id ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}
+                          </Button>
+                        </AlertDialogTrigger>
+                        <AlertDialogContent>
+                          <AlertDialogHeader>
+                            <AlertDialogTitle>¿Eliminar a {u.full_name || u.email}?</AlertDialogTitle>
+                            <AlertDialogDescription>
+                              Esta acción es permanente. Se eliminará la cuenta y todos sus accesos. No podrá deshacerse.
+                            </AlertDialogDescription>
+                          </AlertDialogHeader>
+                          <AlertDialogFooter>
+                            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                            <AlertDialogAction
+                              onClick={() => deleteUser(u.id)}
+                              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                            >
+                              Eliminar
+                            </AlertDialogAction>
+                          </AlertDialogFooter>
+                        </AlertDialogContent>
+                      </AlertDialog>
+                    )}
                   </div>
                 </div>
               ))}

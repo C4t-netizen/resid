@@ -26,6 +26,8 @@ export default function Auth() {
   const location = useLocation();
   const { user, loading: authLoading } = useAuth();
   const [loading, setLoading] = useState(false);
+  const [forgotOpen, setForgotOpen] = useState(false);
+  const [forgotEmail, setForgotEmail] = useState("");
 
   const [loginEmail, setLoginEmail] = useState("");
   const [loginPassword, setLoginPassword] = useState("");
@@ -86,6 +88,21 @@ export default function Auth() {
     setLoginPassword("Demo1234!");
   };
 
+  const handleForgot = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const parsed = z.string().email("Correo inválido").safeParse(forgotEmail.trim());
+    if (!parsed.success) return toast.error(parsed.error.issues[0].message);
+    setLoading(true);
+    const { error } = await supabase.auth.resetPasswordForEmail(parsed.data, {
+      redirectTo: `${window.location.origin}/reset-password`,
+    });
+    setLoading(false);
+    if (error) return toast.error(error.message);
+    toast.success("Te enviamos un correo con el enlace para restablecer la contraseña");
+    setForgotOpen(false);
+    setForgotEmail("");
+  };
+
   return (
     <div className="flex min-h-screen items-center justify-center bg-mesh bg-background p-4">
       <div className="w-full max-w-md space-y-6">
@@ -103,23 +120,45 @@ export default function Auth() {
             </TabsList>
 
             <TabsContent value="login" className="mt-5">
-              <form onSubmit={handleLogin} className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="li-email">Correo electrónico</Label>
-                  <Input id="li-email" type="email" autoComplete="email" value={loginEmail} onChange={(e) => setLoginEmail(e.target.value)} className="h-11 rounded-xl" />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="li-pass">Contraseña</Label>
-                  <Input id="li-pass" type="password" autoComplete="current-password" value={loginPassword} onChange={(e) => setLoginPassword(e.target.value)} className="h-11 rounded-xl" />
-                </div>
-                <Button type="submit" disabled={loading} className="h-11 w-full rounded-xl bg-gradient-primary shadow-elegant hover:shadow-glow">
-                  {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                  Entrar
-                </Button>
-                <button type="button" onClick={fillDemo} className="block w-full text-center text-xs text-muted-foreground underline-offset-2 hover:underline">
-                  Usar credenciales demo (super admin)
-                </button>
-              </form>
+              {forgotOpen ? (
+                <form onSubmit={handleForgot} className="space-y-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="fp-email">Correo electrónico</Label>
+                    <Input id="fp-email" type="email" autoComplete="email" value={forgotEmail} onChange={(e) => setForgotEmail(e.target.value)} className="h-11 rounded-xl" />
+                    <p className="text-[11px] text-muted-foreground">Te enviaremos un enlace para verificar tu correo y poder cambiar la contraseña.</p>
+                  </div>
+                  <Button type="submit" disabled={loading} className="h-11 w-full rounded-xl bg-gradient-primary shadow-elegant hover:shadow-glow">
+                    {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                    Enviar enlace de recuperación
+                  </Button>
+                  <button type="button" onClick={() => setForgotOpen(false)} className="block w-full text-center text-xs text-muted-foreground underline-offset-2 hover:underline">
+                    Volver a iniciar sesión
+                  </button>
+                </form>
+              ) : (
+                <form onSubmit={handleLogin} className="space-y-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="li-email">Correo electrónico</Label>
+                    <Input id="li-email" type="email" autoComplete="email" value={loginEmail} onChange={(e) => setLoginEmail(e.target.value)} className="h-11 rounded-xl" />
+                  </div>
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between">
+                      <Label htmlFor="li-pass">Contraseña</Label>
+                      <button type="button" onClick={() => { setForgotEmail(loginEmail); setForgotOpen(true); }} className="text-xs text-primary underline-offset-2 hover:underline">
+                        ¿Olvidaste tu contraseña?
+                      </button>
+                    </div>
+                    <Input id="li-pass" type="password" autoComplete="current-password" value={loginPassword} onChange={(e) => setLoginPassword(e.target.value)} className="h-11 rounded-xl" />
+                  </div>
+                  <Button type="submit" disabled={loading} className="h-11 w-full rounded-xl bg-gradient-primary shadow-elegant hover:shadow-glow">
+                    {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                    Entrar
+                  </Button>
+                  <button type="button" onClick={fillDemo} className="block w-full text-center text-xs text-muted-foreground underline-offset-2 hover:underline">
+                    Usar credenciales demo (super admin)
+                  </button>
+                </form>
+              )}
             </TabsContent>
 
             <TabsContent value="signup" className="mt-5">
