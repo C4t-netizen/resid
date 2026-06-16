@@ -114,7 +114,7 @@ export default function Accidentes() {
     setLoading(true);
     const [{ data: regs }, { data: invs }] = await Promise.all([
       supabase.from("registro_accidentes").select("*").order("fecha", { ascending: false }),
-      supabase.from("investigaciones").select("id,nombre_persona,fecha_evento,rfc_num_control,departamento,area,edad,sexo").order("fecha_evento", { ascending: false }),
+      supabase.from("investigaciones").select("id,nombre_persona,fecha_evento,rfc_num_control,departamento,area,edad,sexo,telefono").order("fecha_evento", { ascending: false }),
     ]);
     setList((regs ?? []) as Registro[]);
     setInvestigaciones((invs ?? []) as InvOption[]);
