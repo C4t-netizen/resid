@@ -1,10 +1,25 @@
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
+import { createLocalJWKSet, jwtVerify } from "npm:jose@5.9.6";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
   "Access-Control-Allow-Methods": "POST, OPTIONS",
+};
+
+const getAuthenticatedUserId = async (token: string, supabaseUrl: string) => {
+  const jwksRaw = Deno.env.get("SUPABASE_JWKS");
+  if (!jwksRaw) throw new Error("Missing SUPABASE_JWKS");
+
+  const jwks = createLocalJWKSet(JSON.parse(jwksRaw));
+  const { payload } = await jwtVerify(token, jwks, {
+    issuer: `${supabaseUrl}/auth/v1`,
+    audience: "authenticated",
+  });
+
+  if (!payload.sub || typeof payload.sub !== "string") throw new Error("Invalid token subject");
+  return payload.sub;
 };
 
 Deno.serve(async (req) => {
@@ -23,14 +38,16 @@ Deno.serve(async (req) => {
     }
 
     const admin = createClient(supabaseUrl, serviceKey);
-    const { data: userData, error: uErr } = await admin.auth.getUser(token);
-    if (uErr || !userData?.user) {
+    let requesterId: string;
+    try {
+      requesterId = await getAuthenticatedUserId(token, supabaseUrl);
+    } catch (_err) {
       return new Response(JSON.stringify({ error: "Unauthorized" }), {
         status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
-    const user = userData.user;
-    const { data: isSuper } = await admin.rpc("has_role", { _user_id: user.id, _role: "super_admin" });
+
+    const { data: isSuper } = await admin.rpc("has_role", { _user_id: requesterId, _role: "super_admin" });
     if (!isSuper) {
       return new Response(JSON.stringify({ error: "Forbidden: super_admin required" }), {
         status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -43,7 +60,7 @@ Deno.serve(async (req) => {
         status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
-    if (userId === user.id) {
+    if (userId === requesterId) {
       return new Response(JSON.stringify({ error: "No puedes eliminar tu propia cuenta" }), {
         status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
