@@ -75,7 +75,7 @@ Deno.serve(async (req) => {
     let requesterId = "";
     try {
       console.log("[delete-user] Verifying requester with auth.getUser()");
-      const { data: { user }, error: authError } = await authClient.auth.getUser(token);
+      const { data: { user }, error: authError } = await authClient.auth.getUser();
 
       if (authError) {
         console.error("[delete-user] auth.getUser failed", {
