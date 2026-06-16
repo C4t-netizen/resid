@@ -60,6 +60,7 @@ interface InvOption {
   area: string | null;
   edad: number | null;
   sexo: string | null;
+  telefono: string | null;
 }
 
 const empty = {
