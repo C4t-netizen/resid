@@ -361,12 +361,14 @@ export default function Minutas() {
           subtitle={yearFilter === "todos" ? "Crea tu primera minuta para comenzar." : `No hay minutas registradas en ${yearFilter}.`}
           breadcrumbs={[{ label: "Minutas", href: "/minutas" }]}
           actions={
-            <Button
-              className="rounded-xl bg-gradient-primary"
-              onClick={() => setNewMinuta({ id: 0, titulo: "", coordinador: "", iniciales: "", fecha: new Date().toLocaleDateString("es-MX", { day: "numeric", month: "long", year: "numeric" }), estado: "En proceso", anio: new Date().getFullYear().toString() })}
-            >
-              <Plus className="mr-2 h-4 w-4" /> Nueva minuta
-            </Button>
+            canEdit ? (
+              <Button
+                className="rounded-xl bg-gradient-primary"
+                onClick={() => setNewMinuta({ id: 0, titulo: "", coordinador: "", iniciales: "", fecha: new Date().toLocaleDateString("es-MX", { day: "numeric", month: "long", year: "numeric" }), estado: "En proceso", anio: new Date().getFullYear().toString() })}
+              >
+                <Plus className="mr-2 h-4 w-4" /> Nueva minuta
+              </Button>
+            ) : null
           }
         />
         <div className="space-y-6 px-4 py-6 md:px-8">
