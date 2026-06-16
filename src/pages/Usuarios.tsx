@@ -147,6 +147,38 @@ export default function Usuarios() {
                         ))}
                       </SelectContent>
                     </Select>
+                    {isSuperAdmin && u.id !== me?.id && (
+                      <AlertDialog>
+                        <AlertDialogTrigger asChild>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-10 w-10 rounded-xl text-destructive hover:bg-destructive/10 hover:text-destructive"
+                            disabled={deleting === u.id}
+                            title="Eliminar usuario"
+                          >
+                            {deleting === u.id ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}
+                          </Button>
+                        </AlertDialogTrigger>
+                        <AlertDialogContent>
+                          <AlertDialogHeader>
+                            <AlertDialogTitle>¿Eliminar a {u.full_name || u.email}?</AlertDialogTitle>
+                            <AlertDialogDescription>
+                              Esta acción es permanente. Se eliminará la cuenta y todos sus accesos. No podrá deshacerse.
+                            </AlertDialogDescription>
+                          </AlertDialogHeader>
+                          <AlertDialogFooter>
+                            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                            <AlertDialogAction
+                              onClick={() => deleteUser(u.id)}
+                              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                            >
+                              Eliminar
+                            </AlertDialogAction>
+                          </AlertDialogFooter>
+                        </AlertDialogContent>
+                      </AlertDialog>
+                    )}
                   </div>
                 </div>
               ))}
