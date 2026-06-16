@@ -455,6 +455,7 @@ export type Database = {
           puesto: string | null
           rfc_num_control: string | null
           sexo: string | null
+          telefono: string | null
           tipo: string
           updated_at: string
         }
@@ -482,6 +483,7 @@ export type Database = {
           puesto?: string | null
           rfc_num_control?: string | null
           sexo?: string | null
+          telefono?: string | null
           tipo?: string
           updated_at?: string
         }
@@ -509,6 +511,7 @@ export type Database = {
           puesto?: string | null
           rfc_num_control?: string | null
           sexo?: string | null
+          telefono?: string | null
           tipo?: string
           updated_at?: string
         }

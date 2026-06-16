@@ -36,6 +36,7 @@ interface Investigacion {
   sexo: string | null;
   departamento: string | null;
   edad: number | null;
+  telefono: string | null;
   puesto: string | null;
   tipo: string;
   lugar_accidente: string | null;
@@ -59,6 +60,7 @@ const empty = {
   sexo: "M",
   departamento: "",
   edad: "",
+  telefono: "",
   puesto: "",
   fecha_evento: new Date().toISOString().slice(0, 10),
   tipo: "incidente",
@@ -131,6 +133,7 @@ export default function Incidentes() {
       sexo: inv.sexo ?? "M",
       departamento: inv.departamento ?? "",
       edad: inv.edad?.toString() ?? "",
+      telefono: inv.telefono ?? "",
       puesto: inv.puesto ?? "",
       fecha_evento: inv.fecha_evento,
       tipo: inv.tipo,
@@ -307,6 +310,7 @@ export default function Incidentes() {
               </div>
               <div><Label>Departamento de adscripción</Label><Input value={form.departamento} onChange={(e) => setForm({ ...form, departamento: e.target.value })} /></div>
               <div><Label>Edad</Label><Input type="number" value={form.edad} onChange={(e) => setForm({ ...form, edad: e.target.value })} /></div>
+              <div><Label>Teléfono de la persona afectada</Label><Input value={form.telefono} onChange={(e) => setForm({ ...form, telefono: e.target.value })} placeholder="Ej. 618 123 4567" /></div>
               <div className="md:col-span-2"><Label>Puesto de trabajo</Label><Input value={form.puesto} onChange={(e) => setForm({ ...form, puesto: e.target.value })} placeholder="Ej. brigadista, jefe de piso, alumno, docente, etc." /></div>
             </div>
           )}
