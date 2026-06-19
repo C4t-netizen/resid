@@ -1,5 +1,7 @@
 import { useEffect, useState } from "react";
-import { Building2, Loader2, MapPin, Save, Users } from "lucide-react";
+import { Building2, FileDown, Loader2, MapPin, Save, Users } from "lucide-react";
+import jsPDF from "jspdf";
+import autoTable from "jspdf-autotable";
 import { PageHeader } from "@/components/PageHeader";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -88,6 +90,65 @@ export default function Configuracion() {
     else toast.success("Configuración guardada");
   };
 
+  const exportPdf = () => {
+    const doc = new jsPDF({ orientation: "portrait", unit: "pt", format: "a4" });
+    const pageWidth = doc.internal.pageSize.getWidth();
+    doc.setFontSize(16);
+    doc.text("Configuración del centro de trabajo", pageWidth / 2, 40, { align: "center" });
+    doc.setFontSize(10);
+    doc.text(`Fecha de exportación: ${new Date().toLocaleDateString()}`, pageWidth / 2, 58, { align: "center" });
+
+    const sections: { title: string; rows: [string, string][] }[] = [
+      {
+        title: "Datos de la empresa",
+        rows: [
+          ["Razón social", form.razon_social],
+          ["RFC", form.rfc],
+          ["Nombre del centro de trabajo", form.nombre_centro],
+          ["Rama de actividad económica", form.rama_actividad],
+        ],
+      },
+      {
+        title: "Domicilio",
+        rows: [
+          ["Calle y número", form.domicilio],
+          ["Municipio / Alcaldía", form.municipio],
+          ["Estado", form.estado],
+          ["Código postal", form.cp],
+          ["Teléfono", form.telefono],
+        ],
+      },
+      {
+        title: "Personal y representantes",
+        rows: [
+          ["Total de trabajadores", form.num_trabajadores?.toString() ?? ""],
+          ["Hombres", form.num_hombres?.toString() ?? ""],
+          ["Mujeres", form.num_mujeres?.toString() ?? ""],
+          ["Vigencia (años)", form.vigencia_anios?.toString() ?? ""],
+          ["Representante legal", form.representante_legal],
+          ["Representante patronal en CSH", form.representante_patronal],
+          ["Representante de los trabajadores", form.representante_trabajadores],
+          ["Fecha de constitución de la CSH", form.fecha_constitucion],
+        ],
+      },
+    ];
+
+    let startY = 80;
+    sections.forEach((s) => {
+      autoTable(doc, {
+        startY,
+        head: [[{ content: s.title, colSpan: 2, styles: { halign: "left", fillColor: [37, 99, 235], textColor: 255 } }]],
+        body: s.rows.map(([k, v]) => [k, v || "—"]),
+        styles: { fontSize: 10, cellPadding: 6, valign: "top" },
+        columnStyles: { 0: { cellWidth: 200, fontStyle: "bold" } },
+        margin: { left: 40, right: 40 },
+      });
+      startY = (doc as any).lastAutoTable.finalY + 14;
+    });
+
+    doc.save(`Configuracion_CSH_${new Date().toISOString().slice(0, 10)}.pdf`);
+  };
+
   if (loading) {
     return <div className="flex h-96 items-center justify-center"><Loader2 className="h-6 w-6 animate-spin text-primary" /></div>;
   }
@@ -99,6 +160,11 @@ export default function Configuracion() {
         subtitle="Datos generales requeridos por la NOM-019-STPS para conformar la CSH."
         breadcrumbs={[{ label: "Configuración" }]}
         badge={form.id ? <Badge className="border-success/20 bg-success/10 text-success">Guardado</Badge> : <Badge variant="outline">Sin guardar</Badge>}
+        actions={
+          <Button variant="outline" onClick={exportPdf} className="rounded-xl">
+            <FileDown className="mr-2 h-4 w-4" /> Descargar PDF
+          </Button>
+        }
       />
       <div className="px-4 py-6 md:px-8">
         <Card className="mx-auto max-w-5xl rounded-2xl border-border/50 p-6 shadow-soft md:p-8">
