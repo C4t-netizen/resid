@@ -1,0 +1,1 @@
+ALTER TABLE public.acta_constitucion ADD COLUMN IF NOT EXISTS tipo TEXT NOT NULL DEFAULT 'ordinario';
