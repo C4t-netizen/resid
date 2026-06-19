@@ -1,5 +1,7 @@
 import { useEffect, useState } from "react";
-import { Building2, Loader2, MapPin, Save, Users } from "lucide-react";
+import { Building2, FileDown, Loader2, MapPin, Save, Users } from "lucide-react";
+import jsPDF from "jspdf";
+import autoTable from "jspdf-autotable";
 import { PageHeader } from "@/components/PageHeader";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
