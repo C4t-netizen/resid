@@ -333,10 +333,21 @@ export default function Recorridos() {
                   </Select></div>
                 <div className="space-y-1.5 md:col-span-2"><Label>Recomendación</Label>
                   <Textarea value={hForm.recomendacion} onChange={(e) => setHForm({...hForm, recomendacion: e.target.value})} className="min-h-[80px] rounded-xl" /></div>
+                <div className="space-y-1.5 md:col-span-2"><Label>Evidencia fotográfica (máx. 20 MB)</Label>
+                  <Input type="file" accept="image/*" onChange={(e) => {
+                    const f = e.target.files?.[0] ?? null;
+                    if (f && f.size > 20 * 1024 * 1024) { toast.error("La imagen excede 20 MB"); e.target.value = ""; return; }
+                    setHForm({ ...hForm, foto: f });
+                  }} className="h-11 rounded-xl" />
+                  {hForm.foto && <p className="text-xs text-muted-foreground">{hForm.foto.name} · {(hForm.foto.size / (1024*1024)).toFixed(2)} MB</p>}
+                </div>
               </div>
               <div className="mt-4 flex justify-end">
-                <Button onClick={addHallazgo} className="rounded-xl bg-gradient-primary"><Plus className="mr-2 h-4 w-4" /> Agregar</Button>
+                <Button onClick={addHallazgo} disabled={uploadingFoto} className="rounded-xl bg-gradient-primary">
+                  {uploadingFoto ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Plus className="mr-2 h-4 w-4" />} Agregar
+                </Button>
               </div>
+
             </Card>
           )}
           <Card className="overflow-hidden rounded-2xl border-border/50 shadow-soft">
@@ -356,6 +367,12 @@ export default function Recorridos() {
                           <p className="text-sm font-medium">{h.descripcion}</p>
                           {h.ubicacion && <p className="text-xs text-muted-foreground">📍 {h.ubicacion}</p>}
                           {h.recomendacion && <p className="mt-1 text-xs italic text-muted-foreground">→ {h.recomendacion}</p>}
+                          {h.foto_url && (
+                            <a href={h.foto_url} target="_blank" rel="noopener noreferrer" className="mt-2 inline-block">
+                              <img src={h.foto_url} alt="Evidencia" className="max-h-40 rounded-lg border border-border object-cover" />
+                            </a>
+                          )}
+
                         </div>
                       </div>
                     </div>
