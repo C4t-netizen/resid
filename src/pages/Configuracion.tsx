@@ -160,6 +160,11 @@ export default function Configuracion() {
         subtitle="Datos generales requeridos por la NOM-019-STPS para conformar la CSH."
         breadcrumbs={[{ label: "Configuración" }]}
         badge={form.id ? <Badge className="border-success/20 bg-success/10 text-success">Guardado</Badge> : <Badge variant="outline">Sin guardar</Badge>}
+        actions={
+          <Button variant="outline" onClick={exportPdf} className="rounded-xl">
+            <FileDown className="mr-2 h-4 w-4" /> Descargar PDF
+          </Button>
+        }
       />
       <div className="px-4 py-6 md:px-8">
         <Card className="mx-auto max-w-5xl rounded-2xl border-border/50 p-6 shadow-soft md:p-8">
