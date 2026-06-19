@@ -25,12 +25,13 @@ interface Acta {
   representante_trabajadores_firma: string;
   testigo_stps: string;
   estatus: "borrador" | "firmada" | "vigente" | "vencida";
+  tipo: "ordinario" | "extraordinario";
 }
 
 const empty: Acta = {
   lugar: "", fecha_acta: "", hora: "", vigencia_inicio: "", vigencia_fin: "",
   observaciones: "", patron_firma: "", representante_trabajadores_firma: "",
-  testigo_stps: "", estatus: "borrador",
+  testigo_stps: "", estatus: "borrador", tipo: "ordinario",
 };
 
 const estatusColor: Record<string, string> = {
