@@ -36,7 +36,9 @@ interface Hallazgo {
   nivel_riesgo: "bajo" | "medio" | "alto" | "critico";
   recomendacion: string | null;
   estatus: "abierto" | "en_proceso" | "resuelto";
+  foto_url: string | null;
 }
+
 
 const riesgoColor: Record<string, string> = {
   bajo: "bg-muted text-muted-foreground",
@@ -53,7 +55,9 @@ export default function Recorridos() {
   const [selected, setSelected] = useState<Recorrido | null>(null);
   const [hallazgos, setHallazgos] = useState<Hallazgo[]>([]);
   const [form, setForm] = useState({ fecha: new Date().toISOString().slice(0,10), fecha_inicio: new Date().toISOString().slice(0,10), fecha_fin: "", hora_inicio: "", hora_fin: "", area: "", tipo: "ordinario", integrantes: "" });
-  const [hForm, setHForm] = useState({ descripcion: "", ubicacion: "", nivel_riesgo: "medio", recomendacion: "" });
+  const [hForm, setHForm] = useState<{ descripcion: string; ubicacion: string; nivel_riesgo: string; recomendacion: string; foto: File | null }>({ descripcion: "", ubicacion: "", nivel_riesgo: "medio", recomendacion: "", foto: null });
+  const [uploadingFoto, setUploadingFoto] = useState(false);
+
 
   const load = async () => {
     setLoading(true);
@@ -90,17 +94,35 @@ export default function Recorridos() {
 
   const addHallazgo = async () => {
     if (!selected || !hForm.descripcion.trim()) { toast.error("Descripción requerida"); return; }
-    const { error } = await supabase.from("recorrido_hallazgos").insert({
-      recorrido_id: selected.id,
-      descripcion: hForm.descripcion,
-      ubicacion: hForm.ubicacion || null,
-      nivel_riesgo: hForm.nivel_riesgo,
-      recomendacion: hForm.recomendacion || null,
-    });
-    if (error) return toast.error(error.message);
-    setHForm({ descripcion: "", ubicacion: "", nivel_riesgo: "medio", recomendacion: "" });
-    loadHallazgos(selected.id);
+    if (hForm.foto && hForm.foto.size > 20 * 1024 * 1024) { toast.error("La imagen excede 20 MB"); return; }
+    setUploadingFoto(true);
+    let foto_url: string | null = null;
+    try {
+      if (hForm.foto) {
+        const ext = hForm.foto.name.split(".").pop() || "jpg";
+        const path = `recorridos/${selected.id}/${Date.now()}.${ext}`;
+        const { error: upErr } = await supabase.storage.from("documentos-csh").upload(path, hForm.foto, { contentType: hForm.foto.type, upsert: false });
+        if (upErr) { setUploadingFoto(false); return toast.error(upErr.message); }
+        const { data: pub } = supabase.storage.from("documentos-csh").getPublicUrl(path);
+        foto_url = pub.publicUrl;
+      }
+      const { error } = await supabase.from("recorrido_hallazgos").insert({
+        recorrido_id: selected.id,
+        descripcion: hForm.descripcion,
+        ubicacion: hForm.ubicacion || null,
+        nivel_riesgo: hForm.nivel_riesgo,
+        recomendacion: hForm.recomendacion || null,
+        foto_url,
+      });
+      if (error) return toast.error(error.message);
+      setHForm({ descripcion: "", ubicacion: "", nivel_riesgo: "medio", recomendacion: "", foto: null });
+      loadHallazgos(selected.id);
+      toast.success("Hallazgo agregado");
+    } finally {
+      setUploadingFoto(false);
+    }
   };
+
 
   const updateHallazgo = async (id: string, estatus: Hallazgo["estatus"]) => {
     await supabase.from("recorrido_hallazgos").update({ estatus }).eq("id", id);
@@ -122,9 +144,10 @@ export default function Recorridos() {
     load();
   };
 
-  const exportRecorridoPdf = (r: Recorrido, hs: Hallazgo[]) => {
+  const exportRecorridoPdf = async (r: Recorrido, hs: Hallazgo[]) => {
     const doc = new jsPDF();
     const w = doc.internal.pageSize.getWidth();
+    const pageH = doc.internal.pageSize.getHeight();
     doc.setFillColor(30, 64, 175);
     doc.rect(0, 0, w, 28, "F");
     doc.setTextColor(255);
@@ -159,6 +182,53 @@ export default function Recorridos() {
       headStyles: { fillColor: [30, 64, 175] },
       styles: { fontSize: 8, cellPadding: 2 },
     });
+    y = (doc as any).lastAutoTable.finalY + 8;
+
+    // Embed photos
+    const withFoto = hs.filter((h) => h.foto_url);
+    if (withFoto.length > 0) {
+      if (y > pageH - 40) { doc.addPage(); y = 20; }
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(12);
+      doc.text("Evidencias fotográficas", 14, y);
+      y += 6;
+      for (let i = 0; i < hs.length; i++) {
+        const h = hs[i];
+        if (!h.foto_url) continue;
+        try {
+          const res = await fetch(h.foto_url);
+          const blob = await res.blob();
+          const dataUrl: string = await new Promise((resolve, reject) => {
+            const fr = new FileReader();
+            fr.onload = () => resolve(fr.result as string);
+            fr.onerror = reject;
+            fr.readAsDataURL(blob);
+          });
+          const img = await new Promise<HTMLImageElement>((resolve, reject) => {
+            const im = new Image();
+            im.onload = () => resolve(im);
+            im.onerror = reject;
+            im.src = dataUrl;
+          });
+          const maxW = 120;
+          const maxH = 80;
+          const ratio = Math.min(maxW / img.width, maxH / img.height);
+          const drawW = img.width * ratio;
+          const drawH = img.height * ratio;
+          if (y + drawH + 12 > pageH - 15) { doc.addPage(); y = 20; }
+          doc.setFont("helvetica", "bold");
+          doc.setFontSize(9);
+          doc.text(`#${i + 1} · ${h.descripcion}`, 14, y);
+          y += 4;
+          const fmt = (dataUrl.startsWith("data:image/png") ? "PNG" : "JPEG") as "PNG" | "JPEG";
+          doc.addImage(dataUrl, fmt, 14, y, drawW, drawH);
+          y += drawH + 8;
+        } catch (e) {
+          // skip broken images
+        }
+      }
+    }
+
     const pages = doc.getNumberOfPages();
     for (let p = 1; p <= pages; p++) {
       doc.setPage(p);
@@ -168,6 +238,7 @@ export default function Recorridos() {
     }
     doc.save(`recorrido-${r.area}-${r.fecha_inicio ?? r.fecha}.pdf`);
   };
+
 
   // ============ DETAIL VIEW ============
   if (selected) {
@@ -262,10 +333,21 @@ export default function Recorridos() {
                   </Select></div>
                 <div className="space-y-1.5 md:col-span-2"><Label>Recomendación</Label>
                   <Textarea value={hForm.recomendacion} onChange={(e) => setHForm({...hForm, recomendacion: e.target.value})} className="min-h-[80px] rounded-xl" /></div>
+                <div className="space-y-1.5 md:col-span-2"><Label>Evidencia fotográfica (máx. 20 MB)</Label>
+                  <Input type="file" accept="image/*" onChange={(e) => {
+                    const f = e.target.files?.[0] ?? null;
+                    if (f && f.size > 20 * 1024 * 1024) { toast.error("La imagen excede 20 MB"); e.target.value = ""; return; }
+                    setHForm({ ...hForm, foto: f });
+                  }} className="h-11 rounded-xl" />
+                  {hForm.foto && <p className="text-xs text-muted-foreground">{hForm.foto.name} · {(hForm.foto.size / (1024*1024)).toFixed(2)} MB</p>}
+                </div>
               </div>
               <div className="mt-4 flex justify-end">
-                <Button onClick={addHallazgo} className="rounded-xl bg-gradient-primary"><Plus className="mr-2 h-4 w-4" /> Agregar</Button>
+                <Button onClick={addHallazgo} disabled={uploadingFoto} className="rounded-xl bg-gradient-primary">
+                  {uploadingFoto ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Plus className="mr-2 h-4 w-4" />} Agregar
+                </Button>
               </div>
+
             </Card>
           )}
           <Card className="overflow-hidden rounded-2xl border-border/50 shadow-soft">
@@ -285,6 +367,12 @@ export default function Recorridos() {
                           <p className="text-sm font-medium">{h.descripcion}</p>
                           {h.ubicacion && <p className="text-xs text-muted-foreground">📍 {h.ubicacion}</p>}
                           {h.recomendacion && <p className="mt-1 text-xs italic text-muted-foreground">→ {h.recomendacion}</p>}
+                          {h.foto_url && (
+                            <a href={h.foto_url} target="_blank" rel="noopener noreferrer" className="mt-2 inline-block">
+                              <img src={h.foto_url} alt="Evidencia" className="max-h-40 rounded-lg border border-border object-cover" />
+                            </a>
+                          )}
+
                         </div>
                       </div>
                     </div>
