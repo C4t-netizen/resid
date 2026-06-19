@@ -259,6 +259,7 @@ export default function Acta() {
                           <div className="font-medium">{formatFecha(a.fecha_acta)}</div>
                           <div className="mt-0.5 flex items-center gap-1.5 text-[10px] text-muted-foreground">
                             <Badge variant="outline" className={`${estatusColor[a.estatus]} px-1.5 py-0 text-[9px]`}>{a.estatus}</Badge>
+                            {a.tipo && <Badge variant="outline" className="px-1.5 py-0 text-[9px]">{a.tipo}</Badge>}
                             {a.lugar && <span className="truncate">{a.lugar}</span>}
                           </div>
                         </button>
