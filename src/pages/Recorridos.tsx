@@ -199,7 +199,6 @@ export default function Recorridos() {
                     <SelectContent>
                       <SelectItem value="ordinario">Ordinario</SelectItem>
                       <SelectItem value="extraordinario">Extraordinario</SelectItem>
-                      <SelectItem value="especial">Especial</SelectItem>
                     </SelectContent>
                   </Select></div>
                 <div className="space-y-1.5"><Label>Fecha inicio</Label>
@@ -340,7 +339,6 @@ export default function Recorridos() {
                       <SelectContent>
                         <SelectItem value="ordinario">Ordinario</SelectItem>
                         <SelectItem value="extraordinario">Extraordinario</SelectItem>
-                        <SelectItem value="especial">Especial</SelectItem>
                       </SelectContent>
                     </Select></div>
                 </div>
