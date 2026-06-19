@@ -107,6 +107,15 @@ export default function Recorridos() {
     if (selected) loadHallazgos(selected.id);
   };
 
+  const updateRecorrido = async (patch: Partial<Recorrido>) => {
+    if (!selected) return;
+    const { error, data } = await supabase.from("recorridos").update(patch).eq("id", selected.id).select().single();
+    if (error) return toast.error(error.message);
+    setSelected(data as Recorrido);
+    toast.success("Recorrido actualizado");
+    load();
+  };
+
   const removeRecorrido = async (id: string) => {
     await supabase.from("recorridos").delete().eq("id", id);
     toast.success("Recorrido eliminado");
