@@ -305,6 +305,14 @@ export default function Acta() {
                 <div className="space-y-1.5"><Label>Hora</Label><Input type="time" value={form.hora} onChange={(e) => set("hora", e.target.value)} className="h-11 rounded-xl" /></div>
                 <div className="space-y-1.5"><Label>Inicio vigencia</Label><Input type="date" value={form.vigencia_inicio} onChange={(e) => set("vigencia_inicio", e.target.value)} className="h-11 rounded-xl" /></div>
                 <div className="space-y-1.5"><Label>Fin vigencia</Label><Input type="date" value={form.vigencia_fin} onChange={(e) => set("vigencia_fin", e.target.value)} className="h-11 rounded-xl" /></div>
+                <div className="space-y-1.5"><Label>Tipo</Label>
+                  <Select value={form.tipo} onValueChange={(v: any) => set("tipo", v)}>
+                    <SelectTrigger className="h-11 rounded-xl"><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="ordinario">Ordinario</SelectItem>
+                      <SelectItem value="extraordinario">Extraordinario</SelectItem>
+                    </SelectContent>
+                  </Select></div>
                 <div className="space-y-1.5"><Label>Estatus</Label>
                   <Select value={form.estatus} onValueChange={(v: any) => set("estatus", v)}>
                     <SelectTrigger className="h-11 rounded-xl"><SelectValue /></SelectTrigger>
