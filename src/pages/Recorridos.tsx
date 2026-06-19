@@ -36,7 +36,9 @@ interface Hallazgo {
   nivel_riesgo: "bajo" | "medio" | "alto" | "critico";
   recomendacion: string | null;
   estatus: "abierto" | "en_proceso" | "resuelto";
+  foto_url: string | null;
 }
+
 
 const riesgoColor: Record<string, string> = {
   bajo: "bg-muted text-muted-foreground",
@@ -53,7 +55,9 @@ export default function Recorridos() {
   const [selected, setSelected] = useState<Recorrido | null>(null);
   const [hallazgos, setHallazgos] = useState<Hallazgo[]>([]);
   const [form, setForm] = useState({ fecha: new Date().toISOString().slice(0,10), fecha_inicio: new Date().toISOString().slice(0,10), fecha_fin: "", hora_inicio: "", hora_fin: "", area: "", tipo: "ordinario", integrantes: "" });
-  const [hForm, setHForm] = useState({ descripcion: "", ubicacion: "", nivel_riesgo: "medio", recomendacion: "" });
+  const [hForm, setHForm] = useState<{ descripcion: string; ubicacion: string; nivel_riesgo: string; recomendacion: string; foto: File | null }>({ descripcion: "", ubicacion: "", nivel_riesgo: "medio", recomendacion: "", foto: null });
+  const [uploadingFoto, setUploadingFoto] = useState(false);
+
 
   const load = async () => {
     setLoading(true);
@@ -90,17 +94,35 @@ export default function Recorridos() {
 
   const addHallazgo = async () => {
     if (!selected || !hForm.descripcion.trim()) { toast.error("Descripción requerida"); return; }
-    const { error } = await supabase.from("recorrido_hallazgos").insert({
-      recorrido_id: selected.id,
-      descripcion: hForm.descripcion,
-      ubicacion: hForm.ubicacion || null,
-      nivel_riesgo: hForm.nivel_riesgo,
-      recomendacion: hForm.recomendacion || null,
-    });
-    if (error) return toast.error(error.message);
-    setHForm({ descripcion: "", ubicacion: "", nivel_riesgo: "medio", recomendacion: "" });
-    loadHallazgos(selected.id);
+    if (hForm.foto && hForm.foto.size > 20 * 1024 * 1024) { toast.error("La imagen excede 20 MB"); return; }
+    setUploadingFoto(true);
+    let foto_url: string | null = null;
+    try {
+      if (hForm.foto) {
+        const ext = hForm.foto.name.split(".").pop() || "jpg";
+        const path = `recorridos/${selected.id}/${Date.now()}.${ext}`;
+        const { error: upErr } = await supabase.storage.from("documentos-csh").upload(path, hForm.foto, { contentType: hForm.foto.type, upsert: false });
+        if (upErr) { setUploadingFoto(false); return toast.error(upErr.message); }
+        const { data: pub } = supabase.storage.from("documentos-csh").getPublicUrl(path);
+        foto_url = pub.publicUrl;
+      }
+      const { error } = await supabase.from("recorrido_hallazgos").insert({
+        recorrido_id: selected.id,
+        descripcion: hForm.descripcion,
+        ubicacion: hForm.ubicacion || null,
+        nivel_riesgo: hForm.nivel_riesgo,
+        recomendacion: hForm.recomendacion || null,
+        foto_url,
+      });
+      if (error) return toast.error(error.message);
+      setHForm({ descripcion: "", ubicacion: "", nivel_riesgo: "medio", recomendacion: "", foto: null });
+      loadHallazgos(selected.id);
+      toast.success("Hallazgo agregado");
+    } finally {
+      setUploadingFoto(false);
+    }
   };
+
 
   const updateHallazgo = async (id: string, estatus: Hallazgo["estatus"]) => {
     await supabase.from("recorrido_hallazgos").update({ estatus }).eq("id", id);
