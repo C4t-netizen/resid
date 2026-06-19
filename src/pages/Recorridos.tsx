@@ -144,9 +144,10 @@ export default function Recorridos() {
     load();
   };
 
-  const exportRecorridoPdf = (r: Recorrido, hs: Hallazgo[]) => {
+  const exportRecorridoPdf = async (r: Recorrido, hs: Hallazgo[]) => {
     const doc = new jsPDF();
     const w = doc.internal.pageSize.getWidth();
+    const pageH = doc.internal.pageSize.getHeight();
     doc.setFillColor(30, 64, 175);
     doc.rect(0, 0, w, 28, "F");
     doc.setTextColor(255);
@@ -181,6 +182,53 @@ export default function Recorridos() {
       headStyles: { fillColor: [30, 64, 175] },
       styles: { fontSize: 8, cellPadding: 2 },
     });
+    y = (doc as any).lastAutoTable.finalY + 8;
+
+    // Embed photos
+    const withFoto = hs.filter((h) => h.foto_url);
+    if (withFoto.length > 0) {
+      if (y > pageH - 40) { doc.addPage(); y = 20; }
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(12);
+      doc.text("Evidencias fotográficas", 14, y);
+      y += 6;
+      for (let i = 0; i < hs.length; i++) {
+        const h = hs[i];
+        if (!h.foto_url) continue;
+        try {
+          const res = await fetch(h.foto_url);
+          const blob = await res.blob();
+          const dataUrl: string = await new Promise((resolve, reject) => {
+            const fr = new FileReader();
+            fr.onload = () => resolve(fr.result as string);
+            fr.onerror = reject;
+            fr.readAsDataURL(blob);
+          });
+          const img = await new Promise<HTMLImageElement>((resolve, reject) => {
+            const im = new Image();
+            im.onload = () => resolve(im);
+            im.onerror = reject;
+            im.src = dataUrl;
+          });
+          const maxW = 120;
+          const maxH = 80;
+          const ratio = Math.min(maxW / img.width, maxH / img.height);
+          const drawW = img.width * ratio;
+          const drawH = img.height * ratio;
+          if (y + drawH + 12 > pageH - 15) { doc.addPage(); y = 20; }
+          doc.setFont("helvetica", "bold");
+          doc.setFontSize(9);
+          doc.text(`#${i + 1} · ${h.descripcion}`, 14, y);
+          y += 4;
+          const fmt = (dataUrl.startsWith("data:image/png") ? "PNG" : "JPEG") as "PNG" | "JPEG";
+          doc.addImage(dataUrl, fmt, 14, y, drawW, drawH);
+          y += drawH + 8;
+        } catch (e) {
+          // skip broken images
+        }
+      }
+    }
+
     const pages = doc.getNumberOfPages();
     for (let p = 1; p <= pages; p++) {
       doc.setPage(p);
@@ -190,6 +238,7 @@ export default function Recorridos() {
     }
     doc.save(`recorrido-${r.area}-${r.fecha_inicio ?? r.fecha}.pdf`);
   };
+
 
   // ============ DETAIL VIEW ============
   if (selected) {
