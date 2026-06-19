@@ -111,6 +111,7 @@ export type Database = {
           patron_firma: string | null
           representante_trabajadores_firma: string | null
           testigo_stps: string | null
+          tipo: string
           updated_at: string
           vigencia_fin: string | null
           vigencia_inicio: string | null
@@ -127,6 +128,7 @@ export type Database = {
           patron_firma?: string | null
           representante_trabajadores_firma?: string | null
           testigo_stps?: string | null
+          tipo?: string
           updated_at?: string
           vigencia_fin?: string | null
           vigencia_inicio?: string | null
@@ -143,6 +145,7 @@ export type Database = {
           patron_firma?: string | null
           representante_trabajadores_firma?: string | null
           testigo_stps?: string | null
+          tipo?: string
           updated_at?: string
           vigencia_fin?: string | null
           vigencia_inicio?: string | null

@@ -25,12 +25,13 @@ interface Acta {
   representante_trabajadores_firma: string;
   testigo_stps: string;
   estatus: "borrador" | "firmada" | "vigente" | "vencida";
+  tipo: "ordinario" | "extraordinario";
 }
 
 const empty: Acta = {
   lugar: "", fecha_acta: "", hora: "", vigencia_inicio: "", vigencia_fin: "",
   observaciones: "", patron_firma: "", representante_trabajadores_firma: "",
-  testigo_stps: "", estatus: "borrador",
+  testigo_stps: "", estatus: "borrador", tipo: "ordinario",
 };
 
 const estatusColor: Record<string, string> = {
@@ -258,6 +259,7 @@ export default function Acta() {
                           <div className="font-medium">{formatFecha(a.fecha_acta)}</div>
                           <div className="mt-0.5 flex items-center gap-1.5 text-[10px] text-muted-foreground">
                             <Badge variant="outline" className={`${estatusColor[a.estatus]} px-1.5 py-0 text-[9px]`}>{a.estatus}</Badge>
+                            {a.tipo && <Badge variant="outline" className="px-1.5 py-0 text-[9px]">{a.tipo}</Badge>}
                             {a.lugar && <span className="truncate">{a.lugar}</span>}
                           </div>
                         </button>
@@ -304,6 +306,14 @@ export default function Acta() {
                 <div className="space-y-1.5"><Label>Hora</Label><Input type="time" value={form.hora} onChange={(e) => set("hora", e.target.value)} className="h-11 rounded-xl" /></div>
                 <div className="space-y-1.5"><Label>Inicio vigencia</Label><Input type="date" value={form.vigencia_inicio} onChange={(e) => set("vigencia_inicio", e.target.value)} className="h-11 rounded-xl" /></div>
                 <div className="space-y-1.5"><Label>Fin vigencia</Label><Input type="date" value={form.vigencia_fin} onChange={(e) => set("vigencia_fin", e.target.value)} className="h-11 rounded-xl" /></div>
+                <div className="space-y-1.5"><Label>Tipo</Label>
+                  <Select value={form.tipo} onValueChange={(v: any) => set("tipo", v)}>
+                    <SelectTrigger className="h-11 rounded-xl"><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="ordinario">Ordinario</SelectItem>
+                      <SelectItem value="extraordinario">Extraordinario</SelectItem>
+                    </SelectContent>
+                  </Select></div>
                 <div className="space-y-1.5"><Label>Estatus</Label>
                   <Select value={form.estatus} onValueChange={(v: any) => set("estatus", v)}>
                     <SelectTrigger className="h-11 rounded-xl"><SelectValue /></SelectTrigger>
