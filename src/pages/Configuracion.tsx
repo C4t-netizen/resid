@@ -90,6 +90,65 @@ export default function Configuracion() {
     else toast.success("Configuración guardada");
   };
 
+  const exportPdf = () => {
+    const doc = new jsPDF({ orientation: "portrait", unit: "pt", format: "a4" });
+    const pageWidth = doc.internal.pageSize.getWidth();
+    doc.setFontSize(16);
+    doc.text("Configuración del centro de trabajo", pageWidth / 2, 40, { align: "center" });
+    doc.setFontSize(10);
+    doc.text(`Fecha de exportación: ${new Date().toLocaleDateString()}`, pageWidth / 2, 58, { align: "center" });
+
+    const sections: { title: string; rows: [string, string][] }[] = [
+      {
+        title: "Datos de la empresa",
+        rows: [
+          ["Razón social", form.razon_social],
+          ["RFC", form.rfc],
+          ["Nombre del centro de trabajo", form.nombre_centro],
+          ["Rama de actividad económica", form.rama_actividad],
+        ],
+      },
+      {
+        title: "Domicilio",
+        rows: [
+          ["Calle y número", form.domicilio],
+          ["Municipio / Alcaldía", form.municipio],
+          ["Estado", form.estado],
+          ["Código postal", form.cp],
+          ["Teléfono", form.telefono],
+        ],
+      },
+      {
+        title: "Personal y representantes",
+        rows: [
+          ["Total de trabajadores", form.num_trabajadores?.toString() ?? ""],
+          ["Hombres", form.num_hombres?.toString() ?? ""],
+          ["Mujeres", form.num_mujeres?.toString() ?? ""],
+          ["Vigencia (años)", form.vigencia_anios?.toString() ?? ""],
+          ["Representante legal", form.representante_legal],
+          ["Representante patronal en CSH", form.representante_patronal],
+          ["Representante de los trabajadores", form.representante_trabajadores],
+          ["Fecha de constitución de la CSH", form.fecha_constitucion],
+        ],
+      },
+    ];
+
+    let startY = 80;
+    sections.forEach((s) => {
+      autoTable(doc, {
+        startY,
+        head: [[{ content: s.title, colSpan: 2, styles: { halign: "left", fillColor: [37, 99, 235], textColor: 255 } }]],
+        body: s.rows.map(([k, v]) => [k, v || "—"]),
+        styles: { fontSize: 10, cellPadding: 6, valign: "top" },
+        columnStyles: { 0: { cellWidth: 200, fontStyle: "bold" } },
+        margin: { left: 40, right: 40 },
+      });
+      startY = (doc as any).lastAutoTable.finalY + 14;
+    });
+
+    doc.save(`Configuracion_CSH_${new Date().toISOString().slice(0, 10)}.pdf`);
+  };
+
   if (loading) {
     return <div className="flex h-96 items-center justify-center"><Loader2 className="h-6 w-6 animate-spin text-primary" /></div>;
   }
