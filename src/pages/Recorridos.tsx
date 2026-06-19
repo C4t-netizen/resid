@@ -350,48 +350,6 @@ export default function Recorridos() {
 
             </Card>
           )}
-          <Card className="overflow-hidden rounded-2xl border-border/50 shadow-soft">
-            <div className="border-b border-border bg-secondary/30 px-5 py-3">
-              <p className="font-display text-sm font-bold">Hallazgos ({hallazgos.length})</p>
-            </div>
-            {hallazgos.length === 0 ? (
-              <p className="p-8 text-center text-sm text-muted-foreground">Sin hallazgos registrados.</p>
-            ) : (
-              <div className="divide-y divide-border">
-                {hallazgos.map((h) => (
-                  <div key={h.id} className="flex flex-col gap-2 p-4 md:flex-row md:items-center md:justify-between">
-                    <div className="min-w-0 flex-1">
-                      <div className="flex items-start gap-2">
-                        <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-warning" />
-                        <div>
-                          <p className="text-sm font-medium">{h.descripcion}</p>
-                          {h.ubicacion && <p className="text-xs text-muted-foreground">📍 {h.ubicacion}</p>}
-                          {h.recomendacion && <p className="mt-1 text-xs italic text-muted-foreground">→ {h.recomendacion}</p>}
-                          {h.foto_url && (
-                            <a href={h.foto_url} target="_blank" rel="noopener noreferrer" className="mt-2 inline-block">
-                              <img src={h.foto_url} alt="Evidencia" className="max-h-40 rounded-lg border border-border object-cover" />
-                            </a>
-                          )}
-
-                        </div>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <Badge className={riesgoColor[h.nivel_riesgo]}>{h.nivel_riesgo}</Badge>
-                      <Select value={h.estatus} onValueChange={(v: any) => updateHallazgo(h.id, v)} disabled={!canEdit}>
-                        <SelectTrigger className="h-9 w-32 rounded-xl"><SelectValue /></SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="abierto">Abierto</SelectItem>
-                          <SelectItem value="en_proceso">En proceso</SelectItem>
-                          <SelectItem value="resuelto">Resuelto</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </Card>
         </div>
       </>
     );
