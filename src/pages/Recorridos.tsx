@@ -333,7 +333,7 @@ export default function Recorridos() {
                   </Select></div>
                 <div className="space-y-1.5 md:col-span-2"><Label>Recomendación</Label>
                   <Textarea value={hForm.recomendacion} onChange={(e) => setHForm({...hForm, recomendacion: e.target.value})} className="min-h-[80px] rounded-xl" /></div>
-                <div className="space-y-1.5 md:col-span-2"><Label>Hallazgos</Label>
+                <div className="space-y-1.5 md:col-span-2"><Label>Hallazgos (límite de 20 MB)</Label>
                   <Input type="file" accept="image/*" onChange={(e) => {
                     const f = e.target.files?.[0] ?? null;
                     if (f && f.size > 20 * 1024 * 1024) { toast.error("La imagen excede 20 MB"); e.target.value = ""; return; }
