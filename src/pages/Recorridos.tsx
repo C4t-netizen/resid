@@ -107,6 +107,15 @@ export default function Recorridos() {
     if (selected) loadHallazgos(selected.id);
   };
 
+  const updateRecorrido = async (patch: Partial<Recorrido>) => {
+    if (!selected) return;
+    const { error, data } = await supabase.from("recorridos").update(patch).eq("id", selected.id).select().single();
+    if (error) return toast.error(error.message);
+    setSelected(data as Recorrido);
+    toast.success("Recorrido actualizado");
+    load();
+  };
+
   const removeRecorrido = async (id: string) => {
     await supabase.from("recorridos").delete().eq("id", id);
     toast.success("Recorrido eliminado");
@@ -178,6 +187,62 @@ export default function Recorridos() {
           }
         />
         <div className="space-y-6 px-4 py-6 md:px-8">
+          {canEdit && (
+            <Card className="rounded-2xl border-border/50 p-5 shadow-soft">
+              <h3 className="mb-4 font-display text-base font-bold">Editar recorrido</h3>
+              <div className="grid gap-3 md:grid-cols-2">
+                <div className="space-y-1.5"><Label>Área</Label>
+                  <Input value={selected.area} onChange={(e) => setSelected({ ...selected, area: e.target.value })} className="h-11 rounded-xl" /></div>
+                <div className="space-y-1.5"><Label>Tipo</Label>
+                  <Select value={selected.tipo} onValueChange={(v) => setSelected({ ...selected, tipo: v })}>
+                    <SelectTrigger className="h-11 rounded-xl"><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="ordinario">Ordinario</SelectItem>
+                      <SelectItem value="extraordinario">Extraordinario</SelectItem>
+                      <SelectItem value="especial">Especial</SelectItem>
+                    </SelectContent>
+                  </Select></div>
+                <div className="space-y-1.5"><Label>Fecha inicio</Label>
+                  <Input type="date" value={selected.fecha_inicio ?? selected.fecha} onChange={(e) => setSelected({ ...selected, fecha_inicio: e.target.value })} className="h-11 rounded-xl" /></div>
+                <div className="space-y-1.5"><Label>Fecha fin</Label>
+                  <Input type="date" value={selected.fecha_fin ?? ""} onChange={(e) => setSelected({ ...selected, fecha_fin: e.target.value || null })} className="h-11 rounded-xl" /></div>
+                <div className="space-y-1.5"><Label>Hora inicio</Label>
+                  <Input type="time" value={selected.hora_inicio ?? ""} onChange={(e) => setSelected({ ...selected, hora_inicio: e.target.value || null })} className="h-11 rounded-xl" /></div>
+                <div className="space-y-1.5"><Label>Hora fin</Label>
+                  <Input type="time" value={selected.hora_fin ?? ""} onChange={(e) => setSelected({ ...selected, hora_fin: e.target.value || null })} className="h-11 rounded-xl" /></div>
+                <div className="space-y-1.5 md:col-span-2"><Label>Integrantes</Label>
+                  <Input value={selected.integrantes ?? ""} onChange={(e) => setSelected({ ...selected, integrantes: e.target.value })} className="h-11 rounded-xl" /></div>
+                <div className="space-y-1.5 md:col-span-2"><Label>Observaciones generales</Label>
+                  <Textarea value={selected.observaciones_generales ?? ""} onChange={(e) => setSelected({ ...selected, observaciones_generales: e.target.value })} className="min-h-[80px] rounded-xl" /></div>
+                <div className="space-y-1.5"><Label>Estatus</Label>
+                  <Select value={selected.estatus} onValueChange={(v: any) => setSelected({ ...selected, estatus: v })}>
+                    <SelectTrigger className="h-11 rounded-xl"><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="borrador">Borrador</SelectItem>
+                      <SelectItem value="cerrado">Cerrado</SelectItem>
+                    </SelectContent>
+                  </Select></div>
+              </div>
+              <div className="mt-4 flex justify-end">
+                <Button
+                  onClick={() => updateRecorrido({
+                    area: selected.area,
+                    tipo: selected.tipo,
+                    fecha_inicio: selected.fecha_inicio,
+                    fecha_fin: selected.fecha_fin,
+                    hora_inicio: selected.hora_inicio,
+                    hora_fin: selected.hora_fin,
+                    integrantes: selected.integrantes,
+                    observaciones_generales: selected.observaciones_generales,
+                    estatus: selected.estatus,
+                  })}
+                  className="rounded-xl bg-gradient-primary"
+                >
+                  Guardar cambios
+                </Button>
+              </div>
+            </Card>
+          )}
           {canEdit && (
             <Card className="rounded-2xl border-border/50 p-5 shadow-soft">
               <h3 className="mb-4 font-display text-base font-bold">Agregar hallazgo</h3>
