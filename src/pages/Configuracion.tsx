@@ -194,13 +194,38 @@ export default function Configuracion() {
         breadcrumbs={[{ label: "Configuración" }]}
         badge={form.id ? <Badge className="border-success/20 bg-success/10 text-success">Guardado</Badge> : <Badge variant="outline">Sin guardar</Badge>}
         actions={
-          <Button variant="outline" onClick={exportPdf} className="rounded-xl">
-            <FileDown className="mr-2 h-4 w-4" /> Descargar PDF
-          </Button>
+          <div className="flex flex-wrap gap-2">
+            {canEdit && (
+              <Button variant="outline" onClick={nuevaCsh} className="rounded-xl">
+                <Plus className="mr-2 h-4 w-4" /> Nueva CSH
+              </Button>
+            )}
+            <Button variant="outline" onClick={exportPdf} className="rounded-xl">
+              <FileDown className="mr-2 h-4 w-4" /> Descargar PDF
+            </Button>
+          </div>
         }
       />
       <div className="px-4 py-6 md:px-8">
         <Card className="mx-auto max-w-5xl rounded-2xl border-border/50 p-6 shadow-soft md:p-8">
+          {list.length > 0 && (
+            <div className="mb-6 flex flex-wrap items-center gap-3 rounded-xl border border-border/60 bg-secondary/30 p-3">
+              <Label className="text-xs font-semibold uppercase text-muted-foreground">CSH activa</Label>
+              <Select value={form.id ?? ""} onValueChange={selectCsh}>
+                <SelectTrigger className="h-10 w-full max-w-md rounded-lg bg-background">
+                  <SelectValue placeholder="Selecciona una CSH" />
+                </SelectTrigger>
+                <SelectContent>
+                  {list.map((c) => (
+                    <SelectItem key={c.id} value={c.id!}>
+                      {c.nombre_centro || c.razon_social || c.id?.slice(0, 8)}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <Badge variant="outline" className="ml-auto">{list.length} {list.length === 1 ? "registrada" : "registradas"}</Badge>
+            </div>
+          )}
           <fieldset disabled={!canEdit} className="space-y-8 disabled:opacity-70">
             <Section icon={Building2} title="Datos de la empresa">
               <Field label="Razón social *"><Input value={form.razon_social} onChange={(e) => set("razon_social", e.target.value)} className="h-11 rounded-xl" /></Field>
