@@ -1,9 +1,13 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   ArrowRight,
+  Binoculars,
+  Building2,
   CheckCircle2,
   Clock,
   Loader2,
+  MessageSquare,
+  Settings2,
   ShieldCheck,
   TrendingUp,
   Users,
@@ -15,7 +19,12 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/AuthContext";
 
 interface CshOption {
   id: string;
