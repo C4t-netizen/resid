@@ -1,4 +1,4 @@
-import { useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
   BarChart3,
   CheckCircle2,
@@ -161,6 +161,42 @@ const getIniciales = (nombre: string) =>
 const initialMinutas: MinutaInfo[] = [
   { id: 1, titulo: "FT-Minuta 10457", coordinador: "Antonio T.", iniciales: "AT", fecha: "15 marzo, 2026", estado: "En proceso", anio: "2026" },
 ];
+
+const MINUTAS_STORAGE_KEY = "resid:minutas-state";
+
+type PersistedMinutasState = {
+  minutas: MinutaInfo[];
+  acuerdosByMinuta: Record<number, Acuerdo[]>;
+  selectedMinutaId: number;
+};
+
+const defaultMinutasState: PersistedMinutasState = {
+  minutas: initialMinutas,
+  acuerdosByMinuta: { 1: initialAcuerdos },
+  selectedMinutaId: 1,
+};
+
+const getInitialMinutasState = (): PersistedMinutasState => {
+  if (typeof window === "undefined") return defaultMinutasState;
+
+  try {
+    const stored = window.localStorage.getItem(MINUTAS_STORAGE_KEY);
+    if (!stored) return defaultMinutasState;
+
+    const parsed = JSON.parse(stored) as Partial<PersistedMinutasState>;
+    const minutas = Array.isArray(parsed.minutas) ? parsed.minutas : initialMinutas;
+    const acuerdosByMinuta =
+      parsed.acuerdosByMinuta && typeof parsed.acuerdosByMinuta === "object"
+        ? (parsed.acuerdosByMinuta as Record<number, Acuerdo[]>)
+        : { 1: initialAcuerdos };
+    const selectedMinutaId =
+      typeof parsed.selectedMinutaId === "number" ? parsed.selectedMinutaId : minutas[0]?.id ?? 0;
+
+    return { minutas, acuerdosByMinuta, selectedMinutaId };
+  } catch {
+    return defaultMinutasState;
+  }
+};
 
 const AÑOS_DISPONIBLES = ["2024", "2025", "2026", "2027", "2028"];
 const ESTADO_COLORS: Record<Status, string> = {
