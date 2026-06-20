@@ -497,6 +497,15 @@ export default function Minutas() {
                 <Pencil className="mr-2 h-4 w-4" /> Editar minuta
               </Button>
             )}
+            {canEdit && (
+              <Button
+                variant="outline"
+                className="rounded-xl border-destructive/30 text-destructive hover:bg-destructive/10 hover:text-destructive"
+                onClick={() => setDeletingMinutaId(minuta.id)}
+              >
+                <Trash2 className="mr-2 h-4 w-4" /> Eliminar minuta
+              </Button>
+            )}
             <Button variant="outline" className="rounded-xl" onClick={() => setStatsOpen(true)}>
               <BarChart3 className="mr-2 h-4 w-4" /> Estadísticas
             </Button>
