@@ -15,6 +15,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { ROLE_BADGE_COLORS, ROLE_LABELS, useAuth } from "@/contexts/AuthContext";
+import { ThemeToggle } from "./ThemeToggle";
 
 export default function AppLayout() {
   const { profile, role, signOut } = useAuth();
@@ -36,6 +37,7 @@ export default function AppLayout() {
               />
             </div>
             <div className="ml-auto flex items-center gap-2">
+              <ThemeToggle />
               <Button variant="ghost" size="icon" className="relative rounded-xl">
                 <Bell className="h-[18px] w-[18px]" />
                 <span className="absolute right-2 top-2 h-2 w-2 rounded-full bg-destructive ring-2 ring-background" />
