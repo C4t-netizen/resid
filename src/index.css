@@ -100,6 +100,16 @@
     --border: 345 25% 20%;
     --input: 345 25% 20%;
     --ring: 345 75% 50%;
+
+    /* Gradientes (override dark) */
+    --gradient-primary: linear-gradient(135deg, hsl(345 70% 32%), hsl(345 75% 45%));
+    --gradient-header: linear-gradient(180deg, hsl(345 70% 22%), hsl(214 59% 22%));
+    --gradient-success: linear-gradient(135deg, hsl(152 55% 32%), hsl(165 60% 36%));
+    --gradient-warning: linear-gradient(135deg, hsl(32 80% 45%), hsl(20 75% 45%));
+    --gradient-card: linear-gradient(180deg, hsl(345 30% 12%), hsl(345 30% 14%));
+    --gradient-mesh: radial-gradient(at 20% 0%, hsl(345 80% 45% / 0.10) 0px, transparent 50%),
+                     radial-gradient(at 80% 0%, hsl(345 70% 40% / 0.08) 0px, transparent 50%);
+
     --sidebar-background: 345 30% 10%;
     --sidebar-foreground: 0 0% 90%;
     --sidebar-primary: 345 75% 50%;

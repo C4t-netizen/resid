@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Building2, FileDown, Loader2, MapPin, Save, Users } from "lucide-react";
+import { Building2, FileDown, Loader2, MapPin, Plus, Save, Users } from "lucide-react";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import { PageHeader } from "@/components/PageHeader";
@@ -8,9 +8,12 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
+
+const SELECTED_KEY = "nom019-selected-csh";
 
 const Section = ({ icon: Icon, title, children }: any) => (
   <div>
@@ -62,32 +65,62 @@ const empty: CshForm = {
 export default function Configuracion() {
   const { user, canEdit } = useAuth();
   const [form, setForm] = useState<CshForm>(empty);
+  const [list, setList] = useState<CshForm[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
 
-  useEffect(() => {
-    (async () => {
-      const { data } = await supabase.from("csh_config").select("*").order("created_at", { ascending: false }).limit(1).maybeSingle();
-      if (data) setForm({ ...empty, ...data, fecha_constitucion: data.fecha_constitucion ?? "" });
-      setLoading(false);
-    })();
-  }, []);
+  const loadAll = async (preferId?: string) => {
+    const { data } = await supabase
+      .from("csh_config")
+      .select("*")
+      .order("created_at", { ascending: false });
+    const items = (data ?? []) as any[];
+    setList(items.map((d) => ({ ...empty, ...d, fecha_constitucion: d.fecha_constitucion ?? "" })));
+    const target =
+      (preferId && items.find((d) => d.id === preferId)) ||
+      (localStorage.getItem(SELECTED_KEY) && items.find((d) => d.id === localStorage.getItem(SELECTED_KEY))) ||
+      items[0];
+    if (target) setForm({ ...empty, ...target, fecha_constitucion: target.fecha_constitucion ?? "" });
+    else setForm(empty);
+    setLoading(false);
+  };
+
+  useEffect(() => { loadAll(); }, []);
 
   const set = <K extends keyof CshForm>(k: K, v: CshForm[K]) => setForm((p) => ({ ...p, [k]: v }));
+
+  const selectCsh = (id: string) => {
+    const target = list.find((c) => c.id === id);
+    if (target) {
+      setForm(target);
+      localStorage.setItem(SELECTED_KEY, id);
+    }
+  };
+
+  const nuevaCsh = () => {
+    setForm(empty);
+    toast.info("Nueva CSH — completa los datos y guarda");
+  };
 
   const save = async () => {
     if (!form.razon_social.trim()) { toast.error("La razón social es obligatoria"); return; }
     setSaving(true);
-    const payload = { ...form, fecha_constitucion: form.fecha_constitucion || null, created_by: user?.id };
-    const { error } = form.id
-      ? await supabase.from("csh_config").update(payload).eq("id", form.id)
-      : await supabase.from("csh_config").insert(payload).select().single().then((r) => {
-          if (r.data) setForm((p) => ({ ...p, id: r.data.id }));
-          return r;
-        });
-    setSaving(false);
-    if (error) toast.error(error.message);
-    else toast.success("Configuración guardada");
+    const { id, ...rest } = form;
+    const payload = { ...rest, fecha_constitucion: form.fecha_constitucion || null, created_by: user?.id };
+    if (id) {
+      const { error } = await supabase.from("csh_config").update(payload).eq("id", id);
+      setSaving(false);
+      if (error) return toast.error(error.message);
+      toast.success("Configuración actualizada");
+      await loadAll(id);
+    } else {
+      const { data, error } = await supabase.from("csh_config").insert(payload).select().single();
+      setSaving(false);
+      if (error) return toast.error(error.message);
+      toast.success("Nueva CSH creada");
+      if (data) localStorage.setItem(SELECTED_KEY, (data as any).id);
+      await loadAll((data as any)?.id);
+    }
   };
 
   const exportPdf = () => {
@@ -161,13 +194,38 @@ export default function Configuracion() {
         breadcrumbs={[{ label: "Configuración" }]}
         badge={form.id ? <Badge className="border-success/20 bg-success/10 text-success">Guardado</Badge> : <Badge variant="outline">Sin guardar</Badge>}
         actions={
-          <Button variant="outline" onClick={exportPdf} className="rounded-xl">
-            <FileDown className="mr-2 h-4 w-4" /> Descargar PDF
-          </Button>
+          <div className="flex flex-wrap gap-2">
+            {canEdit && (
+              <Button variant="outline" onClick={nuevaCsh} className="rounded-xl">
+                <Plus className="mr-2 h-4 w-4" /> Nueva CSH
+              </Button>
+            )}
+            <Button variant="outline" onClick={exportPdf} className="rounded-xl">
+              <FileDown className="mr-2 h-4 w-4" /> Descargar PDF
+            </Button>
+          </div>
         }
       />
       <div className="px-4 py-6 md:px-8">
         <Card className="mx-auto max-w-5xl rounded-2xl border-border/50 p-6 shadow-soft md:p-8">
+          {list.length > 0 && (
+            <div className="mb-6 flex flex-wrap items-center gap-3 rounded-xl border border-border/60 bg-secondary/30 p-3">
+              <Label className="text-xs font-semibold uppercase text-muted-foreground">CSH activa</Label>
+              <Select value={form.id ?? ""} onValueChange={selectCsh}>
+                <SelectTrigger className="h-10 w-full max-w-md rounded-lg bg-background">
+                  <SelectValue placeholder="Selecciona una CSH" />
+                </SelectTrigger>
+                <SelectContent>
+                  {list.map((c) => (
+                    <SelectItem key={c.id} value={c.id!}>
+                      {c.nombre_centro || c.razon_social || c.id?.slice(0, 8)}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <Badge variant="outline" className="ml-auto">{list.length} {list.length === 1 ? "registrada" : "registradas"}</Badge>
+            </div>
+          )}
           <fieldset disabled={!canEdit} className="space-y-8 disabled:opacity-70">
             <Section icon={Building2} title="Datos de la empresa">
               <Field label="Razón social *"><Input value={form.razon_social} onChange={(e) => set("razon_social", e.target.value)} className="h-11 rounded-xl" /></Field>
