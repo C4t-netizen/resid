@@ -38,9 +38,20 @@ const accentMap = {
   warning: "bg-gradient-warning",
 } as const;
 
+const SELECTED_KEY = "nom019-selected-csh";
+const MODE_KEY = "nom019-csh-mode";
+
 const Index = () => {
+  const { profile } = useAuth();
   const [loading, setLoading] = useState(true);
   const [cshList, setCshList] = useState<CshOption[]>([]);
+  const [mode, setMode] = useState<"single" | "multi">(
+    () => (localStorage.getItem(MODE_KEY) as "single" | "multi") || "single"
+  );
+  const [selectedId, setSelectedId] = useState<string>(
+    () => localStorage.getItem(SELECTED_KEY) || ""
+  );
+  const [newRef, setNewRef] = useState("");
   const [counts, setCounts] = useState({
     miembrosActivos: 0,
     accionesCerradas: 0,
