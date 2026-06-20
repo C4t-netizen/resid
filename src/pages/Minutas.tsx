@@ -181,6 +181,7 @@ export default function Minutas() {
   const [editing, setEditing] = useState<Acuerdo | null>(null);
   const [creatingAcuerdo, setCreatingAcuerdo] = useState<Acuerdo | null>(null);
   const [deletingId, setDeletingId] = useState<number | null>(null);
+  const [deletingMinutaId, setDeletingMinutaId] = useState<number | null>(null);
   const [statsOpen, setStatsOpen] = useState(false);
   const [comentariosByAcuerdo, setComentariosByAcuerdo] = useState<Record<string, { id: number; texto: string; fecha: string }[]>>({});
   const [nuevoComentario, setNuevoComentario] = useState("");
@@ -282,6 +283,23 @@ export default function Minutas() {
     if (selected === deletingId) setSelected(null);
     toast({ title: "Acuerdo eliminado", description: "El acuerdo se eliminó de la minuta." });
     setDeletingId(null);
+  };
+
+  const handleConfirmDeleteMinuta = () => {
+    if (deletingMinutaId == null) return;
+    const eliminada = minutas.find((m) => m.id === deletingMinutaId);
+    setMinutas((prev) => prev.filter((m) => m.id !== deletingMinutaId));
+    setAcuerdosByMinuta((prev) => {
+      const next = { ...prev };
+      delete next[deletingMinutaId];
+      return next;
+    });
+    if (selectedMinutaId === deletingMinutaId) {
+      const remaining = minutas.filter((m) => m.id !== deletingMinutaId);
+      setSelectedMinutaId(remaining[0]?.id ?? 0);
+    }
+    toast({ title: "Minuta eliminada", description: `"${eliminada?.titulo ?? "La minuta"}" se eliminó correctamente.` });
+    setDeletingMinutaId(null);
   };
 
   const downloadPDF = () => {
@@ -477,6 +495,15 @@ export default function Minutas() {
             {canEdit && (
               <Button variant="outline" className="rounded-xl" onClick={() => setEditingMinuta(minuta)}>
                 <Pencil className="mr-2 h-4 w-4" /> Editar minuta
+              </Button>
+            )}
+            {canEdit && (
+              <Button
+                variant="outline"
+                className="rounded-xl border-destructive/30 text-destructive hover:bg-destructive/10 hover:text-destructive"
+                onClick={() => setDeletingMinutaId(minuta.id)}
+              >
+                <Trash2 className="mr-2 h-4 w-4" /> Eliminar minuta
               </Button>
             )}
             <Button variant="outline" className="rounded-xl" onClick={() => setStatsOpen(true)}>
@@ -1023,6 +1050,27 @@ export default function Minutas() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      <AlertDialog open={deletingMinutaId != null} onOpenChange={(open) => !open && setDeletingMinutaId(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>¿Eliminar esta minuta?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Esta acción no se puede deshacer. Se eliminarán la minuta y todos sus acuerdos asociados.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleConfirmDeleteMinuta}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              Eliminar
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
 
       {/* Editar minuta (sin año) */}
       <Dialog open={!!editingMinuta} onOpenChange={(open) => !open && setEditingMinuta(null)}>
