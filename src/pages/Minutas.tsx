@@ -181,6 +181,7 @@ export default function Minutas() {
   const [editing, setEditing] = useState<Acuerdo | null>(null);
   const [creatingAcuerdo, setCreatingAcuerdo] = useState<Acuerdo | null>(null);
   const [deletingId, setDeletingId] = useState<number | null>(null);
+  const [deletingMinutaId, setDeletingMinutaId] = useState<number | null>(null);
   const [statsOpen, setStatsOpen] = useState(false);
   const [comentariosByAcuerdo, setComentariosByAcuerdo] = useState<Record<string, { id: number; texto: string; fecha: string }[]>>({});
   const [nuevoComentario, setNuevoComentario] = useState("");
