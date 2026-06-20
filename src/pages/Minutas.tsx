@@ -288,6 +288,13 @@ export default function Minutas() {
   const handleConfirmDeleteMinuta = () => {
     if (deletingMinutaId == null) return;
     const eliminada = minutas.find((m) => m.id === deletingMinutaId);
+    if (!eliminada) {
+      setDeletingMinutaId(null);
+      return;
+    }
+    const acuerdosEliminados = acuerdosByMinuta[deletingMinutaId] ?? [];
+    const previousSelectedId = selectedMinutaId;
+
     setMinutas((prev) => prev.filter((m) => m.id !== deletingMinutaId));
     setAcuerdosByMinuta((prev) => {
       const next = { ...prev };
@@ -298,7 +305,24 @@ export default function Minutas() {
       const remaining = minutas.filter((m) => m.id !== deletingMinutaId);
       setSelectedMinutaId(remaining[0]?.id ?? 0);
     }
-    toast({ title: "Minuta eliminada", description: `"${eliminada?.titulo ?? "La minuta"}" se eliminó correctamente.` });
+
+    const undo = () => {
+      setMinutas((prev) => (prev.some((m) => m.id === eliminada.id) ? prev : [...prev, eliminada]));
+      setAcuerdosByMinuta((prev) => ({ ...prev, [eliminada.id]: acuerdosEliminados }));
+      setSelectedMinutaId(previousSelectedId);
+      toast({ title: "Eliminación deshecha", description: `"${eliminada.titulo}" se restauró.` });
+    };
+
+    toast({
+      title: "Minuta eliminada",
+      description: `"${eliminada.titulo}" se eliminó. Puedes deshacer en unos segundos.`,
+      duration: 6000,
+      action: (
+        <ToastAction altText="Deshacer eliminación" onClick={undo}>
+          Deshacer
+        </ToastAction>
+      ),
+    });
     setDeletingMinutaId(null);
   };
 
