@@ -654,7 +654,7 @@ export default function Minutas() {
             <div>
               <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">Pendientes</p>
               <div className="mt-1 flex items-center gap-2">
-                <p className="font-display text-3xl font-bold text-warning">{pendientes}</p>
+                <p className="font-display text-3xl font-bold text-warning">{pendientesCount}</p>
                 <Clock className="h-5 w-5 text-warning" />
               </div>
               <p className="mt-3 text-xs text-muted-foreground">Requieren atención</p>
