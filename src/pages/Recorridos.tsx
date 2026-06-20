@@ -196,7 +196,9 @@ export default function Recorridos() {
         const h = hs[i];
         if (!h.foto_url) continue;
         try {
-          const res = await fetch(h.foto_url);
+          const { getReadableStorageUrl } = await import("@/lib/storage");
+          const signedFoto = await getReadableStorageUrl(h.foto_url);
+          const res = await fetch(signedFoto);
           const blob = await res.blob();
           const dataUrl: string = await new Promise((resolve, reject) => {
             const fr = new FileReader();
