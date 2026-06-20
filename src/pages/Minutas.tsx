@@ -208,9 +208,10 @@ const ESTADO_COLORS: Record<Status, string> = {
 
 export default function Minutas() {
   const { canEdit } = useAuth();
-  const [minutas, setMinutas] = useState<MinutaInfo[]>(initialMinutas);
-  const [acuerdosByMinuta, setAcuerdosByMinuta] = useState<Record<number, Acuerdo[]>>({ 1: initialAcuerdos });
-  const [selectedMinutaId, setSelectedMinutaId] = useState<number>(1);
+  const [persistedInitialState] = useState(getInitialMinutasState);
+  const [minutas, setMinutas] = useState<MinutaInfo[]>(persistedInitialState.minutas);
+  const [acuerdosByMinuta, setAcuerdosByMinuta] = useState<Record<number, Acuerdo[]>>(persistedInitialState.acuerdosByMinuta);
+  const [selectedMinutaId, setSelectedMinutaId] = useState<number>(persistedInitialState.selectedMinutaId);
   const [yearFilter, setYearFilter] = useState<string>("todos");
   const [editingMinuta, setEditingMinuta] = useState<MinutaInfo | null>(null);
   const [newMinuta, setNewMinuta] = useState<MinutaInfo | null>(null);
@@ -226,6 +227,14 @@ export default function Minutas() {
   const [lightbox, setLightbox] = useState<string | null>(null);
   
 
+  useEffect(() => {
+    window.localStorage.setItem(
+      MINUTAS_STORAGE_KEY,
+      JSON.stringify({ minutas, acuerdosByMinuta, selectedMinutaId })
+    );
+  }, [minutas, acuerdosByMinuta, selectedMinutaId]);
+
+
   const filteredMinutas = yearFilter === "todos" ? minutas : minutas.filter((m) => m.anio === yearFilter);
   const minuta = filteredMinutas.find((m) => m.id === selectedMinutaId) ?? filteredMinutas[0];
   const acuerdos = minuta ? acuerdosByMinuta[minuta.id] ?? [] : [];
@@ -233,7 +242,6 @@ export default function Minutas() {
   const cumplidos = acuerdos.filter((a) => a.estado === "Cumplido").length;
   const pendientesCount = acuerdos.filter((a) => a.estado === "Pendiente").length;
   const noCumplidos = acuerdos.filter((a) => a.estado === "No cumplido").length;
-  const pendientes = acuerdos.length - cumplidos;
   const progreso = acuerdos.length ? Math.round((cumplidos / acuerdos.length) * 100) : 0;
   const detail = acuerdos.find((a) => a.id === selected);
 
