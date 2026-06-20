@@ -1,4 +1,4 @@
-import { useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
   BarChart3,
   CheckCircle2,
@@ -162,6 +162,42 @@ const initialMinutas: MinutaInfo[] = [
   { id: 1, titulo: "FT-Minuta 10457", coordinador: "Antonio T.", iniciales: "AT", fecha: "15 marzo, 2026", estado: "En proceso", anio: "2026" },
 ];
 
+const MINUTAS_STORAGE_KEY = "resid:minutas-state";
+
+type PersistedMinutasState = {
+  minutas: MinutaInfo[];
+  acuerdosByMinuta: Record<number, Acuerdo[]>;
+  selectedMinutaId: number;
+};
+
+const defaultMinutasState: PersistedMinutasState = {
+  minutas: initialMinutas,
+  acuerdosByMinuta: { 1: initialAcuerdos },
+  selectedMinutaId: 1,
+};
+
+const getInitialMinutasState = (): PersistedMinutasState => {
+  if (typeof window === "undefined") return defaultMinutasState;
+
+  try {
+    const stored = window.localStorage.getItem(MINUTAS_STORAGE_KEY);
+    if (!stored) return defaultMinutasState;
+
+    const parsed = JSON.parse(stored) as Partial<PersistedMinutasState>;
+    const minutas = Array.isArray(parsed.minutas) ? parsed.minutas : initialMinutas;
+    const acuerdosByMinuta =
+      parsed.acuerdosByMinuta && typeof parsed.acuerdosByMinuta === "object"
+        ? (parsed.acuerdosByMinuta as Record<number, Acuerdo[]>)
+        : { 1: initialAcuerdos };
+    const selectedMinutaId =
+      typeof parsed.selectedMinutaId === "number" ? parsed.selectedMinutaId : minutas[0]?.id ?? 0;
+
+    return { minutas, acuerdosByMinuta, selectedMinutaId };
+  } catch {
+    return defaultMinutasState;
+  }
+};
+
 const AÑOS_DISPONIBLES = ["2024", "2025", "2026", "2027", "2028"];
 const ESTADO_COLORS: Record<Status, string> = {
   Cumplido: "hsl(var(--success))",
@@ -172,9 +208,10 @@ const ESTADO_COLORS: Record<Status, string> = {
 
 export default function Minutas() {
   const { canEdit } = useAuth();
-  const [minutas, setMinutas] = useState<MinutaInfo[]>(initialMinutas);
-  const [acuerdosByMinuta, setAcuerdosByMinuta] = useState<Record<number, Acuerdo[]>>({ 1: initialAcuerdos });
-  const [selectedMinutaId, setSelectedMinutaId] = useState<number>(1);
+  const [persistedInitialState] = useState(getInitialMinutasState);
+  const [minutas, setMinutas] = useState<MinutaInfo[]>(persistedInitialState.minutas);
+  const [acuerdosByMinuta, setAcuerdosByMinuta] = useState<Record<number, Acuerdo[]>>(persistedInitialState.acuerdosByMinuta);
+  const [selectedMinutaId, setSelectedMinutaId] = useState<number>(persistedInitialState.selectedMinutaId);
   const [yearFilter, setYearFilter] = useState<string>("todos");
   const [editingMinuta, setEditingMinuta] = useState<MinutaInfo | null>(null);
   const [newMinuta, setNewMinuta] = useState<MinutaInfo | null>(null);
@@ -190,6 +227,14 @@ export default function Minutas() {
   const [lightbox, setLightbox] = useState<string | null>(null);
   
 
+  useEffect(() => {
+    window.localStorage.setItem(
+      MINUTAS_STORAGE_KEY,
+      JSON.stringify({ minutas, acuerdosByMinuta, selectedMinutaId })
+    );
+  }, [minutas, acuerdosByMinuta, selectedMinutaId]);
+
+
   const filteredMinutas = yearFilter === "todos" ? minutas : minutas.filter((m) => m.anio === yearFilter);
   const minuta = filteredMinutas.find((m) => m.id === selectedMinutaId) ?? filteredMinutas[0];
   const acuerdos = minuta ? acuerdosByMinuta[minuta.id] ?? [] : [];
@@ -197,7 +242,6 @@ export default function Minutas() {
   const cumplidos = acuerdos.filter((a) => a.estado === "Cumplido").length;
   const pendientesCount = acuerdos.filter((a) => a.estado === "Pendiente").length;
   const noCumplidos = acuerdos.filter((a) => a.estado === "No cumplido").length;
-  const pendientes = acuerdos.length - cumplidos;
   const progreso = acuerdos.length ? Math.round((cumplidos / acuerdos.length) * 100) : 0;
   const detail = acuerdos.find((a) => a.id === selected);
 
@@ -593,7 +637,7 @@ export default function Minutas() {
 
         {/* Resumen */}
         <Card className="rounded-2xl border-border/50 bg-gradient-card p-6 shadow-soft">
-          <div className="grid gap-6 md:grid-cols-4">
+          <div className="grid gap-6 md:grid-cols-5">
             <div>
               <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">Total de acuerdos</p>
               <p className="mt-1 font-display text-3xl font-bold">{acuerdos.length}</p>
@@ -610,10 +654,18 @@ export default function Minutas() {
             <div>
               <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">Pendientes</p>
               <div className="mt-1 flex items-center gap-2">
-                <p className="font-display text-3xl font-bold text-warning">{pendientes}</p>
+                <p className="font-display text-3xl font-bold text-warning">{pendientesCount}</p>
                 <Clock className="h-5 w-5 text-warning" />
               </div>
               <p className="mt-3 text-xs text-muted-foreground">Requieren atención</p>
+            </div>
+            <div>
+              <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">No cumplidos</p>
+              <div className="mt-1 flex items-center gap-2">
+                <p className="font-display text-3xl font-bold text-destructive">{noCumplidos}</p>
+                <XCircle className="h-5 w-5 text-destructive" />
+              </div>
+              <p className="mt-3 text-xs text-muted-foreground">Fuera de cumplimiento</p>
             </div>
             <div>
               <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">Coordinador</p>
