@@ -1,9 +1,13 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   ArrowRight,
+  Binoculars,
+  Building2,
   CheckCircle2,
   Clock,
   Loader2,
+  MessageSquare,
+  Settings2,
   ShieldCheck,
   TrendingUp,
   Users,
@@ -15,7 +19,12 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/AuthContext";
 
 interface CshOption {
   id: string;
@@ -29,9 +38,20 @@ const accentMap = {
   warning: "bg-gradient-warning",
 } as const;
 
+const SELECTED_KEY = "nom019-selected-csh";
+const MODE_KEY = "nom019-csh-mode";
+
 const Index = () => {
+  const { profile } = useAuth();
   const [loading, setLoading] = useState(true);
   const [cshList, setCshList] = useState<CshOption[]>([]);
+  const [mode, setMode] = useState<"single" | "multi">(
+    () => (localStorage.getItem(MODE_KEY) as "single" | "multi") || "single"
+  );
+  const [selectedId, setSelectedId] = useState<string>(
+    () => localStorage.getItem(SELECTED_KEY) || ""
+  );
+  const [newRef, setNewRef] = useState("");
   const [counts, setCounts] = useState({
     miembrosActivos: 0,
     accionesCerradas: 0,
@@ -93,7 +113,26 @@ const Index = () => {
     load();
   }, []);
 
-  const selectedCsh = cshList[0];
+  useEffect(() => {
+    if (cshList.length && !cshList.find((c) => c.id === selectedId)) {
+      setSelectedId(cshList[0].id);
+    }
+  }, [cshList, selectedId]);
+
+  useEffect(() => {
+    if (selectedId) localStorage.setItem(SELECTED_KEY, selectedId);
+  }, [selectedId]);
+
+  useEffect(() => {
+    localStorage.setItem(MODE_KEY, mode);
+  }, [mode]);
+
+  const selectedCsh = useMemo(
+    () => cshList.find((c) => c.id === selectedId) ?? cshList[0],
+    [cshList, selectedId]
+  );
+  const cshLabel = (c?: CshOption) =>
+    c ? (c.nombre_centro || c.razon_social || c.id.slice(0, 8)) : "—";
 
   const stats = [
     { label: "Miembros activos CSH", value: counts.miembrosActivos.toString(), icon: Users, color: "text-primary" },
@@ -237,36 +276,119 @@ const Index = () => {
               </div>
             </section>
 
-            {/* Accesos rápidos */}
-            <Card className="rounded-2xl border-border/50 bg-gradient-card p-6 shadow-soft">
-              <div className="mb-5 flex items-center justify-between">
-                <div>
-                  <h3 className="font-display text-lg font-bold">Accesos rápidos</h3>
-                  <p className="text-sm text-muted-foreground">
-                    {selectedCsh
-                      ? `Trabajando sobre: ${selectedCsh.nombre_centro ?? selectedCsh.razon_social}`
-                      : "Aún no has configurado una CSH"}
-                  </p>
-                </div>
-                {selectedCsh && (
-                  <Badge variant="outline" className="rounded-lg border-primary/20 bg-primary/5 text-primary">
-                    {selectedCsh.nombre_centro ?? selectedCsh.razon_social}
-                  </Badge>
-                )}
+            {/* CSH — Configuración de empresas */}
+            <Card className="overflow-hidden rounded-2xl border-border/50 bg-card p-0 shadow-soft">
+              <div className="bg-gradient-header px-6 py-3 text-center">
+                <h3 className="font-display text-sm font-bold uppercase tracking-wide text-primary-foreground">
+                  Área para ingresar información de la o las comisiones del centro de trabajo
+                </h3>
               </div>
-              <div className="grid gap-3 md:grid-cols-4">
-                <Button variant="outline" className="h-11 rounded-xl justify-between" asChild>
-                  <Link to="/minutas">Nueva minuta <ArrowRight className="h-4 w-4" /></Link>
-                </Button>
-                <Button variant="outline" className="h-11 rounded-xl justify-between" asChild>
-                  <Link to="/recorridos">Nuevo recorrido <ArrowRight className="h-4 w-4" /></Link>
-                </Button>
-                <Button variant="outline" className="h-11 rounded-xl justify-between" asChild>
-                  <Link to="/acta">Acta constitutiva <ArrowRight className="h-4 w-4" /></Link>
-                </Button>
-                <Button className="h-11 rounded-xl bg-gradient-primary shadow-elegant hover:shadow-glow justify-between" asChild>
-                  <Link to={selectedCsh ? "/configuracion" : "/configuracion"}>
-                    {selectedCsh ? "Configurar CSH" : "Crear CSH"} <ArrowRight className="h-4 w-4" />
+
+              <div className="space-y-5 p-6">
+                {/* Mode + selector row */}
+                <div className="grid gap-4 rounded-xl border border-border/60 bg-secondary/30 p-4 md:grid-cols-[1fr_1fr_1.2fr_auto] md:items-center">
+                  <RadioGroup
+                    value={mode}
+                    onValueChange={(v) => setMode(v as "single" | "multi")}
+                    className="contents"
+                  >
+                    <Label className="flex items-center gap-3 text-sm font-semibold">
+                      <Building2 className="h-4 w-4 text-primary" />
+                      <RadioGroupItem value="single" id="m-single" />
+                      Usar solo una CSH
+                    </Label>
+                    <Label className="flex items-center gap-3 text-sm font-semibold">
+                      <Users className="h-4 w-4 text-accent" />
+                      <RadioGroupItem value="multi" id="m-multi" />
+                      Usar más de una CSH
+                    </Label>
+                  </RadioGroup>
+
+                  <div className="flex items-center gap-2">
+                    <Binoculars className="h-4 w-4 text-accent" />
+                    <Label className="text-xs font-semibold uppercase text-muted-foreground">
+                      Seleccione
+                    </Label>
+                    <Select value={selectedId} onValueChange={setSelectedId}>
+                      <SelectTrigger className="h-10 flex-1 rounded-lg bg-background">
+                        <SelectValue placeholder="Sin CSH" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {cshList.length === 0 && (
+                          <SelectItem value="__empty" disabled>
+                            Aún no hay CSH registradas
+                          </SelectItem>
+                        )}
+                        {cshList.map((c) => (
+                          <SelectItem key={c.id} value={c.id}>
+                            {cshLabel(c)}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <Button variant="outline" className="rounded-xl" asChild>
+                    <Link to="/minutas">
+                      <MessageSquare className="mr-2 h-4 w-4" /> Comentarios
+                    </Link>
+                  </Button>
+                </div>
+
+                {/* Datos llenado documentos */}
+                <div className="rounded-lg bg-foreground/90 px-4 py-2 text-center text-xs font-semibold uppercase tracking-wide text-background">
+                  Datos para llenado de documentos
+                </div>
+
+                <div className="grid gap-4 md:grid-cols-2">
+                  <div className="rounded-xl border border-border/60 bg-secondary/20 p-4">
+                    <p className="mb-2 text-[11px] font-semibold uppercase text-muted-foreground">
+                      {mode === "single"
+                        ? "Ingrese datos en esta sección para una CSH"
+                        : "Si, será más de una CSH, ingrese datos en esta sección"}
+                    </p>
+                    <Label className="text-xs font-medium">
+                      Datos de quien elabora o da seguimiento:
+                    </Label>
+                    <Input
+                      value={profile?.full_name ?? ""}
+                      readOnly
+                      className="mt-2 h-11 rounded-lg bg-background"
+                    />
+                  </div>
+
+                  <div className="rounded-xl border border-border/60 bg-secondary/20 p-4">
+                    <p className="mb-2 text-[11px] font-semibold uppercase text-muted-foreground">
+                      CSH activa
+                    </p>
+                    <Label className="text-xs font-medium">
+                      {mode === "multi" ? "Ingrese nombre / referencia CSH:" : "Centro de trabajo:"}
+                    </Label>
+                    {mode === "multi" ? (
+                      <Input
+                        value={newRef}
+                        onChange={(e) => setNewRef(e.target.value)}
+                        placeholder="Ej. CSH001"
+                        className="mt-2 h-11 rounded-lg bg-background"
+                      />
+                    ) : (
+                      <Input
+                        value={cshLabel(selectedCsh)}
+                        readOnly
+                        className="mt-2 h-11 rounded-lg bg-background font-semibold"
+                      />
+                    )}
+                  </div>
+                </div>
+
+                <Button
+                  className="h-12 w-full rounded-xl bg-gradient-primary text-sm font-bold uppercase tracking-wide shadow-elegant hover:shadow-glow"
+                  asChild
+                >
+                  <Link to="/configuracion">
+                    <Settings2 className="mr-2 h-4 w-4" />
+                    {selectedCsh ? "Click para configurar datos de esta CSH" : "Click para crear una CSH"}
+                    <ArrowRight className="ml-2 h-4 w-4" />
                   </Link>
                 </Button>
               </div>
