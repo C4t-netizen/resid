@@ -3,6 +3,7 @@ import { Loader2, Paperclip, Trash2, Upload, FileText, Eye, Download } from "luc
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { supabase } from "@/integrations/supabase/client";
+import { getReadableStorageUrl } from "@/lib/storage";
 import { toast } from "sonner";
 
 export interface ArchivoItem {
@@ -42,7 +43,8 @@ export function FileUploader({ archivos, canEdit, bucket = "documentos-csh", fol
     setPreviewLoading(true);
     (async () => {
       try {
-        const res = await fetch(preview.archivo_url);
+        const signed = await getReadableStorageUrl(preview.archivo_url);
+        const res = await fetch(signed);
         const blob = await res.blob();
         const mime = isPdf(preview.nombre) ? "application/pdf" : blob.type;
         const typed = mime && mime !== blob.type ? new Blob([blob], { type: mime }) : blob;
@@ -89,8 +91,9 @@ export function FileUploader({ archivos, canEdit, bucket = "documentos-csh", fol
   };
 
   const downloadFile = async (item: ArchivoItem) => {
+    const signed = await getReadableStorageUrl(item.archivo_url);
     try {
-      const res = await fetch(item.archivo_url);
+      const res = await fetch(signed);
       const blob = await res.blob();
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
@@ -101,7 +104,7 @@ export function FileUploader({ archivos, canEdit, bucket = "documentos-csh", fol
       a.remove();
       setTimeout(() => URL.revokeObjectURL(url), 1000);
     } catch {
-      window.open(item.archivo_url, "_blank", "noopener,noreferrer");
+      window.open(signed, "_blank", "noopener,noreferrer");
     }
   };
 
@@ -165,8 +168,8 @@ export function FileUploader({ archivos, canEdit, bucket = "documentos-csh", fol
                 <div className="flex h-[70vh] items-center justify-center rounded-xl border border-dashed border-border/60">
                   <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
                 </div>
-              ) : isImage(preview.nombre) ? (
-                <img src={previewBlobUrl ?? preview.archivo_url} alt={preview.nombre} className="mx-auto max-h-[70vh] rounded-xl object-contain" />
+              ) : isImage(preview.nombre) && previewBlobUrl ? (
+                <img src={previewBlobUrl} alt={preview.nombre} className="mx-auto max-h-[70vh] rounded-xl object-contain" />
               ) : isPdf(preview.nombre) && previewBlobUrl ? (
                 <object data={previewBlobUrl} type="application/pdf" className="h-[70vh] w-full rounded-xl border">
                   <iframe src={previewBlobUrl} title={preview.nombre} className="h-[70vh] w-full rounded-xl border" />
