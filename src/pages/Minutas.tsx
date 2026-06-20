@@ -637,7 +637,7 @@ export default function Minutas() {
 
         {/* Resumen */}
         <Card className="rounded-2xl border-border/50 bg-gradient-card p-6 shadow-soft">
-          <div className="grid gap-6 md:grid-cols-4">
+          <div className="grid gap-6 md:grid-cols-5">
             <div>
               <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">Total de acuerdos</p>
               <p className="mt-1 font-display text-3xl font-bold">{acuerdos.length}</p>
@@ -658,6 +658,14 @@ export default function Minutas() {
                 <Clock className="h-5 w-5 text-warning" />
               </div>
               <p className="mt-3 text-xs text-muted-foreground">Requieren atención</p>
+            </div>
+            <div>
+              <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">No cumplidos</p>
+              <div className="mt-1 flex items-center gap-2">
+                <p className="font-display text-3xl font-bold text-destructive">{noCumplidos}</p>
+                <XCircle className="h-5 w-5 text-destructive" />
+              </div>
+              <p className="mt-3 text-xs text-muted-foreground">Fuera de cumplimiento</p>
             </div>
             <div>
               <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">Coordinador</p>
