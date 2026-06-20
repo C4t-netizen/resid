@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Building2, FileDown, Loader2, MapPin, Save, Users } from "lucide-react";
+import { Building2, FileDown, Loader2, MapPin, Plus, Save, Users } from "lucide-react";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import { PageHeader } from "@/components/PageHeader";
@@ -8,9 +8,12 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
+
+const SELECTED_KEY = "nom019-selected-csh";
 
 const Section = ({ icon: Icon, title, children }: any) => (
   <div>
