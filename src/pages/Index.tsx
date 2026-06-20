@@ -65,6 +65,14 @@ const Index = () => {
     ultimaVerificacion: null as string | null,
   });
 
+  const refetchCsh = async () => {
+    const { data } = await supabase
+      .from("csh_config")
+      .select("id,nombre_centro,razon_social")
+      .order("created_at", { ascending: false });
+    setCshList((data ?? []) as CshOption[]);
+  };
+
   useEffect(() => {
     const load = async () => {
       const now = new Date();
