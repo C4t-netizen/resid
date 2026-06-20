@@ -103,7 +103,18 @@ export default function Configuracion() {
 
   const nuevaCsh = () => {
     setForm(empty);
+    localStorage.removeItem(SELECTED_KEY);
     toast.info("Nueva CSH — completa los datos y guarda");
+  };
+
+  const eliminarCsh = async () => {
+    if (!form.id) return;
+    const idToDelete = form.id;
+    const { error } = await supabase.from("csh_config").delete().eq("id", idToDelete);
+    if (error) return toast.error(error.message);
+    toast.success("CSH eliminada");
+    if (localStorage.getItem(SELECTED_KEY) === idToDelete) localStorage.removeItem(SELECTED_KEY);
+    await loadAll();
   };
 
   const save = async () => {
