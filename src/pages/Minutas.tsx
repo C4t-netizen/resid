@@ -1051,6 +1051,27 @@ export default function Minutas() {
         </AlertDialogContent>
       </AlertDialog>
 
+      <AlertDialog open={deletingMinutaId != null} onOpenChange={(open) => !open && setDeletingMinutaId(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>¿Eliminar esta minuta?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Esta acción no se puede deshacer. Se eliminarán la minuta y todos sus acuerdos asociados.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleConfirmDeleteMinuta}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              Eliminar
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+
       {/* Editar minuta (sin año) */}
       <Dialog open={!!editingMinuta} onOpenChange={(open) => !open && setEditingMinuta(null)}>
         <DialogContent className="sm:max-w-md">
