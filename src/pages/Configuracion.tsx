@@ -239,6 +239,29 @@ export default function Configuracion() {
                 </SelectContent>
               </Select>
               <Badge variant="outline" className="ml-auto">{list.length} {list.length === 1 ? "registrada" : "registradas"}</Badge>
+              {canEdit && form.id && (
+                <AlertDialog>
+                  <AlertDialogTrigger asChild>
+                    <Button variant="outline" size="sm" className="rounded-lg text-destructive hover:bg-destructive/10 hover:text-destructive">
+                      <Trash2 className="mr-2 h-4 w-4" /> Eliminar
+                    </Button>
+                  </AlertDialogTrigger>
+                  <AlertDialogContent>
+                    <AlertDialogHeader>
+                      <AlertDialogTitle>¿Eliminar esta CSH?</AlertDialogTitle>
+                      <AlertDialogDescription>
+                        Se eliminará permanentemente <strong>{form.nombre_centro || form.razon_social}</strong>. Esta acción no se puede deshacer.
+                      </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                      <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                      <AlertDialogAction onClick={eliminarCsh} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+                        Eliminar
+                      </AlertDialogAction>
+                    </AlertDialogFooter>
+                  </AlertDialogContent>
+                </AlertDialog>
+              )}
             </div>
           )}
           <fieldset disabled={!canEdit} className="space-y-8 disabled:opacity-70">
