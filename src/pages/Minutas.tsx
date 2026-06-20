@@ -1217,6 +1217,35 @@ export default function Minutas() {
             <div><p className="font-display text-xl font-bold text-warning">{pendientesCount}</p><p className="text-muted-foreground">Pendientes</p></div>
             <div><p className="font-display text-xl font-bold text-destructive">{noCumplidos}</p><p className="text-muted-foreground">No cumplidos</p></div>
           </div>
+
+          <div className="space-y-2 border-t border-border/40 pt-4">
+            <div className="flex items-center gap-2">
+              <XCircle className="h-4 w-4 text-destructive" />
+              <p className="text-sm font-semibold">Actividades en "No cumplido"</p>
+              <Badge className="bg-destructive/10 text-destructive border-destructive/20">{noCumplidos}</Badge>
+            </div>
+            {noCumplidos === 0 ? (
+              <p className="text-xs text-muted-foreground">No hay actividades en estado "No cumplido".</p>
+            ) : (
+              <ul className="max-h-48 space-y-2 overflow-auto pr-1">
+                {acuerdos.filter((a) => a.estado === "No cumplido").map((a) => (
+                  <li
+                    key={a.id}
+                    className="flex items-start justify-between gap-3 rounded-lg border border-destructive/20 bg-destructive/5 px-3 py-2"
+                  >
+                    <div className="min-w-0">
+                      <p className="truncate text-sm font-medium">{a.actividad}</p>
+                      <p className="text-[11px] text-muted-foreground">
+                        {a.responsable} · Fecha compromiso: {a.fecha}
+                        {a.fechaCumplimiento && a.fechaCumplimiento !== "—" ? ` · Cumplimiento: ${a.fechaCumplimiento}` : ""}
+                      </p>
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
+
           <DialogFooter>
             <Button variant="outline" onClick={() => setStatsOpen(false)}>Cerrar</Button>
             <Button className="bg-gradient-primary" onClick={downloadPDF}>
