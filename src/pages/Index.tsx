@@ -121,6 +121,33 @@ const Index = () => {
     load();
   }, []);
 
+  // Refresca la lista de CSH cuando la ventana recobra foco o cambia el storage
+  // (p. ej. al volver desde /configuracion tras crear una nueva).
+  useEffect(() => {
+    const onFocus = () => { refetchCsh(); };
+    const onStorage = (e: StorageEvent) => {
+      if (e.key === SELECTED_KEY) {
+        refetchCsh();
+        if (e.newValue) setSelectedId(e.newValue);
+      }
+    };
+    window.addEventListener("focus", onFocus);
+    window.addEventListener("storage", onStorage);
+
+    const channel = supabase
+      .channel("csh_config-index")
+      .on("postgres_changes", { event: "*", schema: "public", table: "csh_config" }, () => {
+        refetchCsh();
+      })
+      .subscribe();
+
+    return () => {
+      window.removeEventListener("focus", onFocus);
+      window.removeEventListener("storage", onStorage);
+      supabase.removeChannel(channel);
+    };
+  }, []);
+
   useEffect(() => {
     if (cshList.length && !cshList.find((c) => c.id === selectedId)) {
       setSelectedId(cshList[0].id);
