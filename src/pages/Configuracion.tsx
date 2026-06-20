@@ -1,5 +1,9 @@
 import { useEffect, useState } from "react";
-import { Building2, FileDown, Loader2, MapPin, Plus, Save, Users } from "lucide-react";
+import { Building2, FileDown, Loader2, MapPin, Plus, Save, Trash2, Users } from "lucide-react";
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import { PageHeader } from "@/components/PageHeader";
