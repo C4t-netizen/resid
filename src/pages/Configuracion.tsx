@@ -65,32 +65,62 @@ const empty: CshForm = {
 export default function Configuracion() {
   const { user, canEdit } = useAuth();
   const [form, setForm] = useState<CshForm>(empty);
+  const [list, setList] = useState<CshForm[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
 
-  useEffect(() => {
-    (async () => {
-      const { data } = await supabase.from("csh_config").select("*").order("created_at", { ascending: false }).limit(1).maybeSingle();
-      if (data) setForm({ ...empty, ...data, fecha_constitucion: data.fecha_constitucion ?? "" });
-      setLoading(false);
-    })();
-  }, []);
+  const loadAll = async (preferId?: string) => {
+    const { data } = await supabase
+      .from("csh_config")
+      .select("*")
+      .order("created_at", { ascending: false });
+    const items = (data ?? []) as any[];
+    setList(items.map((d) => ({ ...empty, ...d, fecha_constitucion: d.fecha_constitucion ?? "" })));
+    const target =
+      (preferId && items.find((d) => d.id === preferId)) ||
+      (localStorage.getItem(SELECTED_KEY) && items.find((d) => d.id === localStorage.getItem(SELECTED_KEY))) ||
+      items[0];
+    if (target) setForm({ ...empty, ...target, fecha_constitucion: target.fecha_constitucion ?? "" });
+    else setForm(empty);
+    setLoading(false);
+  };
+
+  useEffect(() => { loadAll(); }, []);
 
   const set = <K extends keyof CshForm>(k: K, v: CshForm[K]) => setForm((p) => ({ ...p, [k]: v }));
+
+  const selectCsh = (id: string) => {
+    const target = list.find((c) => c.id === id);
+    if (target) {
+      setForm(target);
+      localStorage.setItem(SELECTED_KEY, id);
+    }
+  };
+
+  const nuevaCsh = () => {
+    setForm(empty);
+    toast.info("Nueva CSH — completa los datos y guarda");
+  };
 
   const save = async () => {
     if (!form.razon_social.trim()) { toast.error("La razón social es obligatoria"); return; }
     setSaving(true);
-    const payload = { ...form, fecha_constitucion: form.fecha_constitucion || null, created_by: user?.id };
-    const { error } = form.id
-      ? await supabase.from("csh_config").update(payload).eq("id", form.id)
-      : await supabase.from("csh_config").insert(payload).select().single().then((r) => {
-          if (r.data) setForm((p) => ({ ...p, id: r.data.id }));
-          return r;
-        });
-    setSaving(false);
-    if (error) toast.error(error.message);
-    else toast.success("Configuración guardada");
+    const { id, ...rest } = form;
+    const payload = { ...rest, fecha_constitucion: form.fecha_constitucion || null, created_by: user?.id };
+    if (id) {
+      const { error } = await supabase.from("csh_config").update(payload).eq("id", id);
+      setSaving(false);
+      if (error) return toast.error(error.message);
+      toast.success("Configuración actualizada");
+      await loadAll(id);
+    } else {
+      const { data, error } = await supabase.from("csh_config").insert(payload).select().single();
+      setSaving(false);
+      if (error) return toast.error(error.message);
+      toast.success("Nueva CSH creada");
+      if (data) localStorage.setItem(SELECTED_KEY, (data as any).id);
+      await loadAll((data as any)?.id);
+    }
   };
 
   const exportPdf = () => {
