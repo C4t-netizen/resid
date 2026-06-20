@@ -65,6 +65,14 @@ const Index = () => {
     ultimaVerificacion: null as string | null,
   });
 
+  const refetchCsh = async () => {
+    const { data } = await supabase
+      .from("csh_config")
+      .select("id,nombre_centro,razon_social")
+      .order("created_at", { ascending: false });
+    setCshList((data ?? []) as CshOption[]);
+  };
+
   useEffect(() => {
     const load = async () => {
       const now = new Date();
@@ -111,6 +119,33 @@ const Index = () => {
       setLoading(false);
     };
     load();
+  }, []);
+
+  // Refresca la lista de CSH cuando la ventana recobra foco o cambia el storage
+  // (p. ej. al volver desde /configuracion tras crear una nueva).
+  useEffect(() => {
+    const onFocus = () => { refetchCsh(); };
+    const onStorage = (e: StorageEvent) => {
+      if (e.key === SELECTED_KEY) {
+        refetchCsh();
+        if (e.newValue) setSelectedId(e.newValue);
+      }
+    };
+    window.addEventListener("focus", onFocus);
+    window.addEventListener("storage", onStorage);
+
+    const channel = supabase
+      .channel("csh_config-index")
+      .on("postgres_changes", { event: "*", schema: "public", table: "csh_config" }, () => {
+        refetchCsh();
+      })
+      .subscribe();
+
+    return () => {
+      window.removeEventListener("focus", onFocus);
+      window.removeEventListener("storage", onStorage);
+      supabase.removeChannel(channel);
+    };
   }, []);
 
   useEffect(() => {
