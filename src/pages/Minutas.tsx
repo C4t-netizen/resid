@@ -76,6 +76,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { toast } from "@/hooks/use-toast";
+import { ToastAction } from "@/components/ui/toast";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/contexts/AuthContext";
 import jsPDF from "jspdf";
@@ -288,6 +289,13 @@ export default function Minutas() {
   const handleConfirmDeleteMinuta = () => {
     if (deletingMinutaId == null) return;
     const eliminada = minutas.find((m) => m.id === deletingMinutaId);
+    if (!eliminada) {
+      setDeletingMinutaId(null);
+      return;
+    }
+    const acuerdosEliminados = acuerdosByMinuta[deletingMinutaId] ?? [];
+    const previousSelectedId = selectedMinutaId;
+
     setMinutas((prev) => prev.filter((m) => m.id !== deletingMinutaId));
     setAcuerdosByMinuta((prev) => {
       const next = { ...prev };
@@ -298,7 +306,24 @@ export default function Minutas() {
       const remaining = minutas.filter((m) => m.id !== deletingMinutaId);
       setSelectedMinutaId(remaining[0]?.id ?? 0);
     }
-    toast({ title: "Minuta eliminada", description: `"${eliminada?.titulo ?? "La minuta"}" se eliminó correctamente.` });
+
+    const undo = () => {
+      setMinutas((prev) => (prev.some((m) => m.id === eliminada.id) ? prev : [...prev, eliminada]));
+      setAcuerdosByMinuta((prev) => ({ ...prev, [eliminada.id]: acuerdosEliminados }));
+      setSelectedMinutaId(previousSelectedId);
+      toast({ title: "Eliminación deshecha", description: `"${eliminada.titulo}" se restauró.` });
+    };
+
+    toast({
+      title: "Minuta eliminada",
+      description: `"${eliminada.titulo}" se eliminó. Puedes deshacer en unos segundos.`,
+      duration: 6000,
+      action: (
+        <ToastAction altText="Deshacer eliminación" onClick={undo}>
+          Deshacer
+        </ToastAction>
+      ),
+    });
     setDeletingMinutaId(null);
   };
 
@@ -1192,6 +1217,35 @@ export default function Minutas() {
             <div><p className="font-display text-xl font-bold text-warning">{pendientesCount}</p><p className="text-muted-foreground">Pendientes</p></div>
             <div><p className="font-display text-xl font-bold text-destructive">{noCumplidos}</p><p className="text-muted-foreground">No cumplidos</p></div>
           </div>
+
+          <div className="space-y-2 border-t border-border/40 pt-4">
+            <div className="flex items-center gap-2">
+              <XCircle className="h-4 w-4 text-destructive" />
+              <p className="text-sm font-semibold">Actividades en "No cumplido"</p>
+              <Badge className="bg-destructive/10 text-destructive border-destructive/20">{noCumplidos}</Badge>
+            </div>
+            {noCumplidos === 0 ? (
+              <p className="text-xs text-muted-foreground">No hay actividades en estado "No cumplido".</p>
+            ) : (
+              <ul className="max-h-48 space-y-2 overflow-auto pr-1">
+                {acuerdos.filter((a) => a.estado === "No cumplido").map((a) => (
+                  <li
+                    key={a.id}
+                    className="flex items-start justify-between gap-3 rounded-lg border border-destructive/20 bg-destructive/5 px-3 py-2"
+                  >
+                    <div className="min-w-0">
+                      <p className="truncate text-sm font-medium">{a.actividad}</p>
+                      <p className="text-[11px] text-muted-foreground">
+                        {a.responsable} · Fecha compromiso: {a.fecha}
+                        {a.fechaCumplimiento && a.fechaCumplimiento !== "—" ? ` · Cumplimiento: ${a.fechaCumplimiento}` : ""}
+                      </p>
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
+
           <DialogFooter>
             <Button variant="outline" onClick={() => setStatsOpen(false)}>Cerrar</Button>
             <Button className="bg-gradient-primary" onClick={downloadPDF}>
