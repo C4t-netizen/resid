@@ -285,6 +285,23 @@ export default function Minutas() {
     setDeletingId(null);
   };
 
+  const handleConfirmDeleteMinuta = () => {
+    if (deletingMinutaId == null) return;
+    const eliminada = minutas.find((m) => m.id === deletingMinutaId);
+    setMinutas((prev) => prev.filter((m) => m.id !== deletingMinutaId));
+    setAcuerdosByMinuta((prev) => {
+      const next = { ...prev };
+      delete next[deletingMinutaId];
+      return next;
+    });
+    if (selectedMinutaId === deletingMinutaId) {
+      const remaining = minutas.filter((m) => m.id !== deletingMinutaId);
+      setSelectedMinutaId(remaining[0]?.id ?? 0);
+    }
+    toast({ title: "Minuta eliminada", description: `"${eliminada?.titulo ?? "La minuta"}" se eliminó correctamente.` });
+    setDeletingMinutaId(null);
+  };
+
   const downloadPDF = () => {
     if (!minuta) return;
     const doc = new jsPDF();
