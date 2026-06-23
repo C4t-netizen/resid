@@ -158,9 +158,6 @@ export default function Auth() {
                     {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                     Entrar
                   </Button>
-                  <button type="button" onClick={fillDemo} className="hidden">
-                    demo
-                  </button>
 
                 </form>
               )}
