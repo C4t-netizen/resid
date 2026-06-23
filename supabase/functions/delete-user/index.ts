@@ -102,12 +102,8 @@ Deno.serve(async (req) => {
       requesterId = subject;
       console.log("[delete-user] Authenticated requester", { requesterId });
     } catch (err) {
-      const error = err as Error & { status?: number };
-      return jsonResponse({
-        error: "Unauthorized",
-        detail: error.message,
-        status: error.status ?? null,
-      }, 401);
+      console.error("[delete-user] Auth error", err);
+      return jsonResponse({ error: "Unauthorized" }, 401);
     }
 
     console.log("[delete-user] Reached super_admin role check", { requesterId });
