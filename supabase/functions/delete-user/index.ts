@@ -131,6 +131,7 @@ Deno.serve(async (req) => {
 
     return jsonResponse({ success: true });
   } catch (e) {
-    return jsonResponse({ error: (e as Error).message }, 500);
+    console.error("[delete-user] Unhandled error", e);
+    return jsonResponse({ error: "Internal server error" }, 500);
   }
 });
