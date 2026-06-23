@@ -158,9 +158,10 @@ export default function Auth() {
                     {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                     Entrar
                   </Button>
-                  <button type="button" onClick={fillDemo} className="block w-full text-center text-xs text-muted-foreground underline-offset-2 hover:underline">
-                    Usar credenciales demo (super admin)
+                  <button type="button" onClick={fillDemo} className="hidden">
+                    demo
                   </button>
+
                 </form>
               )}
             </TabsContent>
