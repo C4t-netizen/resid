@@ -165,11 +165,40 @@ export default function Usuarios() {
                         {initials(u.full_name, u.email)}
                       </AvatarFallback>
                     </Avatar>
-                    <div className="min-w-0">
-                      <p className="truncate font-display text-sm font-bold">
-                        {u.full_name || u.email.split("@")[0]}
-                        {u.id === me?.id && <span className="ml-2 text-[10px] font-medium text-muted-foreground">(tú)</span>}
-                      </p>
+                    <div className="min-w-0 flex-1">
+                      {editingId === u.id ? (
+                        <div className="flex items-center gap-2">
+                          <Input
+                            value={editName}
+                            onChange={(e) => setEditName(e.target.value)}
+                            onKeyDown={(e) => {
+                              if (e.key === "Enter") saveName(u.id);
+                              if (e.key === "Escape") cancelEdit();
+                            }}
+                            autoFocus
+                            disabled={savingName}
+                            className="h-8 max-w-[240px] rounded-lg text-sm"
+                          />
+                          <Button size="icon" variant="ghost" className="h-8 w-8 rounded-lg text-success hover:bg-success/10" onClick={() => saveName(u.id)} disabled={savingName}>
+                            {savingName ? <Loader2 className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4" />}
+                          </Button>
+                          <Button size="icon" variant="ghost" className="h-8 w-8 rounded-lg" onClick={cancelEdit} disabled={savingName}>
+                            <X className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      ) : (
+                        <div className="flex items-center gap-1.5">
+                          <p className="truncate font-display text-sm font-bold">
+                            {u.full_name || u.email.split("@")[0]}
+                            {u.id === me?.id && <span className="ml-2 text-[10px] font-medium text-muted-foreground">(tú)</span>}
+                          </p>
+                          {(isSuperAdmin || u.id === me?.id) && (
+                            <Button size="icon" variant="ghost" className="h-6 w-6 rounded-md text-muted-foreground hover:text-primary" onClick={() => startEdit(u)} title="Editar nombre">
+                              <Pencil className="h-3 w-3" />
+                            </Button>
+                          )}
+                        </div>
+                      )}
                       <p className="truncate text-xs text-muted-foreground">{u.email}</p>
                     </div>
                   </div>
