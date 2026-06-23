@@ -1,5 +1,5 @@
 import { Outlet } from "react-router-dom";
-import { Bell, Eye, LogOut, Plus, Search } from "lucide-react";
+import { Eye, LogOut, Plus, Search } from "lucide-react";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "./AppSidebar";
 import { Button } from "@/components/ui/button";
