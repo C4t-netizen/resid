@@ -91,10 +91,6 @@ export default function Auth() {
     }
   };
 
-  const fillDemo = () => {
-    setLoginEmail("coordinador@nom019.demo");
-    setLoginPassword("Demo1234!");
-  };
 
   const handleForgot = async (e: React.FormEvent) => {
     e.preventDefault();
