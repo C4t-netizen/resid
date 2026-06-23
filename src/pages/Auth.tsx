@@ -187,9 +187,8 @@ export default function Auth() {
           </Tabs>
         </Card>
 
-        <p className="text-center text-[11px] text-muted-foreground">
-          Demo · Coordinador: <code className="rounded bg-muted px-1.5 py-0.5">coordinador@nom019.demo</code>
-        </p>
+
+
       </div>
     </div>
   );
