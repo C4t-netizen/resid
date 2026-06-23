@@ -91,10 +91,6 @@ export default function Auth() {
     }
   };
 
-  const fillDemo = () => {
-    setLoginEmail("coordinador@nom019.demo");
-    setLoginPassword("Demo1234!");
-  };
 
   const handleForgot = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -162,9 +158,7 @@ export default function Auth() {
                     {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                     Entrar
                   </Button>
-                  <button type="button" onClick={fillDemo} className="block w-full text-center text-xs text-muted-foreground underline-offset-2 hover:underline">
-                    Usar credenciales demo (super admin)
-                  </button>
+
                 </form>
               )}
             </TabsContent>
@@ -193,9 +187,8 @@ export default function Auth() {
           </Tabs>
         </Card>
 
-        <p className="text-center text-[11px] text-muted-foreground">
-          Demo · Coordinador: <code className="rounded bg-muted px-1.5 py-0.5">coordinador@nom019.demo</code>
-        </p>
+
+
       </div>
     </div>
   );
