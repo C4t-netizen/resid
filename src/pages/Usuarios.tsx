@@ -32,6 +32,37 @@ export default function Usuarios() {
   const [loading, setLoading] = useState(true);
   const [updating, setUpdating] = useState<string | null>(null);
   const [deleting, setDeleting] = useState<string | null>(null);
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editName, setEditName] = useState("");
+  const [savingName, setSavingName] = useState(false);
+
+  const startEdit = (u: UserRow) => {
+    setEditingId(u.id);
+    setEditName(u.full_name ?? "");
+  };
+
+  const cancelEdit = () => {
+    setEditingId(null);
+    setEditName("");
+  };
+
+  const saveName = async (userId: string) => {
+    const name = editName.trim();
+    if (!name) {
+      toast.error("El nombre no puede estar vacío");
+      return;
+    }
+    setSavingName(true);
+    const { error } = await supabase.from("profiles").update({ full_name: name }).eq("id", userId);
+    setSavingName(false);
+    if (error) {
+      toast.error(error.message);
+      return;
+    }
+    toast.success("Nombre actualizado");
+    setRows((prev) => prev.map((r) => (r.id === userId ? { ...r, full_name: name } : r)));
+    cancelEdit();
+  };
 
   const deleteUser = async (userId: string) => {
     setDeleting(userId);
