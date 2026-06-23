@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
-import { Loader2, ShieldCheck, UserCog, Trash2 } from "lucide-react";
+import { Loader2, ShieldCheck, UserCog, Trash2, Pencil, Check, X } from "lucide-react";
+import { Input } from "@/components/ui/input";
 import { PageHeader } from "@/components/PageHeader";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -31,6 +32,37 @@ export default function Usuarios() {
   const [loading, setLoading] = useState(true);
   const [updating, setUpdating] = useState<string | null>(null);
   const [deleting, setDeleting] = useState<string | null>(null);
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editName, setEditName] = useState("");
+  const [savingName, setSavingName] = useState(false);
+
+  const startEdit = (u: UserRow) => {
+    setEditingId(u.id);
+    setEditName(u.full_name ?? "");
+  };
+
+  const cancelEdit = () => {
+    setEditingId(null);
+    setEditName("");
+  };
+
+  const saveName = async (userId: string) => {
+    const name = editName.trim();
+    if (!name) {
+      toast.error("El nombre no puede estar vacío");
+      return;
+    }
+    setSavingName(true);
+    const { error } = await supabase.from("profiles").update({ full_name: name }).eq("id", userId);
+    setSavingName(false);
+    if (error) {
+      toast.error(error.message);
+      return;
+    }
+    toast.success("Nombre actualizado");
+    setRows((prev) => prev.map((r) => (r.id === userId ? { ...r, full_name: name } : r)));
+    cancelEdit();
+  };
 
   const deleteUser = async (userId: string) => {
     setDeleting(userId);
@@ -133,11 +165,40 @@ export default function Usuarios() {
                         {initials(u.full_name, u.email)}
                       </AvatarFallback>
                     </Avatar>
-                    <div className="min-w-0">
-                      <p className="truncate font-display text-sm font-bold">
-                        {u.full_name || u.email.split("@")[0]}
-                        {u.id === me?.id && <span className="ml-2 text-[10px] font-medium text-muted-foreground">(tú)</span>}
-                      </p>
+                    <div className="min-w-0 flex-1">
+                      {editingId === u.id ? (
+                        <div className="flex items-center gap-2">
+                          <Input
+                            value={editName}
+                            onChange={(e) => setEditName(e.target.value)}
+                            onKeyDown={(e) => {
+                              if (e.key === "Enter") saveName(u.id);
+                              if (e.key === "Escape") cancelEdit();
+                            }}
+                            autoFocus
+                            disabled={savingName}
+                            className="h-8 max-w-[240px] rounded-lg text-sm"
+                          />
+                          <Button size="icon" variant="ghost" className="h-8 w-8 rounded-lg text-success hover:bg-success/10" onClick={() => saveName(u.id)} disabled={savingName}>
+                            {savingName ? <Loader2 className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4" />}
+                          </Button>
+                          <Button size="icon" variant="ghost" className="h-8 w-8 rounded-lg" onClick={cancelEdit} disabled={savingName}>
+                            <X className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      ) : (
+                        <div className="flex items-center gap-1.5">
+                          <p className="truncate font-display text-sm font-bold">
+                            {u.full_name || u.email.split("@")[0]}
+                            {u.id === me?.id && <span className="ml-2 text-[10px] font-medium text-muted-foreground">(tú)</span>}
+                          </p>
+                          {(isSuperAdmin || u.id === me?.id) && (
+                            <Button size="icon" variant="ghost" className="h-6 w-6 rounded-md text-muted-foreground hover:text-primary" onClick={() => startEdit(u)} title="Editar nombre">
+                              <Pencil className="h-3 w-3" />
+                            </Button>
+                          )}
+                        </div>
+                      )}
                       <p className="truncate text-xs text-muted-foreground">{u.email}</p>
                     </div>
                   </div>
